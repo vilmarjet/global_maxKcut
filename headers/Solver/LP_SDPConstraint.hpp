@@ -4,8 +4,8 @@
 #include <vector>
 #include <limits>
 #include <set>
-#include "../../../eigen/Eigen/Dense"
-#include "../../../eigen/Eigen/Eigenvalues"
+#include "../../../myFiles/eigen/Eigen/Dense"
+#include "../../../myFiles/eigen/Eigen/Eigenvalues"
 #include "../CPA/ViolatedConstraint.hpp"
 #include "../MKCUtil.hpp"
 

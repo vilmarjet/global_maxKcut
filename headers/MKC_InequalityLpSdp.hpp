@@ -54,7 +54,7 @@ public:
                     int vi = (*maximal_clique)[clq][i];
                     int vj = (*maximal_clique)[clq][j];
                     const GraphEdge *edge = graph->get_edges()->get_edge_by_vertices(vi, vj);
-                    const Variable<GraphEdge> *var = variables->get_variable(edge);
+                    const Variable *var = variables->get_variable(edge);
                     //set in symmetric matrix
                     sym_matr_variables[i][j] = var;
                     sym_matr_variables[j][i] = var;

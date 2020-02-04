@@ -4,8 +4,8 @@
 #
 
 CC=g++ -m64
-MOSEK_IPATHS=-I ../../mosek/9.0/tools/platform/linux64x86/h
-MOSEK_BINPATH=../../mosek/9.0/tools/platform/linux64x86/bin
+MOSEK_IPATHS=-I ../mosek/9.0/tools/platform/linux64x86/h
+MOSEK_BINPATH=../mosek/9.0/tools/platform/linux64x86/bin
 MOSEK_LPATHS=-L$(MOSEK_BINPATH) -Wl,-rpath-link,$(MOSEK_BINPATH) '-Wl,-rpath=$$ORIGIN/$(MOSEK_BINPATH)'
 LIBS=-lm
 
@@ -28,7 +28,7 @@ lo1: lo1.c
 easy: 
 	  rm -f lp_sdp8
 	  make lp_sdp8
-	  ./lp_sdp8 instance7.txt 3 -3 1 4 1 0 2 10
+	  ./lp_sdp8 ../myFiles/MySolver/instance7.txt 3 -3 1 4 1 0 2 10
 
 easyTriangle: 
 	  rm lp_sdp8

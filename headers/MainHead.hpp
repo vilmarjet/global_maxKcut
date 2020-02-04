@@ -47,8 +47,8 @@
 #include "./Solver/Solver.hpp"
 #include "./Solver/SolverMosekLp.hpp"
 
-#include "../../eigen/Eigen/Dense"
-#include "../../eigen/Eigen/Eigenvalues" 
+#include "../../myFiles/eigen/Eigen/Dense"
+#include "../../myFiles/eigen/Eigen/Eigenvalues" 
 
 //#include <ilcplex/ilocplex.h>
 

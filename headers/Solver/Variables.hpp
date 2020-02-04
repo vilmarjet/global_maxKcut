@@ -8,15 +8,14 @@
 #include <map>
 #include <string>
 
-template <class Dimension>
 class Variables
 {
 private:
-    std::map<const Dimension *, Variable *> variables;
-    typename std::map<const Dimension *, Variable *>::iterator it;
+    std::map<const DimensionVariable *, Variable *> variables;
+    std::map<const DimensionVariable *, Variable *>::iterator it;
 
-    std::map<int, const Dimension *> index_variables;
-    typename std::map<int, const Dimension *>::iterator it_idx;
+    std::map<int, const DimensionVariable *> index_variables;
+    std::map<int, const DimensionVariable *>::iterator it_idx;
 
     int idx_variable;
 
@@ -24,17 +23,17 @@ public:
     Variables() : idx_variable(0) {}
     ~Variables() {}
 
-    void add_variable(const Dimension *key, const Variable &var)
+    void add_variable(const DimensionVariable *key, const Variable &var)
     {
-        variables.insert(std::pair<const Dimension *,
+        variables.insert(std::pair<const DimensionVariable *,
                                    Variable *>(key, new Variable(idx_variable, var)));
 
-        index_variables.insert(std::pair<int, const Dimension *>(idx_variable, key));
+        index_variables.insert(std::pair<int, const DimensionVariable *>(idx_variable, key));
 
         idx_variable++;
     }
 
-    Variable *get_variable(const Dimension *key)
+    Variable *get_variable(const DimensionVariable *key)
     {
         it = variables.find(key);
 
@@ -47,10 +46,10 @@ public:
         return it->second;
     }
 
-    const Variable *get_variable(const Dimension *key) const
+    const Variable *get_variable(const DimensionVariable *key) const
     {
 
-        std::map<const Dimension *, Variable *>::const_iterator it_const = variables.find(key);
+        std::map<const DimensionVariable *, Variable *>::const_iterator it_const = variables.find(key);
 
         if (it_const == variables.end())
         {
@@ -75,7 +74,7 @@ public:
 
     const Variable *get_variable_by_index(const int &idx) const
     {
-        std::map<int, const Dimension *>::const_iterator it_idx_c;
+        std::map<int, const DimensionVariable *>::const_iterator it_idx_c;
         it_idx_c = index_variables.find(idx);
         if (it_idx_c == index_variables.end())
         {
