@@ -1,0 +1,59 @@
+{
+	"folders": [
+		{
+			"path": "/home/vilmarjet/mkCut/MySolver"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"new": "cpp",
+			"array": "cpp",
+			"initializer_list": "cpp",
+			"string_view": "cpp",
+			"utility": "cpp",
+			"*.tcc": "cpp",
+			"cctype": "cpp",
+			"clocale": "cpp",
+			"cmath": "cpp",
+			"complex": "cpp",
+			"cstddef": "cpp",
+			"cstdint": "cpp",
+			"cstdio": "cpp",
+			"cstdlib": "cpp",
+			"cstring": "cpp",
+			"ctime": "cpp",
+			"cwchar": "cpp",
+			"cwctype": "cpp",
+			"deque": "cpp",
+			"unordered_map": "cpp",
+			"vector": "cpp",
+			"exception": "cpp",
+			"fstream": "cpp",
+			"functional": "cpp",
+			"iomanip": "cpp",
+			"iosfwd": "cpp",
+			"iostream": "cpp",
+			"istream": "cpp",
+			"limits": "cpp",
+			"optional": "cpp",
+			"ostream": "cpp",
+			"sstream": "cpp",
+			"stdexcept": "cpp",
+			"streambuf": "cpp",
+			"system_error": "cpp",
+			"type_traits": "cpp",
+			"tuple": "cpp",
+			"typeinfo": "cpp",
+			"atomic": "cpp",
+			"cstdarg": "cpp",
+			"algorithm": "cpp",
+			"memory": "cpp",
+			"memory_resource": "cpp",
+			"set": "cpp",
+			"string": "cpp",
+			"dense": "cpp",
+			"iterator": "cpp",
+			"map": "cpp"
+		}
+	}
+}
