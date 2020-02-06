@@ -1,5 +1,5 @@
-#ifndef VARIABLES_CONTAINER_MATRIX
-#define VARIABLES_CONTAINER_MATRIX
+#ifndef VARIABLE_SYMMETRIC_MATRIX
+#define VARIABLE_SYMMETRIC_MATRIX
 
 #include <string>
 #include <vector>
@@ -12,14 +12,22 @@ class VariableSymmetricMatrix
 private:
     int dimension;
     int number_variables;
+    VariableType type = VariableType::SDP;
     std::vector<Variable *> variables;
 
     /**
-     * @info vi must be inferior than vj
-     * @param vi and vj are positions in matrix (starts by zero)
+     * @param i and j are positions in matrix (starts by zero)
      **/
     int calculate_position_variable(const int &i, const int &j) const
     {
+        if (i >= dimension || j >= dimension || i < 0 || j < 0)
+        {
+            std::string msg = "\nIndices larger than dimension in ";
+            msg += "VariableSymmetricMatrix::add_variable() or not possible.";
+            msg += ". It has got (" + std::to_string(i) + "," + std::to_string(j) + ") \n";
+            throw Exception(msg, ExceptionType::STOP_EXECUTION);
+        }
+
         int vi = i,
             vj = j;
         if (vi > vj)
@@ -33,7 +41,7 @@ private:
 
     /**
      * @param dim is dimension of matrix
-     * */ 
+     * */
     int get_number_variables_for_matrix(const int &dim) const
     {
         return (int)(((dim - 1) * dim) / 2.0) + dim;
@@ -46,17 +54,9 @@ public:
         this->number_variables = get_number_variables_for_matrix(dim);
         this->variables.resize(number_variables, nullptr);
     }
-    ~VariableSymmetricMatrix() {}
 
     bool add_variable(const int &vi, const int &vj, const Variable &var)
     {
-        if (vi => this->dimension || vj => this->dimension)
-        {
-            std::string msg = "\nIndices larger than dimension in VariableSymmetricMatrix::add_variable() or not possible.";
-            msg += "Got (" + std::to_string(vi) + "," + std::to_string(vj) + ") \n";
-            throw Exception(msg, ExceptionType::STOP_EXECUTION);
-        }
-
         int pos_index = calculate_position_variable(vi, vj);
 
         this->variables[pos_index] = new Variable(pos_index, var);
@@ -68,6 +68,7 @@ public:
         return this->variables[pos_index];
     }
 
+    ~VariableSymmetricMatrix() {}
 };
 
 #endif
