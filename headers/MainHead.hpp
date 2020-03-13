@@ -36,6 +36,8 @@
 
 #include "MKC_ModelEdgeLP.hpp"
 
+#include "VariablesEdge.hpp"
+
 #include "MKC_Inequalities.hpp"
 #include "MKC_InequalityTriangle.hpp"
 #include "MKC_InequalityClique.hpp"

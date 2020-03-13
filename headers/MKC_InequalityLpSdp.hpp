@@ -20,13 +20,12 @@ public:
     MKC_InequalityLpSdp() : MKC_Inequalities(0.0) {}
     ~MKC_InequalityLpSdp() {}
 
-    void find_violated_constraints(const Solver *solver,
+    void find_violated_constraints(const VariablesEdge *variables,
                                    const MKCInstance *instance,
                                    std::set<ViolatedConstraint *, CompViolatedConstraint> *violated_constraints)
     {
         LP_SDPConstraint lp_sdp_constraint;
         const MKCGraph *graph = instance->get_graph();
-        const Variables *variables = solver->get_variables();
         const std::vector<std::vector<int>> *maximal_clique = graph->get_edges()->get_vector_of_maximal_cliques();
 
         //coefficients and constants for eigen value calculation
@@ -53,7 +52,7 @@ public:
                 {
                     int vi = (*maximal_clique)[clq][i];
                     int vj = (*maximal_clique)[clq][j];
-                    const GraphEdge *edge = graph->get_edges()->get_edge_by_vertices(vi, vj);
+                    const Edge *edge = graph->get_edges()->get_edge_by_vertices(vi, vj);
                     const Variable *var = variables->get_variable(edge);
                     //set in symmetric matrix
                     sym_matr_variables[i][j] = var;

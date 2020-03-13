@@ -8,7 +8,7 @@
 
 namespace maxkcut
 {
-class GraphEdge : public DimensionVariable
+class Edge : public DimensionVariable
 {
 private:
     int i, j;
@@ -16,13 +16,13 @@ private:
     std::string code;
 
 public:
-    GraphEdge() : i(-1), j(-1), weight(0.0)
+    Edge() : i(-1), j(-1), weight(0.0)
     {
         this->code = "Edge(not defined)";
     }
-    GraphEdge(const int &vi, const int &vj, const double &w) : weight(w), i(vi), j(vj)
+    Edge(const int &vi, const int &vj, const double &w) : weight(w), i(vi), j(vj)
     {
-        GraphEdge::validate_vertices_i_j(this->i, this->j);
+        Edge::validate_vertices_i_j(this->i, this->j);
         this->code = "e(" + std::to_string(vi) + "," + std::to_string(vj) + ")";
     }
     inline int get_vertex_i() const
@@ -63,7 +63,7 @@ public:
         }
     }
 
-    inline GraphEdge operator=(GraphEdge e)
+    inline Edge operator=(Edge e)
     {
         this->i = e.i;
         this->j = e.j;
@@ -83,7 +83,7 @@ public:
         return s;
     }
 
-    ~GraphEdge() {}
+    ~Edge() {}
 };
 } // namespace maxkcut
 

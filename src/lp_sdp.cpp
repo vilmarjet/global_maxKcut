@@ -240,6 +240,8 @@ int main(int argc, char *argv[])
                                  ->build();
 
   cout << new_instance.get_graph()->to_string();
+
+
   SolverParam solverParm;
   solverParm.set_gap_primal(0.75)
       ->set_gap_tolerance(0.9)
@@ -248,7 +250,10 @@ int main(int argc, char *argv[])
   Solver *solver = SolverFactory::create_solver(TypeSolver::LP_EARLY_MOSEK, solverParm);
   solver->create_environnement();
 
+
+
   MKC_ModelEdgeLP model = MKC_ModelEdgeLP(&new_instance, solver);
+
   MKC_InequalityTriangle inea = MKC_InequalityTriangle();
   MKC_InequalityClique ineCliq = MKC_InequalityClique(new_instance.get_K() + 1);
   MKC_InequalityClique ineGenCliq = MKC_InequalityClique(new_instance.get_K() + 2);

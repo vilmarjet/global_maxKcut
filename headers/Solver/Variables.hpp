@@ -4,95 +4,75 @@
 #include "Variable.hpp"
 #include "DimensionVariable.hpp"
 #include "../Utils/Exception.hpp"
+#include <utility> // std::pair, std::make_pair
 #include <vector>
 #include <map>
 #include <string>
+#include <typeinfo>
 
 class Variables
 {
 private:
-    std::map<const DimensionVariable *, Variable *> variables;
-    std::map<const DimensionVariable *, Variable *>::iterator it;
+    std::vector<Variable* > variables;
+    std::map <const Variable *, int> index_variables;
+    
 
-    std::map<int, const DimensionVariable *> index_variables;
-    std::map<int, const DimensionVariable *>::iterator it_idx;
-
-    int idx_variable;
+    void validate_index(const int &idx) const
+    {
+        if (idx >= variables.size() || idx < 0)
+        {
+            throw Exception("Variables: Index of variable does not exist",
+                            ExceptionType::STOP_EXECUTION);
+        }
+    }
 
 public:
-    Variables() : idx_variable(0) {}
-    ~Variables() {}
+    Variables(){};
+    ~Variables(){};
 
-    void add_variable(const DimensionVariable *key, const Variable &var)
+    void add_variable(const Variable &var)
     {
-        variables.insert(std::pair<const DimensionVariable *,
-                                   Variable *>(key, new Variable(idx_variable, var)));
-
-        index_variables.insert(std::pair<int, const DimensionVariable *>(idx_variable, key));
-
-        idx_variable++;
+        //FIXME to be optimized 
+        variables.push_back(new Variable(var));
+        int idx = variables.size() -1;
+        index_variables.insert(std::pair<const Variable *, int>(get_variable(idx), idx));    
     }
 
-    Variable *get_variable(const DimensionVariable *key)
+    const Variable *const get_variable(const int &idx) const
     {
-        it = variables.find(key);
-
-        if (it == variables.end())
-        {
-            throw Exception("Variables1D: Variable does not exist",
-                            ExceptionType::STOP_EXECUTION);
-        }
-
-        return it->second;
+        validate_index(idx);
+        return variables[idx];
     }
 
-    const Variable *get_variable(const DimensionVariable *key) const
+    const int get_index(const Variable *var) const
     {
+         std::map <const Variable *, int>::const_iterator it_idx = index_variables.find(var);
 
-        std::map<const DimensionVariable *, Variable *>::const_iterator it_const = variables.find(key);
-
-        if (it_const == variables.end())
-        {
-            // std::string msg = "Variable from" + key->get_code() + "does not exist";
-            std::string msg = "Variable from does not exist";
-            throw Exception(msg, ExceptionType::STOP_EXECUTION);
-        }
-
-        return it_const->second;
-    }
-
-    Variable *get_variable_by_index(const int &idx)
-    {
-        it_idx = index_variables.find(idx);
         if (it_idx == index_variables.end())
         {
-            throw Exception("Variables: Index of variable does not exist",
+            throw Exception("Variables1D: Variable does not exist = " + var->to_string() ,
                             ExceptionType::STOP_EXECUTION);
         }
-        return get_variable(it_idx->second);
+
+        return it_idx->second;
     }
 
-    const Variable *get_variable_by_index(const int &idx) const
+    void set_solution_value(const int &idx, const double &val)
     {
-        std::map<int, const DimensionVariable *>::const_iterator it_idx_c;
-        it_idx_c = index_variables.find(idx);
-        if (it_idx_c == index_variables.end())
-        {
-            throw Exception("Variables: Index of variable does not exist",
-                            ExceptionType::STOP_EXECUTION);
-        }
-        return get_variable(it_idx_c->second);
+        validate_index(idx);
+        variables[idx]->update_solution(val);
     }
 
     std::string to_string() const
     {
         std::string s;
-        s = "Variables: \n";
+        // s = typeid(this).name() + ": \n";
 
         for (int i = 0; i < size(); ++i)
         {
-            s += get_variable_by_index(i)->to_string() + "\n";
+            s += get_variable(i)->to_string() +  "\n" ;
         }
+
         return s;
     }
 

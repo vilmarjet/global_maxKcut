@@ -6,6 +6,7 @@
 #include "Constraint.hpp"
 #include "Variable.hpp"
 #include "Solver.hpp"
+#include <vector>
 
 class SolverMosek
 {
@@ -136,16 +137,17 @@ public:
 
             for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
             {
-                const Variable *variable = vars.get_variable_by_index(i);
+                const Variable *variable = vars.get_variable(i);
+                int idx = vars.get_index(variable);
 
                 r_code = MSK_putvarbound(task,
-                                         (MSKint32t)variable->get_index(), // Index of variable.
+                                         (MSKint32t)idx, // Index of variable.
                                          MSK_BK_RA,                        // Bound key. (@todo addapt type in variable)
                                          variable->get_lower_bound(),      // Numerical value of lower bound.
                                          variable->get_upper_bound());     // Numerical value of upper bound.
 
                 r_code = MSK_putvartype(task,
-                                        (MSKint32t)variable->get_index(),
+                                        (MSKint32t)i,
                                         get_mosek_variable_type(variable->get_type())); //integer
             }
 
@@ -157,7 +159,7 @@ public:
         }
     }
 
-    void add_constraint_append_mosek(const Constraint *constraint, const bool &is_to_append, const int &position)
+    void add_constraint_append_mosek(const Constraint *constraint, const bool &is_to_append, const int &position, const Variables *variables)
     {
         if (is_to_append)
         {
@@ -165,19 +167,18 @@ public:
         }
 
         r_code = MSK_putconbound(task,
-                                 //this->size_constraints,
                                  position,
                                  get_mosek_constraint_type(constraint->get_type()),
                                  constraint->get_lower_bound(),
                                  constraint->get_upper_bound());
 
+    std::vector<int> indices_variables;
         if (r_code == MSK_RES_OK)
         {
             r_code = MSK_putarow(task,
                                  position,
-                                 //this->size_constraints,
                                  constraint->size(),                  // Number of non-zeros in row i.
-                                 constraint->get_variables_indices(), // Pointer to column indexes of row i.
+                                 constraint->get_indices_variables(variables, indices_variables), // Pointer to column indexes of row i.
                                  constraint->get_coefficients());
         }
 

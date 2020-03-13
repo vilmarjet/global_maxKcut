@@ -13,7 +13,6 @@ enum VariableType
 class Variable
 {
 private:
-    int index;
     double lowerBound;
     double upperBound;
     double cost;
@@ -22,56 +21,33 @@ private:
     std::string code;
 
 public:
-    Variable() : index(-1), lowerBound(0.0), upperBound(0.0), cost(0.0){};
-    Variable(const int &idx,
-             const double &lb,
+    Variable() : lowerBound(0.0), upperBound(0.0), cost(0.0), solution(0.0){};
+    Variable(const double &lb,
              const double &ub,
+             const double &sol = 0.0,
              const double &cst = 0.0,
              const VariableType typ = VariableType::CONTINOUS,
-             const std::string &name = "x") : index(idx),
-                                              lowerBound(lb),
+             const std::string &name = "x") : lowerBound(lb),
                                               upperBound(ub),
                                               cost(cst),
                                               type(typ),
-                                              code(name)
-    {
-        code += "(" + std::to_string(this->index) + ")";
-    }
+                                              code(name),
+                                              solution(sol) {}
+    Variable(const Variable &variable) : lowerBound(variable.lowerBound),
+                                         upperBound(variable.upperBound),
+                                         cost(variable.cost),
+                                         type(variable.type),
+                                         code(variable.code),
+                                         solution(variable.solution) {}
 
-    Variable(const int &idx, const Variable &var) : index(idx),
-                                                    lowerBound(var.get_lower_bound()),
-                                                    upperBound(var.get_upper_bound()),
-                                                    cost(var.get_cost()),
-                                                    type(var.get_type()),
-                                                    code(var.get_code()) {}
-
-    static Variable *of(Variable variable, const int &idx)
+    static Variable *of(const Variable &variable)
     {
-        return new Variable(idx,
-                            variable.lowerBound,
+        return new Variable(variable.lowerBound,
                             variable.upperBound,
-                            variable.cost, variable.type);
-    }
-
-    int get_index() const
-    {
-        return this->index;
-    }
-
-    void set_index(const int &idx)
-    {
-        this->index = idx;
-    }
-
-    void set_bounds(const double &lb, const double &ub)
-    {
-        this->lowerBound = lb;
-        this->upperBound = ub;
-    }
-
-    void set_cost_variables(const double &cost)
-    {
-        this->cost = cost;
+                            variable.solution,
+                            variable.cost,
+                            variable.type,
+                            variable.code);
     }
 
     double get_lower_bound() const

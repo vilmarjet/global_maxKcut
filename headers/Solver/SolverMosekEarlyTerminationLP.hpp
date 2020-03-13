@@ -139,8 +139,8 @@ public:
 
         for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
         {
-            Variable *variable = this->variables.get_variable_by_index(i);
-            r_code = MSK_putcj(task, variable->get_index(), -1.0 * variable->get_cost());
+            const Variable *variable = this->variables.get_variable(i);
+            r_code = MSK_putcj(task, i, -1.0 * variable->get_cost());
         }
 
         if (r_code == MSK_RES_OK)
@@ -191,7 +191,7 @@ public:
 
             for (int i = 0; i < size; ++i)
             {
-                this->variables.get_variable_by_index(i)->update_solution(var_x[i]);
+                this->variables.set_solution_value(i, var_x[i]);
             }
 
             break;
@@ -222,9 +222,9 @@ public:
         }
     }
 
-    void add_constraint(const Constraint *constraint)
+    void add_constraint(const Constraint *constraint, bool is_to_append_new = true)
     {
-        this->add_constraint_append_mosek(constraint, true, this->number_constraints);
+        this->add_constraint_append_mosek(constraint, is_to_append_new, this->number_constraints, get_variables());
         ++this->number_constraints;
     }
 
@@ -234,8 +234,7 @@ public:
 
         for (int i = 0; i < size; ++i)
         {
-            this->add_constraint_append_mosek(&constraints[i], false, this->number_constraints);
-            ++this->number_constraints;
+            add_constraint(&constraints[i], false);
         }
     }
 
@@ -247,8 +246,7 @@ public:
              it != constraints->end();
              ++it)
         {
-            this->add_constraint_append_mosek(&(*it), false, this->number_constraints);
-            ++this->number_constraints;
+            add_constraint(&(*it), false);
         }
     }
 

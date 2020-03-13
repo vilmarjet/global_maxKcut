@@ -5,6 +5,7 @@
 #include "./Solver/Solver.hpp"
 #include "./MKCGraph.hpp"
 #include "./MKCInstance.hpp"
+#include "./VariablesEdge.hpp"
 
 #include <vector>
 
@@ -17,7 +18,7 @@ protected:
 
 public:
     MKC_Inequalities(const double &_rhs) : rhs(_rhs) {}
-    virtual void find_violated_constraints(const Solver *solver,
+    virtual void find_violated_constraints(const VariablesEdge *Variables,
                                            const MKCInstance *instance,
                                            std::set<ViolatedConstraint *, CompViolatedConstraint>  *violated_constraints) = 0;
 };

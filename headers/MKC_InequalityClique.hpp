@@ -9,41 +9,17 @@
 #include "./Utils/Exception.hpp"
 #include "./MKCGraph.hpp"
 #include "./Heuristics/Tabu.hpp"
-#include <cmath>        // std::abs
+#include <cmath> // std::abs
 
 namespace maxkcut
 {
 
 class MKC_InequalityClique : public MKC_Inequalities
 {
-private:
+protected:
   int size_clique;
   int nb_edges_clique;
   Tabu<int> tabu;
-
-  void set_rhs(const MKCInstance *instance)
-  {
-    int t_GClique, q_GClique;
-    double z;
-
-    /* size clique ought be greater than number of partitions  */
-    if (this->size_clique <= instance->get_K())
-    {
-      std::string msg = "Size of clique: " + std::to_string(this->size_clique);
-      msg += " ought be greater than number of partitions";
-      throw Exception(msg, ExceptionType::STOP_EXECUTION);
-    }
-
-    //Calculating the "t" and "q" of the General_Clique
-    t_GClique = (double)(this->size_clique) / instance->get_K();
-    q_GClique = this->size_clique - t_GClique * instance->get_K();
-
-    //Calcule of the right side of the inequality
-    double cst = (1.0 / 2.0) * t_GClique * (t_GClique - 1) * (instance->get_K() - q_GClique);
-    cst += (1.0 / 2.0) * t_GClique * (t_GClique + 1) * q_GClique;
-
-    this->rhs = cst;
-  }
 
 public:
   MKC_InequalityClique(const int &size_c) : MKC_Inequalities(0.0),
@@ -52,22 +28,20 @@ public:
     this->nb_edges_clique = (int)((size_c * (size_c - 1)) / 2.0);
   }
 
-  void find_violated_constraints(const Solver *solver,
+  ~MKC_InequalityClique() {}
+
+  void find_violated_constraints(const VariablesEdge* variables,
                                  const MKCInstance *instance,
                                  std::set<ViolatedConstraint *, CompViolatedConstraint> *violated_constraints)
   {
-    if (this->rhs <= maxkcut::ZERO)
-    {
-      this->set_rhs(instance);
-    }
-
+    this->rhs = compute_rhs(instance);
     const Edges *edges = instance->get_graph()->get_edges();
-    const Variables *variables = solver->get_variables();
 
     this->deterministic_heuristic(variables, edges, violated_constraints);
   }
 
-  void deterministic_heuristic(const Variables *variables,
+private:
+  void deterministic_heuristic(const VariablesEdge *variables,
                                const Edges *edges,
                                std::set<ViolatedConstraint *, CompViolatedConstraint> *violated_constraints)
   {
@@ -97,6 +71,7 @@ public:
 
           if (val < this->rhs - maxkcut::EPSILON)
           {
+            double violation = this->rhs - val;
             this->set_edges_in_clique(vertices_in_clique, &variables_in_clique, edges, variables);
 
             violated_constraints->insert(new ViolatedConstraint(variables_in_clique,
@@ -104,7 +79,7 @@ public:
                                                                 this->rhs,
                                                                 variables_in_clique.size(),
                                                                 ConstraintType::SUPERIOR_EQUAL,
-                                                                this->rhs - val));
+                                                                violation));
           }
         }
       }
@@ -130,7 +105,7 @@ public:
   void set_edges_in_clique(std::vector<int> &vertices_in_clique,
                            std::vector<const Variable *> *variables_in_clique,
                            const Edges *edges,
-                           const Variables *variables)
+                           const VariablesEdge *variables)
   {
     int counter_edge = 0;
     for (int vi = 0; vi < vertices_in_clique.size() - 1; ++vi)
@@ -139,13 +114,13 @@ public:
       for (int vj = vi + 1; vj < vertices_in_clique.size(); ++vj)
       {
         int idx_vj = vertices_in_clique[vj];
-        const GraphEdge *edge = edges->get_edge_by_vertices(idx_vi, idx_vj);
+        const Edge *edge = edges->get_edge_by_vertices(idx_vi, idx_vj);
         (*variables_in_clique)[counter_edge++] = variables->get_variable(edge);
       }
     }
   }
 
-  double local_search_deterministic_clique(const Variables *variables, const Edges *edges, std::vector<int> *vertices_in_clique)
+  double local_search_deterministic_clique(const VariablesEdge *variables, const Edges *edges, std::vector<int> *vertices_in_clique)
   {
     double current_val = this->evaluate_clique(variables, edges, vertices_in_clique);
 
@@ -205,7 +180,7 @@ public:
     tabu.add_value(vertex_min_sum);
   }
 
-  double evaluate_clique(const Variables *variables, const Edges *edges, std::vector<int> *vertices_in_clique)
+  double evaluate_clique(const VariablesEdge *variables, const Edges *edges, std::vector<int> *vertices_in_clique)
   {
     double sum = 0.0;
     for (int vi = 0; vi < vertices_in_clique->size() - 1; ++vi)
@@ -214,13 +189,13 @@ public:
       for (int vj = vi + 1; vj < vertices_in_clique->size(); ++vj)
       {
         int idx_vj = (*vertices_in_clique)[vj];
-        const GraphEdge *edge = edges->get_edge_by_vertices(idx_vi, idx_vj);
+        const Edge *edge = edges->get_edge_by_vertices(idx_vi, idx_vj);
         sum += variables->get_variable(edge)->get_solution();
       }
     }
   }
 
-  bool find_minimum_clique_deterministic(const Variables *variables, const Edges *edges, std::vector<int> *vertices_in_clique)
+  bool find_minimum_clique_deterministic(const VariablesEdge *variables, const Edges *edges, std::vector<int> *vertices_in_clique)
   {
     int index_set_vertex = 1; // first vertex has already been set
 
@@ -267,7 +242,7 @@ public:
   double get_sum_variable_solution_if_vertex_in_clique(const int &vertex,
                                                        const std::vector<int> *vertices_in_clique,
                                                        const Edges *edges,
-                                                       const Variables *variables)
+                                                       const VariablesEdge *variables)
   {
     double sum = 0.0;
 
@@ -279,7 +254,7 @@ public:
         break;
       }
 
-      const GraphEdge *edge = edges->get_edge_by_vertices(vertex, vertex_in_clique);
+      const Edge *edge = edges->get_edge_by_vertices(vertex, vertex_in_clique);
       sum += variables->get_variable(edge)->get_solution();
     }
 
@@ -312,7 +287,35 @@ public:
     return is_vertex_allowed_in_clique(vertex, vertices_in_clique, edges);
   }
 
-  ~MKC_InequalityClique() {}
+  double compute_rhs(const MKCInstance *instance)
+  {
+
+    if (this->rhs > maxkcut::ZERO)
+    {
+      return this->rhs;
+    }
+
+    int t_GClique, q_GClique;
+    double z;
+
+    /* size clique ought be greater than number of partitions  */
+    if (this->size_clique <= instance->get_K())
+    {
+      std::string msg = "Size of clique: " + std::to_string(this->size_clique);
+      msg += " ought be greater than number of partitions";
+      throw Exception(msg, ExceptionType::STOP_EXECUTION);
+    }
+
+    //Calculating the "t" and "q" of the General_Clique
+    t_GClique = (double)(this->size_clique) / instance->get_K();
+    q_GClique = this->size_clique - t_GClique * instance->get_K();
+
+    //Calcule of the right side of the inequality
+    double cst = (1.0 / 2.0) * t_GClique * (t_GClique - 1) * (instance->get_K() - q_GClique);
+    cst += (1.0 / 2.0) * t_GClique * (t_GClique + 1) * q_GClique;
+
+    return cst;
+  }
 };
 } // namespace maxkcut
 

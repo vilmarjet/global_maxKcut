@@ -27,7 +27,7 @@ public:
     virtual void finalize_optimization() = 0;
 
     //constraints
-    virtual void add_constraint(const Constraint *constraint) = 0;
+    virtual void add_constraint(const Constraint *constraint, bool is_to_append_new = true) = 0;
     virtual void add_constraints(const std::set<Constraint> *constraints) = 0;
     virtual void add_constraints(const Constraint *constraints, const int &size_consts) = 0;
 
@@ -39,9 +39,9 @@ public:
     }
 
     //variables
-    void add_variable(const DimensionVariable *key, const Variable &vars)
+    void add_variable(const Variable &vars)
     {
-        this->variables.add_variable(key, vars);
+        this->variables.add_variable(vars);
     }
 
     Variables *get_variables()

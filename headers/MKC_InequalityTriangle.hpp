@@ -18,15 +18,13 @@ public:
   {
   }
 
-  void find_violated_constraints(const Solver *solver,
+  void find_violated_constraints(const VariablesEdge* variables,
                                  const MKCInstance *instance,
                                  std::set<ViolatedConstraint *, CompViolatedConstraint>  *violated_constraints)
   {
     try
     {
       const Edges *edges = instance->get_graph()->get_edges();
-      const Variables *variables = solver->get_variables();
-      std::cout << solver->to_string();
       double sum;
 
       int dim = edges->get_number_vertices();
@@ -35,7 +33,7 @@ public:
       {
         for (int j = i + 1; j < dim - 1; ++j)
         {
-          const GraphEdge *edge1 = edges->get_edge_by_vertices(i + 1, j + 1); //edges start with 1
+          const Edge *edge1 = edges->get_edge_by_vertices(i + 1, j + 1); //edges start with 1
 
           if (edge1 == nullptr)
           {
@@ -46,8 +44,8 @@ public:
           for (int h = j + 1; h < dim; ++h)
           {
             // std::cout << "i, j, h" << i << ","<< j << ","<< h << "\n";
-            const GraphEdge *edge2 = edges->get_edge_by_vertices(i + 1, h + 1);
-            const GraphEdge *edge3 = edges->get_edge_by_vertices(h + 1, j + 1);
+            const Edge *edge2 = edges->get_edge_by_vertices(i + 1, h + 1);
+            const Edge *edge3 = edges->get_edge_by_vertices(h + 1, j + 1);
 
             if (edge2 == nullptr || edge3 == nullptr)
             {

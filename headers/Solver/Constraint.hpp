@@ -4,10 +4,10 @@
 #include <vector>
 #include <algorithm>
 #include "Variable.hpp"
+#include "Variables.hpp"
 #include "../MKCGraph.hpp"
 #include <string>
 #include <new>
-#include "Variable.hpp"
 
 enum ConstraintType
 {
@@ -20,22 +20,12 @@ class Constraint
 {
 
 private:
-    void initialize_indices()
-    {
-        variables_indices.resize(size());
-        for (int i = 0; i < size(); ++i)
-        {
-            variables_indices[i] = variables[i]->get_index();
-        }
-    }
-
 protected:
     double lowerBound;
     double upperBound;
     ConstraintType type;
 
     std::vector<const Variable *> variables;
-    std::vector<int> variables_indices;
     std::vector<double> coefficients;
 
 public:
@@ -51,10 +41,7 @@ public:
                                             coefficients(coef),
                                             lowerBound(lb),
                                             upperBound(ub),
-                                            type(typ)
-    {
-        this->initialize_indices();
-    }
+                                            type(typ){};
     Constraint(const Variable **vars,
                double *coef,
                const int &size,
@@ -66,13 +53,6 @@ public:
     {
         std::copy(vars, vars + size, std::back_inserter(variables));
         std::copy(coef, coef + size, std::back_inserter(coefficients));
-
-        this->initialize_indices();
-    }
-
-    const int *get_variables_indices() const
-    {
-        return &this->variables_indices[0];
     }
 
     const Variable *const *get_variables() const
@@ -113,8 +93,7 @@ public:
         strg += std::to_string(get_lower_bound()) + " <= ";
         for (int i = 0; i < nb_non_zero_variables; ++i)
         {
-            strg += std::to_string(this->coefficients[i]) + "*x_(";
-            strg += std::to_string(this->variables_indices[i]) + ") + ";
+            strg += std::to_string(this->coefficients[i]) + "*x_( idx" + ") + ";
         }
 
         strg += "<=" + std::to_string(this->get_upper_bound());
@@ -122,7 +101,19 @@ public:
         return strg;
     }
 
-    std::string to_string(const maxkcut::MKCGraph *graph) const
+    const int *get_indices_variables(const Variables* solver_variables, std::vector<int> & indices_variables) const
+    {
+        indices_variables.resize(size());
+
+        for (int i=0; i < size(); ++i)
+        {
+            indices_variables[i] = solver_variables->get_index(variables[i]);
+        }
+
+        return &indices_variables[0];
+    }
+
+    std::string to_string(const maxkcut::MKCGraph *graph, const Variables* variabless) const
     {
         int nb_non_zero_variables = this->size();
         std::string strg;
@@ -130,7 +121,7 @@ public:
         strg += std::to_string(get_lower_bound()) + " <= ";
         for (int i = 0; i < nb_non_zero_variables; ++i)
         {
-            const maxkcut::GraphEdge *edge = graph->get_edges()->get_edge_by_index(variables_indices[i]);
+            const maxkcut::Edge *edge = graph->get_edges()->get_edge_by_index(variabless->get_index(variables[i]));
             strg += std::to_string(this->coefficients[i]) + "*x_(";
             strg += std::to_string(edge->get_vertex_i()) + ",";
             strg += std::to_string(edge->get_vertex_j()) + ") + ";
@@ -145,7 +136,6 @@ public:
     {
         return this->lowerBound == other.lowerBound &&
                this->upperBound == other.upperBound &&
-               this->variables_indices == other.variables_indices &&
                this->variables == other.variables &&
                this->coefficients == other.coefficients;
     }

@@ -53,14 +53,13 @@ public:
         this->set_rhs();
     }
 
-    void find_violated_constraints(const Solver *solver,
+    void find_violated_constraints(const VariablesEdge *variables,
                                    const MKCInstance *instance,
                                    std::set<ViolatedConstraint *, CompViolatedConstraint> *violated_constraints)
     {
         try
         {
             const MKCGraph *graph = instance->get_graph();
-            const Variables *variables = solver->get_variables();
 
             GRASP_heurisistic(variables, graph->get_edges(), violated_constraints);
         }
@@ -82,7 +81,7 @@ public:
         }
     }
 
-    void GRASP_heurisistic(const Variables *variables,
+    void GRASP_heurisistic(const VariablesEdge *variables,
                            const Edges *edges,
                            std::set<ViolatedConstraint *, CompViolatedConstraint> *violated_constraints)
     {
@@ -159,7 +158,7 @@ public:
         tabu.add_value(vertex_min_sum);
     }
 
-    void local_search_wheel(const Variables *variables,
+    void local_search_wheel(const VariablesEdge *variables,
                             const Edges *edges,
                             std::vector<int> *vertices_in_cycle,
                             std::vector<int> *vertices_in_hub,
@@ -213,7 +212,7 @@ public:
         }
     }
 
-    bool evaluate_wheel(const Variables *variables,
+    bool evaluate_wheel(const VariablesEdge *variables,
                         const Edges *edges,
                         const std::vector<int> &vertices_in_cycle,
                         const std::vector<int> &vertices_in_hub,
@@ -228,7 +227,7 @@ public:
             for (int uj = ui + 1; uj < vertices_in_hub.size(); ++uj)
             {
 
-                const GraphEdge *edge = edges->get_edge_by_vertices(v_ui, vertices_in_hub[uj]);
+                const Edge *edge = edges->get_edge_by_vertices(v_ui, vertices_in_hub[uj]);
                 if (edge == nullptr)
                 {
                     return false;
@@ -242,7 +241,7 @@ public:
         {
             int previous_vertex = v != 0 ? v - 1 : vertices_in_cycle.size() - 1;
 
-            const GraphEdge *edge = edges->get_edge_by_vertices(vertices_in_cycle[v],
+            const Edge *edge = edges->get_edge_by_vertices(vertices_in_cycle[v],
                                                                 vertices_in_cycle[previous_vertex]);
             if (edge == nullptr)
             {
@@ -257,7 +256,7 @@ public:
             int v_ui = vertices_in_hub[ui];
             for (int v = 0; v < vertices_in_cycle.size(); ++v)
             {
-                const GraphEdge *edge = edges->get_edge_by_vertices(v_ui, vertices_in_cycle[v]);
+                const Edge *edge = edges->get_edge_by_vertices(v_ui, vertices_in_cycle[v]);
 
                 if (edge == nullptr)
                 {
@@ -270,7 +269,7 @@ public:
         return true;
     }
 
-    bool Construct_grasp_random_wheel(const Variables *variables,
+    bool Construct_grasp_random_wheel(const VariablesEdge *variables,
                                       const Edges *edges,
                                       std::vector<int> *vertices_in_cycle,
                                       std::vector<int> *vertices_in_hub)
@@ -287,7 +286,7 @@ public:
             //vertices start by 1
             for (int v = 1; v <= dimension; ++v)
             {
-                const GraphEdge *edge = edges->get_edge_by_vertices(v, prev_vertex);
+                const Edge *edge = edges->get_edge_by_vertices(v, prev_vertex);
                 if (edge != nullptr &&
                     !tabu.has_element(v) &&
                     find(vertices_in_cycle->begin(), vertices_in_cycle->end(), v) == vertices_in_cycle->end())
@@ -347,7 +346,7 @@ public:
         return true;
     }
 
-    bool is_vertex_valid_to_hub(const Variables *variables,
+    bool is_vertex_valid_to_hub(const VariablesEdge *variables,
                                 const Edges *edges,
                                 std::vector<int> *vertices_in_cycle,
                                 std::vector<int> *vertices_in_hub,
@@ -364,7 +363,7 @@ public:
                 break;
             }
 
-            const GraphEdge *edge = edges->get_edge_by_vertices(vertex, (*vertices_in_hub)[i]);
+            const Edge *edge = edges->get_edge_by_vertices(vertex, (*vertices_in_hub)[i]);
             if (edge == nullptr)
             {
                 return false;
@@ -377,7 +376,7 @@ public:
         for (int i = 0; i < vertices_in_cycle->size(); ++i)
         {
 
-            const GraphEdge *edge = edges->get_edge_by_vertices(vertex, (*vertices_in_cycle)[i]);
+            const Edge *edge = edges->get_edge_by_vertices(vertex, (*vertices_in_cycle)[i]);
             if (edge == nullptr)
             {
                 return false;
@@ -418,7 +417,7 @@ public:
     *    2) edges of hub and cycle 
     *    3) edges in hub    
     * */
-    bool set_variables_of_wheel(const Variables *variables,
+    bool set_variables_of_wheel(const VariablesEdge *variables,
                                 const Edges *edges,
                                 const std::vector<int> &vertices_in_cycle,
                                 const std::vector<int> &vertices_in_hub,
@@ -430,7 +429,7 @@ public:
         {
             int previous_vertex = v != 0 ? v - 1 : vertices_in_cycle.size() - 1;
 
-            const GraphEdge *edge = edges->get_edge_by_vertices(vertices_in_cycle[v],
+            const Edge *edge = edges->get_edge_by_vertices(vertices_in_cycle[v],
                                                                 vertices_in_cycle[previous_vertex]);
             if (edge == nullptr)
             {
@@ -446,7 +445,7 @@ public:
             for (int v = 0; v < vertices_in_cycle.size(); ++v)
             {
                 int v_cycle = vertices_in_cycle[v];
-                const GraphEdge *edge = edges->get_edge_by_vertices(v_ui, v_cycle);
+                const Edge *edge = edges->get_edge_by_vertices(v_ui, v_cycle);
                 if (edge == nullptr)
                 {
                     return false;
@@ -462,7 +461,7 @@ public:
             for (int uj = ui + 1; uj < vertices_in_hub.size(); ++uj)
             {
                 int v_uj = vertices_in_hub[uj];
-                const GraphEdge *edge = edges->get_edge_by_vertices(v_ui, v_uj);
+                const Edge *edge = edges->get_edge_by_vertices(v_ui, v_uj);
                 if (edge == nullptr)
                 {
                     return false;

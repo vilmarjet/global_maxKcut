@@ -12,7 +12,7 @@ namespace maxkcut
 class Edges
 {
 private:
-    std::vector<GraphEdge> edges;
+    std::vector<Edge> edges;
     std::vector<int> easy_index_edges;
     int number_vertices;
     std::vector<std::vector<int>> vertices_maximal_clique;
@@ -52,7 +52,7 @@ public:
 
         if (this->easy_index_edges[pos_edge_in_easy_indexing] == -1)
         {
-            edges.push_back(GraphEdge(vi, vj, weight));
+            edges.push_back(Edge(vi, vj, weight));
             this->easy_index_edges[pos_edge_in_easy_indexing] = edges.size() - 1;
             if (is_complete())
             {
@@ -272,7 +272,7 @@ public:
     }
 
     /*Attention: vertices must start by 1 in input file*/
-    const GraphEdge *get_edge_by_vertices(const int &i, const int &j) const
+    const Edge *get_edge_by_vertices(const int &i, const int &j) const
     {
         validate_vertices_i_j(i, j);
 
@@ -300,7 +300,7 @@ public:
         return true;
     }
 
-    const GraphEdge *get_edge_by_index(const int &index) const
+    const Edge *get_edge_by_index(const int &index) const
     {
         if (index >= 0 && index < edges.size())
         {
