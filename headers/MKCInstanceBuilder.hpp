@@ -53,11 +53,11 @@ public:
         return *this->parent;
     }
 
-    MKCInstance build()
+    MKCInstance* build()
     {
         MKCGraph graph = this->graph_builder->build();
 
-        return MKCInstance(graph, this->K);
+        return new MKCInstance(graph, this->K);
     }
 
     ~MKCInstanceBuilder(){};

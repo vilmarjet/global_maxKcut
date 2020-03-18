@@ -38,10 +38,10 @@ public:
     {
     }
 
-    //variables
-    void add_variable(const Variable &vars)
+    //add variables and return idx of variable;
+    const Variable* add_variable(Variable *vars)
     {
-        this->variables.add_variable(vars);
+        return this->variables.add_variable(vars);
     }
 
     Variables *get_variables()

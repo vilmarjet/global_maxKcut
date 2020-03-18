@@ -30,12 +30,14 @@ public:
     Variables(){};
     ~Variables(){};
 
-    void add_variable(const Variable &var)
+    const Variable* add_variable(Variable *var)
     {
         //FIXME to be optimized 
-        variables.push_back(new Variable(var));
+        variables.push_back(var);
         int idx = variables.size() -1;
-        index_variables.insert(std::pair<const Variable *, int>(get_variable(idx), idx));    
+        index_variables.insert(std::pair<const Variable *, int>(var, idx));
+
+        return var;
     }
 
     const Variable *const get_variable(const int &idx) const

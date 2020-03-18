@@ -231,7 +231,7 @@ using namespace maxkcut;
 int main(int argc, char *argv[])
 {
   int a = 0;
-  MKCInstance new_instance = MKCInstanceBuilder<std::nullptr_t>::create()
+  MKCInstance* new_instance = MKCInstanceBuilder<std::nullptr_t>::create()
                                  ->set_graph()
                                  ->set_graph_input_file(argv[1])
                                  ->set_type_graph(GraphType::CHORDAL)
@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
                                  ->set_K(3)
                                  ->build();
 
-  cout << new_instance.get_graph()->to_string();
+  cout << new_instance->get_graph()->to_string();
 
 
   SolverParam solverParm;
@@ -252,21 +252,14 @@ int main(int argc, char *argv[])
 
 
 
-  MKC_ModelEdgeLP model = MKC_ModelEdgeLP(&new_instance, solver);
+  MKC_ModelEdgeLP model = MKC_ModelEdgeLP(new_instance, solver);
 
-  MKC_InequalityTriangle inea = MKC_InequalityTriangle();
-  MKC_InequalityClique ineCliq = MKC_InequalityClique(new_instance.get_K() + 1);
-  MKC_InequalityClique ineGenCliq = MKC_InequalityClique(new_instance.get_K() + 2);
-  MKC_InequalityWheel ineWheel = MKC_InequalityWheel(3, 1);
-  MKC_InequalityWheel ineBiWheel = MKC_InequalityWheel(3, 2);
-  MKC_InequalityLpSdp eigenC = MKC_InequalityLpSdp();
-
-  model.add_type_inequality(&inea);
-  model.add_type_inequality(&ineCliq);
-  model.add_type_inequality(&ineGenCliq);
-  model.add_type_inequality(&ineWheel);
-  model.add_type_inequality(&ineBiWheel);
-  model.add_type_inequality(&eigenC);
+  model.add_type_inequality(new MKC_InequalityTriangle());
+  model.add_type_inequality(new MKC_InequalityClique(new_instance->get_K() + 1));
+  model.add_type_inequality(new MKC_InequalityClique(new_instance->get_K() + 2));
+  model.add_type_inequality(new MKC_InequalityWheel(3, 1));
+  model.add_type_inequality(new MKC_InequalityWheel(3, 2));
+  model.add_type_inequality(new MKC_InequalityLpSdp());
 
   for (int ite = 0; ite < 21; ite++)
   {
