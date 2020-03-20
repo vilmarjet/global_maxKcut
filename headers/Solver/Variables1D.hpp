@@ -45,7 +45,7 @@ public:
         it_idx_c = index_variables.find(idx);
         if (it_idx_c == index_variables.end())
         {
-            throw Exception("Variable of index " std::to_string(idx) " does not exist",
+            throw Exception(("Variable of index " + std::to_string(idx) + " does not exist"),
                             ExceptionType::STOP_EXECUTION);
         }
         return get_variable(it_idx_c->second);
