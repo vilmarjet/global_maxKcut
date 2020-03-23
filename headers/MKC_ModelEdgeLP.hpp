@@ -36,6 +36,7 @@ public:
     void solve()
     {
         this->solver->solve();
+        std::cout <<solver->to_string();
     }
 
     void reset_solver()

@@ -1,5 +1,5 @@
-#ifndef VARIABLES1d_CONTAINER_HPP
-#define VARIABLES1d_CONTAINER_HPP
+#ifndef VARIABLES1d2_CONTAINER_HPP
+#define VARIABLES1d2_CONTAINER_HPP
 
 #include "Variable.hpp"
 #include "DimensionVariable.hpp"
@@ -10,12 +10,12 @@
 #include <string>
 #include <typeinfo>
 
+template <typename V>
 class Variables
 {
-private:
-    std::vector<Variable* > variables;
-    std::map <const Variable *, int> index_variables;
-    
+protected:
+    std::vector<V *> variables;
+    std::map<const V *, int> index_variables;
 
     void validate_index(const int &idx) const
     {
@@ -30,52 +30,42 @@ public:
     Variables(){};
     ~Variables(){};
 
-    const Variable* add_variable(Variable *var)
+    const V *add_variable(V *var)
     {
-        //FIXME to be optimized 
-        variables.push_back(var);
-        int idx = variables.size() -1;
-        index_variables.insert(std::pair<const Variable *, int>(var, idx));
+        int idx = variables.size();
+        return add_variable_with_index(var, idx);
+    }
+
+    const V *add_variable_with_index(V *var, const int &idx)
+    {
+        if (variables.size() <= idx)
+        {
+            variables.resize(idx + 1);
+        }
+
+        variables[idx] = var;
+        index_variables.insert(std::pair<const V *, int>(var, idx));
 
         return var;
     }
 
-    const Variable *const get_variable(const int &idx) const
+    const V *const get_variable(const int &idx) const
     {
         validate_index(idx);
         return variables[idx];
     }
 
-    const int get_index(const Variable *var) const
+    const int get_index(const V *var) const
     {
-         std::map <const Variable *, int>::const_iterator it_idx = index_variables.find(var);
+        typename std::map<const V *, int>::const_iterator it_idx = index_variables.find(var);
 
         if (it_idx == index_variables.end())
         {
-            throw Exception("Variables1D: Variable does not exist = " + var->to_string() ,
+            throw Exception("Variables1D: Variable does not exist = " + var->to_string(),
                             ExceptionType::STOP_EXECUTION);
         }
 
         return it_idx->second;
-    }
-
-    void set_solution_value(const int &idx, const double &val)
-    {
-        validate_index(idx);
-        variables[idx]->update_solution(val);
-    }
-
-    std::string to_string() const
-    {
-        std::string s;
-        // s = typeid(this).name() + ": \n";
-
-        for (int i = 0; i < size(); ++i)
-        {
-            s += get_variable(i)->to_string() +  "\n" ;
-        }
-
-        return s;
     }
 
     int size() const

@@ -4,7 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include "Variable.hpp"
-#include "Variables.hpp"
+#include "LPVariables.hpp"
 #include "../MKCGraph.hpp"
 #include <string>
 #include <new>
@@ -101,7 +101,7 @@ public:
         return strg;
     }
 
-    const int *get_indices_variables(const Variables* solver_variables, std::vector<int> & indices_variables) const
+    const int *get_indices_variables(const LPVariables* solver_variables, std::vector<int> & indices_variables) const
     {
         indices_variables.resize(size());
 
@@ -113,7 +113,7 @@ public:
         return &indices_variables[0];
     }
 
-    std::string to_string(const maxkcut::MKCGraph *graph, const Variables* variabless) const
+    std::string to_string(const maxkcut::MKCGraph *graph, const LPVariables* variabless) const
     {
         int nb_non_zero_variables = this->size();
         std::string strg;

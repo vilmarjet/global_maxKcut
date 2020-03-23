@@ -2,7 +2,8 @@
 #define SOLVER_HPP
 
 #include "Constraint.hpp"
-#include "Variables.hpp"
+#include "LPVariables.hpp"
+#include "SDPVariables.hpp"
 #include "../Utils/Exception.hpp"
 #include "ObjectiveFunction.hpp"
 #include <string>
@@ -13,7 +14,8 @@
 class Solver
 {
 protected:
-    Variables variables;
+    LPVariables variables;
+    SDPVariables variables_sdp;
     ObjectiveFunction objectiveFunction;
     double time_solver;
     int number_constraints;
@@ -44,12 +46,12 @@ public:
         return this->variables.add_variable(vars);
     }
 
-    Variables *get_variables()
+    LPVariables *get_variables()
     {
         return &this->variables;
     }
 
-    const Variables *get_variables() const
+    const LPVariables *get_variables() const
     {
         return &this->variables;
     }
