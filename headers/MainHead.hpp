@@ -35,6 +35,7 @@
 #include "MKCInstanceBuilder.hpp"
 
 #include "MKC_ModelEdgeLP.hpp"
+#include "MKC_ModelEdgeSDP.hpp"
 
 #include "VariablesEdge.hpp"
 

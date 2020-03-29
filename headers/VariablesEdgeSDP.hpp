@@ -9,11 +9,12 @@
 #include <string>
 #include <utility>
 #include "./MKCInstance.hpp"
+#include "./VariablesEdge.hpp"
 
 namespace maxkcut
 {
 
-class VariablesEdgeSDP : public Variables1D<const Edge *>
+class VariablesEdgeSDP : public VariablesEdge
 {
 public:
     static VariablesEdgeSDP *create(Solver *_solver, MKCInstance *instance)
@@ -22,37 +23,51 @@ public:
     }
 
 private:
-    Solver *solver;
-    const Edges *edges;
+    int dimension;
+    int K;
+    SDPVariable<Variable> *var_sdp;
 
-    VariablesEdgeSDP(Solver *_solver, const MKCInstance *instance) : solver(_solver)
+    VariablesEdgeSDP(Solver *_solver, const MKCInstance *instance) : VariablesEdge(_solver, instance)
     {
-        edges = instance->get_graph()->get_edges();
+        this->dimension = instance->get_graph()->get_dimension();
+        this->K = instance->get_K();
     }
 
 public:
     ~VariablesEdgeSDP() {}
 
-    VariablesEdgeSDP * populate()
+    VariablesEdgeSDP *populate()
     {
+        double const_sdp_var = (-1.0) * ((this->K - 1.0) / this->K);
+        var_sdp = solver->add_sdp_variable(new SDPVariable<Variable>(dimension, const_sdp_var));
+
+        //todo: Impemente populate
         double lower_bound = 0.0;
         double upper_bound = 1.0;
         double initial_solution = 0.0;
-        VariableType type = VariableType::CONTINOUS;
+        VariableType type = VariableType::SDP;
         for (int i = 0; i < edges->get_number_edges(); ++i)
         {
             const Edge *edge = edges->get_edge_by_index(i);
+            int vi = edge->get_vertex_i() - 1 ;
+            int vj = edge->get_vertex_j() - 1;
 
-            const Variable *variable = solver->add_variable(new Variable(lower_bound,
-                                                                         upper_bound,
-                                                                         initial_solution,
-                                                                         edge->get_weight(),
-                                                                         type));
-            int idx = solver->get_variables()->get_index(variable);
+            const Variable *variable = var_sdp->add_variable(vi, vj,
+                                                             new Variable(lower_bound,
+                                                                          upper_bound,
+                                                                          initial_solution,
+                                                                          edge->get_weight(),
+                                                                          type));
+            int idx = var_sdp->get_index(variable);
             add_variable(idx, edge, variable);
         }
 
         return this;
+    }
+
+    const SDPVariable<Variable>* get_variable_sdp()
+    {
+        return var_sdp;
     }
 };
 } // namespace maxkcut

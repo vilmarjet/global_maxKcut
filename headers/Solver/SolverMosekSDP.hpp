@@ -8,13 +8,12 @@
 #include <stdlib.h> //malloc
 #include "SolverParam.hpp"
 
-class SolverSDP : public Solver
+class SolverMosekSDP : public Solver, SolverMosek
 {
-protected:
-  Variables variables;
+private:
 public:
-  SolverSDP(const SolverParam &solverParm) : Solver(solverParm) {}
-  ~SolverSDP()
+  SolverMosekSDP(const SolverParam &solverParm) : Solver(solverParm) {}
+  ~SolverMosekSDP()
   {
   }
 
@@ -45,8 +44,7 @@ public:
     }
     catch (...)
     {
-      Exception e = Exception("Not handle exeception in solve\n", ExceptionType::STOP_EXECUTION);
-      e.execute();
+      Exception("Not handled exception set varialbe \n", ExceptionType::STOP_EXECUTION).execute();
     }
   }
 
@@ -57,7 +55,7 @@ public:
 
   void set_solution()
   {
-    set_mosek_solution_statuss(&solsta, MSK_SOL_BAS);
+    set_mosek_solution_statuss(&solsta, MSK_SOL_ITR);
 
     switch (solsta)
     {
@@ -87,7 +85,7 @@ public:
 
       for (int i = 0; i < size; ++i)
       {
-        this->variables.get_variable_by_index(i)->update_solution(var_x[i]);
+        this->variables.set_solution_value(i, var_x[i]);
       }
 
       break;
@@ -114,63 +112,22 @@ public:
 
   void initialize()
   {
-    SolverMosek::create_task(Solver::variables.size(), this->number_constraints);
+    std::cout << "Begin of initilize";
+
+    create_task(Solver::variables.size(), this->number_constraints);
     initialize_variables_mosek_task(Solver::variables);
+    initialize_sdp_variables_mosek_task(&(Solver::variables_sdp));
     initilize_objective_function();
 
     r_code = MSK_putobjsense(task, get_mosek_objective_sense(this->objectiveFunction.get_optimization_sense()));
 
     SolverParam param = get_parameter();
     MSK_putintparam(task, MSK_IPAR_NUM_THREADS, param.get_number_threads()); /*Nber of cpus*/
-
-    //Controls whether the interior-point optimizer also computes an optimal basis.
-    r_code = MSK_putintparam(task, MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
   }
 
-  //overrides from SolverMosek
-  void initialize_variables_mosek_task(const Variables &vars)
+  void add_constraint(const Constraint *constraint, bool is_to_append_new = true)
   {
-    if (SolverMosek::r_code == MSK_RES_OK)
-    {
-      size_t size = vars.size();
-
-      for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
-      {
-
-        const Variable *variable = vars.get_variable_by_index(i);
-
-        if (variable->get_type() == VariableType::SDP)
-        {
-          SolverMosek::r_code = MSK_appendbarvars(task, 1, DIMBARVAR);
-        }
-        else
-        {
-
-          SolverMosek::r_code = MSK_appendvars(task, 1); //append one at time
-
-          SolverMosek::r_code = MSK_putvarbound(task,
-                                                (MSKint32t)variable->get_index(), // Index of variable.
-                                                MSK_BK_RA,                        // Bound key. (@todo addapt type in variable)
-                                                variable->get_lower_bound(),      // Numerical value of lower bound.
-                                                variable->get_upper_bound());     // Numerical value of upper bound.
-
-          SolverMosek::r_code = MSK_putvartype(task,
-                                               (MSKint32t)variable->get_index(),
-                                               get_mosek_variable_type(variable->get_type())); //integer
-        }
-      }
-
-      if (r_code != MSK_RES_OK)
-      {
-        throw Exception("r_code != MSK_RES_OK in initialize_variables_mosek_task",
-                        ExceptionType::STOP_EXECUTION);
-      }
-    }
-  }
-
-  void add_constraint(const Constraint *constraint)
-  {
-    this->add_constraint_append_mosek(constraint, true, this->number_constraints);
+    this->add_constraint_append_mosek(constraint, is_to_append_new, this->number_constraints, get_variables());
     ++this->number_constraints;
   }
 
@@ -180,8 +137,7 @@ public:
 
     for (int i = 0; i < size; ++i)
     {
-      this->add_constraint_append_mosek(&constraints[i], false, this->number_constraints);
-      ++this->number_constraints;
+      add_constraint(&constraints[i], false);
     }
   }
 
@@ -193,9 +149,12 @@ public:
          it != constraints->end();
          ++it)
     {
-      this->add_constraint_append_mosek(&(*it), false, this->number_constraints);
-      ++this->number_constraints;
+      add_constraint(&(*it), false);
     }
+  }
+
+  void add_constraint_single_SDP_variable(const int &idx_var_sdp, const Constraint *constraints)
+  {
   }
 
   void reset_solver()
@@ -213,6 +172,21 @@ public:
     r_code = MSK_makeenv(&env, NULL);
   }
 
+  void run_optimizer()
+    {
+        r_code = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr);
+        /* Run optimizer */
+        if (r_code == MSK_RES_OK)
+        {
+            r_code = MSK_optimizetrm(task, NULL);
+        }
+
+        if (r_code != MSK_RES_OK)
+        {
+            throw Exception("r_code not MSK_RES_OK in run_optimizer()", ExceptionType::STOP_EXECUTION);
+        }
+    }
+
   void initilize_objective_function()
   {
     if (r_code == MSK_RES_OK)
@@ -224,8 +198,8 @@ public:
 
     for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
     {
-      Variable *variable = this->variables.get_variable_by_index(i);
-      r_code = MSK_putcj(task, variable->get_index(), -1.0 * variable->get_cost());
+      const Variable *variable = this->variables.get_variable(i);
+      r_code = MSK_putcj(task, i, -1.0 * variable->get_cost());
     }
 
     if (r_code == MSK_RES_OK)
@@ -233,9 +207,35 @@ public:
       r_code = MSK_putobjsense(task, MSK_OBJECTIVE_SENSE_MAXIMIZE);
     }
 
+    /*For SDP*/
+    MSKint64t idx; //use for index in mosek
+    SDPVariables *vars = &(Solver::variables_sdp);
+    size = vars->size();
+    for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
+    {
+      if (vars->get_variable(i)->get_row_indices()) //check no null 
+      {
+
+        r_code = MSK_appendsparsesymmat(task,
+                                        vars->get_variable(i)->get_dimension(),
+                                        vars->get_variable(i)->get_number_non_null_variables(),
+                                        vars->get_variable(i)->get_col_indices(),
+                                        vars->get_variable(i)->get_row_indices(),
+                                        vars->get_cost_indices(i),
+                                        &idx);
+      }
+      if (r_code == MSK_RES_OK)
+      {
+        std::cout << "Cst = " <<   vars->get_variable(i)->get_constant_object_function() ;
+        double val = vars->get_variable(i)->get_constant_object_function();
+        r_code = MSK_putbarcj(task, i, 1, &idx, &val);
+      }
+    }
+
     if (r_code != MSK_RES_OK)
     {
-      throw Exception("r_code != MSK_RES_OK in initilize_Objective_function()", ExceptionType::STOP_EXECUTION);
+      std::cout << "r_code = " << r_code;
+      Exception("r_code != MSK_RES_OK in initilize_Objective_function()", ExceptionType::STOP_EXECUTION).execute();
     }
   }
 };

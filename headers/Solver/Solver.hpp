@@ -32,6 +32,10 @@ public:
     virtual void add_constraint(const Constraint *constraint, bool is_to_append_new = true) = 0;
     virtual void add_constraints(const std::set<Constraint> *constraints) = 0;
     virtual void add_constraints(const Constraint *constraints, const int &size_consts) = 0;
+    void add_constraint_single_SDP_variable(const int &idx_var, const Constraint *constraints)
+    {
+        //nop
+    }
 
     Solver(const SolverParam &solverParm) : objectiveFunction(ObjectiveFunction::create()),
                                            param(solverParm),
@@ -44,6 +48,11 @@ public:
     const Variable* add_variable(Variable *vars)
     {
         return this->variables.add_variable(vars);
+    }
+
+    SDPVariable<Variable> * add_sdp_variable(SDPVariable<Variable> * var)
+    {
+        return this->variables_sdp.add_variable(var);
     }
 
     LPVariables *get_variables()

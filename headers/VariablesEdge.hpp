@@ -21,7 +21,7 @@ public:
         return (new VariablesEdge(_solver, instance))->populate();
     }
 
-private:
+protected:
     Solver *solver;
     const Edges *edges;
 

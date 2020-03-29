@@ -6,24 +6,30 @@
 #include <cstddef>
 #include "../Utils/Exception.hpp"
 #include "Variable.hpp"
+#include "Variables.hpp"
 
-class SDPVariable
+template <typename V>
+class SDPVariable : public Variables<V>
 {
 private:
     const int dimension;
-    std::vector<Variable *> variables;
     const int number_variables;
+    const double constant_object_function;
+    std::vector<int> row_index;
+    std::vector<int> col_index;
+    
 
     /**
      * @param i and j are positions in matrix (starts by zero)
      **/
     int calculate_position_variable(const int &i, const int &j) const
     {
-        if (i >= dimension || j >= dimension || i < 0 || j < 0)
+        if (i >= dimension || j >= dimension || i < 0 || j < 0 || i == j)
         {
-            std::string msg = "\nIndices larger than dimension in ";
+            std::string msg = "\n Invalid indices in SDPVariable,";
+            msg += " for sdp variable of dimension" + std::to_string(this->dimension);
             msg += ". It has got (" + std::to_string(i) + "," + std::to_string(j) + ") \n";
-            throw Exception(msg, ExceptionType::STOP_EXECUTION);
+            Exception(msg, ExceptionType::STOP_EXECUTION).execute();
         }
 
         int vi = i,
@@ -45,25 +51,72 @@ private:
         return (int)(((dim - 1) * dim) / 2.0) + dim;
     }
 
+    void add_new_indices(const int &vi, const int &vj)
+    {
+        if (vi < vj)
+        {
+            row_index.push_back(vi);
+            col_index.push_back(vj);
+        }
+        else
+        {
+            row_index.push_back(vj);
+            col_index.push_back(vi);
+        }
+    }
+
 public:
-    SDPVariable(const int &dim) : dimension(dim),
-    number_variables(get_number_variables_for_matrix(dim))
+    SDPVariable(const int &dim, double cost=0.0) : dimension(dim),
+                                  number_variables(get_number_variables_for_matrix(dim)),
+                                  constant_object_function(cost)
     {
-        this->variables.clear();
-        this->variables.resize(this->number_variables, nullptr);
     }
 
-    const Variable* add_variable(const int &vi, const int &vj, Variable *var)
+    V *add_variable(V *var)
     {
-        int pos_index = calculate_position_variable(vi, vj);
-        this->variables[pos_index] = var;
-        return var;
+        std::string error = "Method add_variable(variable*) not implemented for SDP variables.\n";
+        error += "Use add_variable(int, int, variable*)  ";
+        Exception(error, ExceptionType::STOP_EXECUTION).execute();
     }
 
-    const Variable *get_variable(const int &vi, const int &vj)
+    V *add_variable(const int &vi, const int &vj, Variable *var)
     {
         int pos_index = calculate_position_variable(vi, vj);
-        return this->variables[pos_index];
+        add_new_indices(vi, vj);    
+
+        return this->add_variable_with_index(var, pos_index);
+    }
+
+    const V *get_variable(const int &vi, const int &vj)
+    {
+        int pos_index = calculate_position_variable(vi, vj);
+
+        return Variables<Variable>::get_variable(pos_index);
+    }
+
+    const int get_dimension() const
+    {
+        return this->dimension;
+    }
+
+    const int get_number_non_null_variables() const
+    {
+        return this->row_index.size();
+    }
+
+    const int *get_row_indices() const 
+    {
+        return row_index.empty()? 0 : &this->row_index[0];
+    }
+
+    const int *get_col_indices() const 
+    {
+        return col_index.empty()? 0 : &this->col_index[0];
+    }
+
+    const double &get_constant_object_function() const
+    {
+        return this->constant_object_function;
     }
 
     ~SDPVariable() {}

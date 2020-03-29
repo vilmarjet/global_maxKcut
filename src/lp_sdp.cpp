@@ -249,10 +249,17 @@ int main(int argc, char *argv[])
 
   Solver *solver = SolverFactory::create_solver(TypeSolver::LP_EARLY_MOSEK, solverParm);
   solver->create_environnement();
-
-
-
   MKC_ModelEdgeLP model = MKC_ModelEdgeLP(new_instance, solver);
+
+  
+
+
+  Solver *solverSDP = SolverFactory::create_solver(TypeSolver::SDP_MOSEK, solverParm);
+   solverSDP->create_environnement();
+  MKC_ModelEdgeSDP modelSDP = MKC_ModelEdgeSDP(new_instance, solverSDP);
+
+
+  modelSDP.solve();
 
   model.add_type_inequality(new MKC_InequalityTriangle());
   model.add_type_inequality(new MKC_InequalityClique(new_instance->get_K() + 1));

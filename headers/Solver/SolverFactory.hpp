@@ -5,6 +5,7 @@
 #include "Solver.hpp"
 #include "SolverMosekLp.hpp"
 #include "SolverMosekEarlyTerminationLP.hpp"
+#include "SolverMosekSDP.hpp"
 
 enum class TypeSolver
 {
@@ -26,6 +27,8 @@ public:
             return new SolverMosekLp(solverParm);
         case TypeSolver::LP_EARLY_MOSEK:
             return new SolverMosekEarlyTerminationLP(solverParm);
+        case TypeSolver::SDP_MOSEK:
+            return new SolverMosekSDP(solverParm);
         default:
             return new SolverMosekLp(solverParm);
         }

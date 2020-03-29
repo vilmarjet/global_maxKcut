@@ -25,10 +25,20 @@ public:
         Edge::validate_vertices_i_j(this->i, this->j);
         this->code = "e(" + std::to_string(vi) + "," + std::to_string(vj) + ")";
     }
+
+    /**
+     * Return idx of a vertex. 
+     * Remember vertex starts by 1
+     * */
     inline int get_vertex_i() const
     {
         return this->i;
     }
+
+    /**
+     * Return idx of a vertex. 
+     * Remember vertex starts by 1
+     * */
     inline int get_vertex_j() const
     {
         return this->j;

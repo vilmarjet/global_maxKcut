@@ -1,5 +1,5 @@
-#ifndef MKC_EDGE_MODEL_LP_HPP
-#define MKC_EDGE_MODEL_LP_HPP
+#ifndef MKC_EDGE_MODEL_SDP_HPP
+#define MKC_EDGE_MODEL_SDP_HPP
 
 #include "./Solver/Solver.hpp"
 #include "./MKCInstance.hpp"
@@ -10,22 +10,22 @@
 #include <algorithm> // use of min and max
 #include <set>
 #include <vector>
-#include "VariablesEdge.hpp"
+#include "VariablesEdgeSDP.hpp"
 
 namespace maxkcut
 {
 
-class MKC_ModelEdgeLP
+class MKC_ModelEdgeSDP
 {
 private:
     Solver *solver;
     MKCInstance *instance;
-    VariablesEdge *variablesEdge;
+    VariablesEdgeSDP *variablesEdgeSDP;
     std::vector<MKC_Inequalities *> inequalities_type;
     std::set<ViolatedConstraint *, CompViolatedConstraint> violated_constraints;
 
 public:
-    MKC_ModelEdgeLP(MKCInstance *instance_, Solver *solver_) : instance(instance_),
+    MKC_ModelEdgeSDP(MKCInstance *instance_, Solver *solver_) : instance(instance_),
                                                                solver(solver_)
     {
         this->initilize();
@@ -46,12 +46,14 @@ public:
 
     void initilize()
     {
-        variablesEdge = VariablesEdge::create(solver, instance);
+        variablesEdgeSDP = VariablesEdgeSDP::create(solver, instance);
         this->set_objective_function();
     }
     void set_objective_function()
     {
         double cst = instance->get_graph()->get_edges()->sum_cost_all_edges();
+        int K = instance->get_K();
+        cst *= (-1.0) * ((K - 1.0) / K);
         solver->set_const_objective_function(cst);
     }
 
@@ -68,7 +70,7 @@ public:
         for (std::size_t idx_ineq = 0; idx_ineq < inequalities_type.size(); ++idx_ineq)
         {
             //@todo: create class for violated constraints and send as parameter or return in get violated inequalities
-            inequalities_type[idx_ineq]->find_violated_constraints(this->variablesEdge,
+            inequalities_type[idx_ineq]->find_violated_constraints(this->variablesEdgeSDP,
                                                                    this->instance,
                                                                    &violated_constraints);
         }
@@ -77,13 +79,14 @@ public:
              it != violated_constraints.end() && counter_ineq < nb_max_ineq;
              ++it, ++counter_ineq)
         {
-            solver->add_constraint((*it)->get_constraint());
+            int idx_sdp_variable = 0;
+            solver->add_constraint_single_SDP_variable(idx_sdp_variable, (*it)->get_constraint());
         }
 
         std::cout << "Nb constraints after= " << solver->get_nb_constraints();
     }
 
-    ~MKC_ModelEdgeLP()
+    ~MKC_ModelEdgeSDP()
     {
     }
 };

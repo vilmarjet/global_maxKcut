@@ -30,19 +30,19 @@ public:
     Variables(){};
     ~Variables(){};
 
-    const V *add_variable(V *var)
+    V *add_variable(V *var)
     {
         int idx = variables.size();
         return add_variable_with_index(var, idx);
     }
 
-    const V *add_variable_with_index(V *var, const int &idx)
+    V *add_variable_with_index(V *var, const int &idx)
     {
         if (variables.size() <= idx)
         {
             variables.resize(idx + 1);
         }
-
+        
         variables[idx] = var;
         index_variables.insert(std::pair<const V *, int>(var, idx));
 

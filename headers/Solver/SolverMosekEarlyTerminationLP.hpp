@@ -72,8 +72,6 @@ public:
         if (early_termination)
         {
             set_mosek_solution_statuss(solsta,  MSK_SOL_ITR);
-            //FIXME     
-            // solsta = MSK_SOL_STA_PRIM_AND_DUAL_FEAS;
         }
         else
         {
