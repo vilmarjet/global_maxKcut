@@ -42,7 +42,7 @@ public:
         var_sdp = solver->add_sdp_variable(new SDPVariable<Variable>(dimension, const_sdp_var));
 
         //todo: Impemente populate
-        double lower_bound = 0.0;
+        double lower_bound = -1.0 / (K - 1.0);
         double upper_bound = 1.0;
         double initial_solution = 0.0;
         VariableType type = VariableType::SDP;
@@ -51,12 +51,13 @@ public:
             const Edge *edge = edges->get_edge_by_index(i);
             int vi = edge->get_vertex_i() - 1 ;
             int vj = edge->get_vertex_j() - 1;
+            double cost_var =edge->get_weight() / 2.0; 
 
             const Variable *variable = var_sdp->add_variable(vi, vj,
                                                              new Variable(lower_bound,
                                                                           upper_bound,
                                                                           initial_solution,
-                                                                          edge->get_weight(),
+                                                                          cost_var,
                                                                           type));
             int idx = var_sdp->get_index(variable);
             add_variable(idx, edge, variable);

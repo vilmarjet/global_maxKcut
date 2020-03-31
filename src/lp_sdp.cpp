@@ -6202,6 +6202,7 @@ inline void Set_ObFunction_Mosek_SDP(const T_Instance &instance, MSKrescodee &r,
     vl[j] = instance.cij.barc_v[j] / 2.0; // in SDP we should divide for symmetric matrix
   }
 
+
   if (r == MSK_RES_OK)
     r = MSK_appendsparsesymmat(task,
                                instance.DIM,

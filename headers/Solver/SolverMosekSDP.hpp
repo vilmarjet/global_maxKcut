@@ -92,7 +92,7 @@ public:
     }
     case MSK_SOL_STA_DUAL_INFEAS_CER:
     case MSK_SOL_STA_PRIM_INFEAS_CER:
-      throw Exception("Infeasible problem", ExceptionType::STOP_EXECUTION);
+      throw Exception("Infeasible problem", ExceptionType::DO_NOTHING);
       break;
     case MSK_SOL_STA_UNKNOWN:
     {
@@ -119,15 +119,21 @@ public:
     initialize_sdp_variables_mosek_task(&(Solver::variables_sdp));
     initilize_objective_function();
 
-    r_code = MSK_putobjsense(task, get_mosek_objective_sense(this->objectiveFunction.get_optimization_sense()));
-
     SolverParam param = get_parameter();
+    MSK_putintparam(task, MSK_IPAR_INFEAS_REPORT_AUTO, MSK_ON);
+    //r_code = MSK_putintparam(task, MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
     MSK_putintparam(task, MSK_IPAR_NUM_THREADS, param.get_number_threads()); /*Nber of cpus*/
   }
 
   void add_constraint(const Constraint *constraint, bool is_to_append_new = true)
   {
     this->add_constraint_append_mosek(constraint, is_to_append_new, this->number_constraints, get_variables());
+    ++this->number_constraints;
+  }
+
+  void add_constraint_SDP(const ConstraintSDP *constraint, bool is_to_append_new = true)
+  {
+    this->add_constraint_append_mosek_SDP(constraint, is_to_append_new, this->number_constraints, get_variables());
     ++this->number_constraints;
   }
 
@@ -173,19 +179,19 @@ public:
   }
 
   void run_optimizer()
+  {
+    r_code = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr);
+    /* Run optimizer */
+    if (r_code == MSK_RES_OK)
     {
-        r_code = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr);
-        /* Run optimizer */
-        if (r_code == MSK_RES_OK)
-        {
-            r_code = MSK_optimizetrm(task, NULL);
-        }
-
-        if (r_code != MSK_RES_OK)
-        {
-            throw Exception("r_code not MSK_RES_OK in run_optimizer()", ExceptionType::STOP_EXECUTION);
-        }
+      r_code = MSK_optimizetrm(task, NULL);
     }
+
+    if (r_code != MSK_RES_OK)
+    {
+      throw Exception("r_code not MSK_RES_OK in run_optimizer()", ExceptionType::STOP_EXECUTION);
+    }
+  }
 
   void initilize_objective_function()
   {
@@ -204,7 +210,7 @@ public:
 
     if (r_code == MSK_RES_OK)
     {
-      r_code = MSK_putobjsense(task, MSK_OBJECTIVE_SENSE_MAXIMIZE);
+      r_code = MSK_putobjsense(task, get_mosek_objective_sense(this->objectiveFunction.get_optimization_sense()));
     }
 
     /*For SDP*/
@@ -213,9 +219,8 @@ public:
     size = vars->size();
     for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
     {
-      if (vars->get_variable(i)->get_row_indices()) //check no null 
+      if (vars->get_variable(i)->get_row_indices()) //check no null
       {
-
         r_code = MSK_appendsparsesymmat(task,
                                         vars->get_variable(i)->get_dimension(),
                                         vars->get_variable(i)->get_number_non_null_variables(),
@@ -226,7 +231,6 @@ public:
       }
       if (r_code == MSK_RES_OK)
       {
-        std::cout << "Cst = " <<   vars->get_variable(i)->get_constant_object_function() ;
         double val = vars->get_variable(i)->get_constant_object_function();
         r_code = MSK_putbarcj(task, i, 1, &idx, &val);
       }
@@ -234,7 +238,6 @@ public:
 
     if (r_code != MSK_RES_OK)
     {
-      std::cout << "r_code = " << r_code;
       Exception("r_code != MSK_RES_OK in initilize_Objective_function()", ExceptionType::STOP_EXECUTION).execute();
     }
   }

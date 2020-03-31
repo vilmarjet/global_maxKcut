@@ -78,13 +78,9 @@ public:
     */
     void create_task(const int &nb_variables, const int &nb_constraints)
     {
-        std::cout << nb_variables ;
-        std::cin.get();
         r_code = MSK_maketask(env, (MSKint32t)nb_constraints, (MSKint32t)nb_variables, &task);
         if (r_code != MSK_RES_OK)
         {
-            std::cout << r_code;
-            std::cin.get();
             throw Exception("r_code != MSK_RES_OK in create_task()", ExceptionType::STOP_EXECUTION);
         }
     }
@@ -123,8 +119,8 @@ public:
 
         if (r_code != MSK_RES_OK)
         {
-            throw Exception("r_code = " + std::to_string(r_code) + " != MSK_RES_OK in set_solution_status", 
-            ExceptionType::STOP_EXECUTION);
+            throw Exception("r_code = " + std::to_string(r_code) + " != MSK_RES_OK in set_solution_status",
+                            ExceptionType::STOP_EXECUTION);
         }
     }
 
@@ -182,7 +178,6 @@ public:
             }
 
             MSKint32t *DIMBARVAR = new MSKint32t[size + 1];
-
             for (size_t i = 0; i < size; ++i)
             {
                 DIMBARVAR[i] = vars->get_variable(i)->get_dimension();
@@ -227,6 +222,40 @@ public:
         {
             throw Exception("r_code != MSK_RES_OK in add_constraint_mosek_task()", ExceptionType::STOP_EXECUTION);
         }
+    }
+
+    void add_constraint_append_mosek_SDP(const ConstraintSDP *constraint,
+                                         const bool &is_to_append,
+                                         const int &position,
+                                         const LPVariables *variables)
+    {
+
+        if (is_to_append)
+        {
+            r_code = MSK_appendcons(task, 1);
+        }
+
+        r_code = MSK_putconbound(task,
+                                 position,
+                                 get_mosek_constraint_type(constraint->get_type()),
+                                 constraint->get_lower_bound(),
+                                 constraint->get_upper_bound());
+
+        std::vector<int> indices_variables;
+        if (r_code == MSK_RES_OK)
+        {
+            r_code = MSK_putarow(task,
+                                 position,
+                                 constraint->size(),                                              // Number of non-zeros in row i.
+                                 constraint->get_indices_variables(variables, indices_variables), // Pointer to column indexes of row i.
+                                 constraint->get_coefficients());
+        }
+
+        if (r_code != MSK_RES_OK)
+        {
+            throw Exception("r_code != MSK_RES_OK in add_constraint_mosek_task()", ExceptionType::STOP_EXECUTION);
+        }
+        
     }
 };
 

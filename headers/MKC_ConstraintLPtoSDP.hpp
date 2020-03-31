@@ -1,7 +1,7 @@
 #ifndef VECPROPREINEQ
 #define VECPROPREINEQ
 
-#include "../../myFiles/eigen/Eigen/Dense"
+#include "../../../myFiles/eigen/Eigen/Dense"
 
 #include <vector>
 #include <set>

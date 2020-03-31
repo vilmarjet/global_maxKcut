@@ -10,6 +10,7 @@
 #include <vector>
 #include <set>
 #include "SolverParam.hpp"
+#include "ConstraintSDP.hpp"
 
 class Solver
 {
@@ -30,9 +31,8 @@ public:
 
     //constraints
     virtual void add_constraint(const Constraint *constraint, bool is_to_append_new = true) = 0;
-    virtual void add_constraints(const std::set<Constraint> *constraints) = 0;
-    virtual void add_constraints(const Constraint *constraints, const int &size_consts) = 0;
-    void add_constraint_single_SDP_variable(const int &idx_var, const Constraint *constraints)
+
+    void add_constraint_SDP(const ConstraintSDP *constraint, bool is_to_append_new = true)  
     {
         //nop
     }
@@ -50,14 +50,19 @@ public:
         return this->variables.add_variable(vars);
     }
 
-    SDPVariable<Variable> * add_sdp_variable(SDPVariable<Variable> * var)
+    SDPVariable<Variable>* add_sdp_variable(SDPVariable<Variable> * var)
     {
         return this->variables_sdp.add_variable(var);
     }
 
-    LPVariables *get_variables()
+    LPVariables* get_variables()
     {
         return &this->variables;
+    }
+
+    const SDPVariables* get_sdp_variables() const 
+    {
+        return &this->variables_sdp;
     }
 
     const LPVariables *get_variables() const

@@ -80,10 +80,27 @@ public:
              ++it, ++counter_ineq)
         {
             int idx_sdp_variable = 0;
-            solver->add_constraint_single_SDP_variable(idx_sdp_variable, (*it)->get_constraint());
+            //solver->add_constraint_single_SDP_variable(idx_sdp_variable, (*it)->get_constraint());
         }
 
         std::cout << "Nb constraints after= " << solver->get_nb_constraints();
+    }
+
+
+    void diagonal_constraint()
+    {
+        const SDPVariables* sdp_vars = solver->get_sdp_variables();
+        const SDPVariable<Variable>* sdp_var =  sdp_vars->get_variable(0);//
+
+        int dim = sdp_var->get_dimension();
+
+        for (int i=0; i<dim; ++i)
+        {
+
+
+        }
+        
+
     }
 
     ~MKC_ModelEdgeSDP()
