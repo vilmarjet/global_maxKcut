@@ -108,7 +108,7 @@ public:
         return var_created;
     }
 
-    const V *get_variable(const int &vi, const int &vj)
+    const V *get_variable(const int &vi, const int &vj) const
     {
         int pos_index = calculate_position_variable(vi, vj);
 

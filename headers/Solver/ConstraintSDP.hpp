@@ -10,17 +10,15 @@
 #include "SDPVariable.hpp"
 #include "LPVariables.hpp"
 #include "../MKCGraph.hpp"
+#include "ConstraintCoefficient.hpp"
 #include "ConstraintGeneric.hpp"
 #include <string>
 #include <new>
 
-class ConstraintSDP : public ConstraintGeneric<std::pair<const SDPVariable<Variable> *, const Variable *>>
+class ConstraintSDP : public ConstraintGeneric
 {
-
 private:
-
-    std::map<const SDPVariable<Variable> *, std::vector<const Variable *>> map_sdp_var;
-
+    std::map<const SDPVariable<Variable> *, std::vector<ConstraintCoefficient<Variable>>> map_sdp_var;
 
 public:
     static ConstraintSDP *create()
@@ -39,37 +37,20 @@ public:
                   const double &ub,
                   const ConstraintType &typ) : ConstraintGeneric(lb, ub, typ) {}
 
-
-    void add_coefficient(const SDPVariable<Variable> * sdp_var, const Variable * var, const double &value)
+    void add_coefficient(const SDPVariable<Variable> *sdp_var, const Variable *var, const double &coeff)
     {
-        map_sdp_var[sdp_var].push_back(var);
-
-        add_coefficient(new std::pair<const SDPVariable<Variable> *, const Variable *> (sdp_var, var), value);
+        map_sdp_var[sdp_var].push_back(ConstraintCoefficient<Variable>::create(var, coeff));
     }
 
-/*    bool operator==(const ConstraintSDP &other) const
+    const std::map<const SDPVariable<Variable> *, std::vector<ConstraintCoefficient<Variable>>> &get_variables()
     {
-        if (this->lowerBound == other.lowerBound &&
-            this->upperBound == other.upperBound &&
-            this->size() == other.size())
-        {
-            std::map<std::pair<const SDPVariable<Variable> *, const Variable *>, double>::iterator it;
-            std::map<std::pair<const SDPVariable<Variable> *, const Variable *>, double>::iterator it_other =
-                other.coefficients.begin();
+        return map_sdp_var;
+    }
 
-            for (it = coefficients.begin(); it != coefficients.end(); ++it, ++it_other)
-            {
-                if (it_other->second != it->second || it_other->first != it->first)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        return false;
-    }*/
+    const size_t size()
+    {
+        return map_sdp_var.size();
+    }
 
     ~ConstraintSDP()
     {

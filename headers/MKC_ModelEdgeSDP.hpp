@@ -26,17 +26,16 @@ private:
 
 public:
     MKC_ModelEdgeSDP(MKCInstance *instance_, Solver *solver_) : instance(instance_),
-                                                               solver(solver_)
+                                                                solver(solver_)
     {
         this->initilize();
         inequalities_type.clear();
-        
     }
 
     void solve()
     {
         this->solver->solve();
-        std::cout <<solver->to_string();
+        std::cout << solver->to_string();
     }
 
     void reset_solver()
@@ -86,21 +85,25 @@ public:
         std::cout << "Nb constraints after= " << solver->get_nb_constraints();
     }
 
-
     void diagonal_constraint()
     {
-        const SDPVariables* sdp_vars = solver->get_sdp_variables();
-        const SDPVariable<Variable>* sdp_var =  sdp_vars->get_variable(0);//
+        const SDPVariables *sdp_vars = solver->get_sdp_variables();
+        const SDPVariable<Variable> *sdp_var = sdp_vars->get_variable(0); //
 
         int dim = sdp_var->get_dimension();
+        double lowerBound = 1.0;
+        double upperBound = 1.0;
+        ConstraintType type = ConstraintType::EQUAL;
+        double coeff = 1.0;
 
-        for (int i=0; i<dim; ++i)
+        for (int i = 0; i < dim; ++i)
         {
-
-
+            const Variable *variable = sdp_var->get_variable(i, i);
+            ConstraintSDP* constraint = solver->add_constraint_SDP(lowerBound, upperBound, type);
+            constraint->add_coefficient(sdp_var, variable, coeff);
         }
-        
 
+       // solver->
     }
 
     ~MKC_ModelEdgeSDP()

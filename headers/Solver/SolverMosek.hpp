@@ -229,7 +229,7 @@ public:
                                          const int &position,
                                          const LPVariables *variables)
     {
-
+        /*
         if (is_to_append)
         {
             r_code = MSK_appendcons(task, 1);
@@ -255,7 +255,7 @@ public:
         {
             throw Exception("r_code != MSK_RES_OK in add_constraint_mosek_task()", ExceptionType::STOP_EXECUTION);
         }
-        
+        */
     }
 };
 

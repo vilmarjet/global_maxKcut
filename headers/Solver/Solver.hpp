@@ -11,6 +11,7 @@
 #include <set>
 #include "SolverParam.hpp"
 #include "ConstraintSDP.hpp"
+#include "ConstraintsSDP.hpp"
 
 class Solver
 {
@@ -21,6 +22,8 @@ protected:
     double time_solver;
     int number_constraints;
     SolverParam param;
+    ConstraintsSDP constraints_sdp;
+
 
 public:
     virtual void solve() = 0;
@@ -32,9 +35,11 @@ public:
     //constraints
     virtual void add_constraint(const Constraint *constraint, bool is_to_append_new = true) = 0;
 
-    void add_constraint_SDP(const ConstraintSDP *constraint, bool is_to_append_new = true)  
+    ConstraintSDP* add_constraint_SDP(const double &lb,
+                                 const double &ub,
+                                 const ConstraintType &typ)  
     {
-        //nop
+        return constraints_sdp.add_constraint(lb, ub, typ);
     }
 
     Solver(const SolverParam &solverParm) : objectiveFunction(ObjectiveFunction::create()),

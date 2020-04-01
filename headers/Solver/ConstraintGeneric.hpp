@@ -10,12 +10,12 @@
 #include "SDPVariable.hpp"
 #include "LPVariables.hpp"
 #include "Constraint.hpp"
+#include "ConstraintCoefficient.hpp"
 #include "../MKCGraph.hpp"
 #include <string>
 #include <new>
 
 
-template <typename T>
 class ConstraintGeneric
 {
 
@@ -25,8 +25,6 @@ protected:
     const double upperBound;
     const ConstraintType type;
 
-    std::map<const T, double> coefficients;
-
 public:
 
     ConstraintGeneric(const double &lb,
@@ -35,19 +33,9 @@ public:
                                                upperBound(ub),
                                                type(typ){}
 
-    void add_coefficient(const T* variable, const double &value)
-    {
-       coefficients[variable] += value ;
-    }
-
     double get_lower_bound() const
     {
         return this->lowerBound;
-    }
-
-    size_t size() const
-    {
-        return this->coefficients.size();
     }
 
     double get_upper_bound() const
@@ -58,11 +46,6 @@ public:
     ConstraintType get_type() const
     {
         return this->type;
-    }
-
-    const std::map<const T, double>* get_coefficients() const
-    {
-        return &coefficients;
     }
 
     ~ConstraintGeneric()
