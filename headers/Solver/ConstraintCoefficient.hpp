@@ -43,7 +43,10 @@ public:
                this->value == other.value;
     }
 
-    ~ConstraintCoefficient();
+    ~ConstraintCoefficient()
+    {
+        
+    }
 };
 
 #endif

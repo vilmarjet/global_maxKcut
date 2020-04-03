@@ -227,9 +227,13 @@ public:
     void add_constraint_append_mosek_SDP(const ConstraintSDP *constraint,
                                          const bool &is_to_append,
                                          const int &position,
-                                         const LPVariables *variables)
+                                         const SDPVariables *variablesSDP)
     {
-        /*
+
+        std::cout << "Inside add_constraint_append_mosek_SDP " ;
+        std::cin.get();
+        
+        double falpha = 1.0; //weight of A will always be 1.0
         if (is_to_append)
         {
             r_code = MSK_appendcons(task, 1);
@@ -241,21 +245,45 @@ public:
                                  constraint->get_lower_bound(),
                                  constraint->get_upper_bound());
 
-        std::vector<int> indices_variables;
-        if (r_code == MSK_RES_OK)
+        int nb_sdp_variables = constraint->number_sdp_variables();
+
+        for (int i = 0; i < nb_sdp_variables && r_code == MSK_RES_OK; ++i)
         {
-            r_code = MSK_putarow(task,
-                                 position,
-                                 constraint->size(),                                              // Number of non-zeros in row i.
-                                 constraint->get_indices_variables(variables, indices_variables), // Pointer to column indexes of row i.
-                                 constraint->get_coefficients());
+            const SDPVariable<Variable> *sdp_var = constraint->get_sdp_variable_by_index(i);
+            std::vector<ConstraintCoefficient<Variable>> variables = constraint->get_coefficeints_of_variable(sdp_var);
+
+            int non_null_variables = variables.size();
+            std::vector<int> col_idx(non_null_variables);
+            std::vector<int> row_idx(non_null_variables);
+            std::vector<double> coeff(non_null_variables);
+
+            for (int j = 0; j < non_null_variables; ++j)
+            {
+                const Variable *var = variables[j].get_variable();
+                col_idx[j] = sdp_var->get_col_index(var);
+                row_idx[j] = sdp_var->get_row_index(var);
+                coeff[j] = variables[j].get_value();
+            }
+
+            MSKint64t idx;
+            r_code = MSK_appendsparsesymmat(task,
+                                            sdp_var->get_dimension(),
+                                            non_null_variables,
+                                            &col_idx[0],
+                                            &row_idx[0],
+                                            &coeff[0],
+                                            &idx);
+
+            if (r_code == MSK_RES_OK)
+            {
+                r_code = MSK_putbaraij(task, position, variablesSDP->get_index(sdp_var), 1, &idx, &falpha);
+            }
         }
 
         if (r_code != MSK_RES_OK)
         {
             throw Exception("r_code != MSK_RES_OK in add_constraint_mosek_task()", ExceptionType::STOP_EXECUTION);
         }
-        */
     }
 };
 

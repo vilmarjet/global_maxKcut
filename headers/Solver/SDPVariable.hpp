@@ -9,6 +9,7 @@
 #include "../Utils/Exception.hpp"
 #include "Variable.hpp"
 #include "Variables.hpp"
+#include "../Utils/Exception.hpp"
 
 template <typename V>
 class SDPVariable : public Variables<V>
@@ -138,6 +139,38 @@ public:
     const double &get_constant_object_function() const
     {
         return this->constant_object_function;
+    }
+
+    int get_col_index(const V *var) const
+    {
+        int idx = get_row_col_of_variables(var).second;
+        return idx;
+    }
+
+    int get_row_index(const V *var) const
+    {
+        int idx = get_row_col_of_variables(var).first;
+        return idx;
+    }
+
+    const std::pair<int, int> &get_row_col_of_variables(const V *var) const
+    {
+        typename std::map<const V *, std::pair<int, int>>::const_iterator it;
+
+        it = variables_by_row_col.find(var);
+
+        if (it == variables_by_row_col.end())
+        {
+            Exception("Object does not exist in SDPVariable::get_row_col_of_variables",
+                            ExceptionType::STOP_EXECUTION). execute();
+        }
+
+        return it->second;
+    }
+
+    std::string to_string() const
+    {
+        return "SDP Variable";
     }
 
     ~SDPVariable() {}

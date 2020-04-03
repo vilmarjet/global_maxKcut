@@ -12,7 +12,6 @@ class SolverMosekLp : public Solver, SolverMosek
 {
 private:
 public:
-
   SolverMosekLp(const SolverParam &solverParm) : Solver(solverParm) {}
   ~SolverMosekLp()
   {
@@ -153,6 +152,11 @@ public:
     {
       add_constraint(&(*it), false);
     }
+  }
+
+  void execute_constraints()
+  {
+    //nop
   }
 
   void reset_solver()

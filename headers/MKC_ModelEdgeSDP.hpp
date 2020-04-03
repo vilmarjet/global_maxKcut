@@ -47,6 +47,7 @@ public:
     {
         variablesEdgeSDP = VariablesEdgeSDP::create(solver, instance);
         this->set_objective_function();
+        diagonal_constraint();
     }
     void set_objective_function()
     {
@@ -103,7 +104,7 @@ public:
             constraint->add_coefficient(sdp_var, variable, coeff);
         }
 
-       // solver->
+       solver->execute_constraints();
     }
 
     ~MKC_ModelEdgeSDP()

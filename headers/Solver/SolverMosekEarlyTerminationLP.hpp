@@ -226,6 +226,11 @@ public:
         ++this->number_constraints;
     }
 
+    void execute_constraints()
+    {
+        //nop 
+    }
+
     void add_constraints(const Constraint *constraints, const int &size)
     {
         r_code = MSK_appendcons(task, (MSKint32t)size);

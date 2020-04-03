@@ -78,7 +78,7 @@ public:
         return s;
     }
 
-    int size() const
+    size_t size() const
     {
         return this->variables.size();
     }

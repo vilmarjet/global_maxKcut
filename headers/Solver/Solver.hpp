@@ -34,7 +34,8 @@ public:
 
     //constraints
     virtual void add_constraint(const Constraint *constraint, bool is_to_append_new = true) = 0;
-
+    virtual void execute_constraints() = 0;
+    
     ConstraintSDP* add_constraint_SDP(const double &lb,
                                  const double &ub,
                                  const ConstraintType &typ)  
@@ -59,6 +60,8 @@ public:
     {
         return this->variables_sdp.add_variable(var);
     }
+
+    
 
     LPVariables* get_variables()
     {

@@ -12,7 +12,10 @@ class SolverMosekSDP : public Solver, SolverMosek
 {
 private:
 public:
-  SolverMosekSDP(const SolverParam &solverParm) : Solver(solverParm) {}
+  SolverMosekSDP(const SolverParam &solverParm) : Solver(solverParm) 
+  {
+     initialize();
+  }
   ~SolverMosekSDP()
   {
   }
@@ -133,7 +136,10 @@ public:
 
   void add_constraint_SDP(const ConstraintSDP *constraint, bool is_to_append_new = true)
   {
-    this->add_constraint_append_mosek_SDP(constraint, is_to_append_new, this->number_constraints, get_variables());
+    this->add_constraint_append_mosek_SDP(constraint,
+                                          is_to_append_new,
+                                          this->number_constraints,
+                                          &(Solver::variables_sdp));
     ++this->number_constraints;
   }
 
@@ -159,10 +165,30 @@ public:
     }
   }
 
-  void add_constraint_single_SDP_variable(const int &idx_var_sdp, const Constraint *constraints)
+  void execute_constraints()
   {
-  }
+    size_t size = Solver::constraints_sdp.size();
 
+    std::cout << "size of sdp constraints = " << size;
+    std::cin.get();
+
+    if (r_code == MSK_RES_OK)
+    {
+      r_code = MSK_appendcons(task, (MSKint32t)size);
+    }
+
+    for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
+    {
+      const ConstraintSDP *constraint = Solver::constraints_sdp.get_constraint(i);
+      add_constraint_SDP(constraint, false);
+    }
+
+    if (r_code != MSK_RES_OK)
+    {
+      Exception("r_code != MSK_RES_OK in execute_constraints()", ExceptionType::STOP_EXECUTION).execute();
+    }
+    //nop
+  }
   void reset_solver()
   {
     this->task = NULL;
