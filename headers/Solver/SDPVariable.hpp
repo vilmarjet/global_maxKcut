@@ -78,13 +78,15 @@ public:
                                                      constant_object_function(cost)
     {
         int number_variables = get_number_variables_for_lower_matrix(dim);
-        this->variables.resize(number_variables, new Variable());
+        this->variables.resize(number_variables);
 
         for (int row = 0; row < this->dimension; ++row)
         {
             for (int col = row; col < this->dimension; ++col)
             {
-                const V *var = get_variable(row, col);
+                int pos = calculate_position_variable(row, col);
+                this->variables[pos] = new Variable ();
+                const V *var = this->variables[pos];
                 variables_by_row_col
                     .insert(std::pair<const V *, std::pair<int, int>>(var, std::pair<int, int>(row, col)));
             }

@@ -34,6 +34,7 @@ public:
 
     void solve()
     {
+        diagonal_constraint();
         this->solver->solve();
         std::cout << solver->to_string();
     }
@@ -47,7 +48,6 @@ public:
     {
         variablesEdgeSDP = VariablesEdgeSDP::create(solver, instance);
         this->set_objective_function();
-        diagonal_constraint();
     }
     void set_objective_function()
     {
@@ -99,9 +99,9 @@ public:
 
         for (int i = 0; i < dim; ++i)
         {
-            const Variable *variable = sdp_var->get_variable(i, i);
+            const Variable *variable = sdp_var->get_variable(5, 5);
             ConstraintSDP* constraint = solver->add_constraint_SDP(lowerBound, upperBound, type);
-            constraint->add_coefficient(sdp_var, variable, coeff);
+            constraint->add_coefficient(sdp_var, variable, 0.5);
         }
 
        solver->execute_constraints();

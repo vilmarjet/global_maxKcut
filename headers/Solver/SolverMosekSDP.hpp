@@ -12,9 +12,10 @@ class SolverMosekSDP : public Solver, SolverMosek
 {
 private:
 public:
-  SolverMosekSDP(const SolverParam &solverParm) : Solver(solverParm) 
+  SolverMosekSDP(const SolverParam &solverParm) : Solver(solverParm)
   {
-     initialize();
+    create_environnement();
+    initialize();
   }
   ~SolverMosekSDP()
   {
@@ -26,6 +27,8 @@ public:
     {
       if (this->task == NULL)
       {
+        std::cout << "My god... chegou aqui ? ";
+        std::cin.get();
         initialize();
       }
 
@@ -174,13 +177,13 @@ public:
 
     if (r_code == MSK_RES_OK)
     {
-      r_code = MSK_appendcons(task, (MSKint32t)size);
+     // r_code = MSK_appendcons(task, (MSKint32t)size);
     }
 
     for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
     {
       const ConstraintSDP *constraint = Solver::constraints_sdp.get_constraint(i);
-      add_constraint_SDP(constraint, false);
+      add_constraint_SDP(constraint, true);
     }
 
     if (r_code != MSK_RES_OK)

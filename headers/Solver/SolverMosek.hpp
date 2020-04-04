@@ -253,6 +253,7 @@ public:
             std::vector<ConstraintCoefficient<Variable>> variables = constraint->get_coefficeints_of_variable(sdp_var);
 
             int non_null_variables = variables.size();
+            std::cout << "non_null_variables = " << non_null_variables;
             std::vector<int> col_idx(non_null_variables);
             std::vector<int> row_idx(non_null_variables);
             std::vector<double> coeff(non_null_variables);
@@ -263,9 +264,13 @@ public:
                 col_idx[j] = sdp_var->get_col_index(var);
                 row_idx[j] = sdp_var->get_row_index(var);
                 coeff[j] = variables[j].get_value();
+
+                std::cout << "col =" << sdp_var->get_col_index(var);
+                std::cout << "row =" << sdp_var->get_row_index(var);
+                std::cout << "val =" << variables[j].get_value();
             }
 
-            MSKint64t idx;
+            MSKint64t idx = 100;
             r_code = MSK_appendsparsesymmat(task,
                                             sdp_var->get_dimension(),
                                             non_null_variables,
@@ -276,13 +281,24 @@ public:
 
             if (r_code == MSK_RES_OK)
             {
-                r_code = MSK_putbaraij(task, position, variablesSDP->get_index(sdp_var), 1, &idx, &falpha);
+                std::cout << "task = " << task;
+                std::cout << "\n idx = " << idx;
+                std::cout << "n position = " << position;
+                std::cin.get();
+                r_code = MSK_putbaraij(task, position+1,0 /* variablesSDP->get_index(sdp_var)*/, 1, &idx, &falpha);
+                
+            }
+            else{
+                std::cout << "erro before putbaraij" ;
+                std::cin.get();
             }
         }
 
         if (r_code != MSK_RES_OK)
         {
-            throw Exception("r_code != MSK_RES_OK in add_constraint_mosek_task()", ExceptionType::STOP_EXECUTION);
+            std::cout << "r_code = " << r_code;
+            Exception("r_code != MSK_RES_OK in add_constraint_mosek_task()", ExceptionType::STOP_EXECUTION)
+            .execute();
         }
     }
 };

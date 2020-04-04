@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
 
 
   Solver *solverSDP = SolverFactory::create_solver(TypeSolver::SDP_MOSEK, solverParm);
-   solverSDP->create_environnement();
+  // solverSDP->create_environnement();
   MKC_ModelEdgeSDP modelSDP = MKC_ModelEdgeSDP(new_instance, solverSDP);
 
 
