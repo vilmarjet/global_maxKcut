@@ -85,7 +85,7 @@ public:
             for (int col = row; col < this->dimension; ++col)
             {
                 int pos = calculate_position_variable(row, col);
-                this->variables[pos] = new Variable ();
+                this->variables[pos] = Variable::create();
                 const V *var = this->variables[pos];
                 variables_by_row_col
                     .insert(std::pair<const V *, std::pair<int, int>>(var, std::pair<int, int>(row, col)));

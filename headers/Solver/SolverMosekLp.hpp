@@ -128,7 +128,7 @@ public:
 
   void add_constraint(const Constraint *constraint, bool is_to_append_new = true)
   {
-    this->add_constraint_append_mosek(constraint, is_to_append_new, this->number_constraints, get_variables());
+    this->add_constraint_append_mosek(constraint, is_to_append_new, this->number_constraints, get_lp_variables());
     ++this->number_constraints;
   }
 
@@ -181,7 +181,7 @@ public:
       r_code = MSK_putcfix(task, this->objectiveFunction.get_constant_term());
     }
 
-    int size = get_variables()->size();
+    int size = get_lp_variables()->size();
 
     for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
     {

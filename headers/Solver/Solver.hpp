@@ -24,7 +24,6 @@ protected:
     SolverParam param;
     ConstraintsSDP constraints_sdp;
 
-
 public:
     virtual void solve() = 0;
     virtual void create_environnement() = 0;
@@ -35,40 +34,36 @@ public:
     //constraints
     virtual void add_constraint(const Constraint *constraint, bool is_to_append_new = true) = 0;
     virtual void execute_constraints() = 0;
-    
-    ConstraintSDP* add_constraint_SDP(const double &lb,
-                                 const double &ub,
-                                 const ConstraintType &typ)  
+
+    ConstraintSDP *add_constraint_SDP(const double &lb, const double &ub, const ConstraintType &typ)
     {
         return constraints_sdp.add_constraint(lb, ub, typ);
     }
 
     Solver(const SolverParam &solverParm) : objectiveFunction(ObjectiveFunction::create()),
-                                           param(solverParm),
-                                           number_constraints(0),
-                                           time_solver(0.0)
+                                            param(solverParm),
+                                            number_constraints(0),
+                                            time_solver(0.0)
     {
     }
 
     //add variables and return idx of variable;
-    const Variable* add_variable(Variable *vars)
+    const Variable *add_lp_variable(Variable *vars)
     {
         return this->variables.add_variable(vars);
     }
 
-    SDPVariable<Variable>* add_sdp_variable(SDPVariable<Variable> * var)
+    SDPVariable<Variable> *add_sdp_variable(SDPVariable<Variable> *var)
     {
         return this->variables_sdp.add_variable(var);
     }
 
-    
-
-    LPVariables* get_variables()
+    const LPVariables *get_lp_variables()
     {
         return &this->variables;
     }
 
-    const SDPVariables* get_sdp_variables() const 
+    const SDPVariables *get_sdp_variables() const
     {
         return &this->variables_sdp;
     }

@@ -4,21 +4,21 @@
 #include "Variable.hpp"
 
 template <typename V>
-class ConstraintCoefficient
+class CoefficientConstraint
 {
 private:
     const V *variable;
     double value;
 
-    ConstraintCoefficient(const V *var, const double &val) : variable(var),
+    CoefficientConstraint(const V *var, const double &val) : variable(var),
                                                              value(val)
     {
     }
-public:
 
-    static ConstraintCoefficient create (const V *var, const double &val)
+public:
+    static CoefficientConstraint *create(const V *var, const double &val)
     {
-        return ConstraintCoefficient(var, val);
+        return new CoefficientConstraint(var, val);
     }
 
 public:
@@ -37,15 +37,20 @@ public:
         this->value = new_value;
     }
 
-    bool operator==(const ConstraintCoefficient &other) const
+    bool operator==(const CoefficientConstraint &other) const
     {
         return this->variable == other.variable &&
                this->value == other.value;
     }
 
-    ~ConstraintCoefficient()
+
+    bool operator !=(const CoefficientConstraint &other) const
     {
-        
+        return !(*(this) == other);
+    }
+
+    ~CoefficientConstraint()
+    {
     }
 };
 

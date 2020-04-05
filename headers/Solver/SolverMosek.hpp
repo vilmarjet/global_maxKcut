@@ -249,7 +249,7 @@ public:
         for (int i = 0; i < nb_sdp_variables && r_code == MSK_RES_OK; ++i)
         {
             const SDPVariable<Variable> *sdp_var = constraint->get_sdp_variable_by_index(i);
-            std::vector<ConstraintCoefficient<Variable>> variables = constraint->get_coefficeints_of_variable(sdp_var);
+            std::vector<CoefficientConstraint<Variable>*> variables = constraint->get_coefficeints_of_variable(sdp_var);
 
             int non_null_variables = variables.size();
             std::vector<int> col_idx(non_null_variables);
@@ -258,10 +258,10 @@ public:
 
             for (int j = 0; j < non_null_variables; ++j)
             {
-                const Variable *var = variables[j].get_variable();
+                const Variable *var = variables[j]->get_variable();
                 col_idx[j] = sdp_var->get_col_index(var);
                 row_idx[j] = sdp_var->get_row_index(var);
-                coeff[j] = variables[j].get_value();
+                coeff[j] = variables[j]->get_value();
             }
 
             MSKint64t idx = 100;

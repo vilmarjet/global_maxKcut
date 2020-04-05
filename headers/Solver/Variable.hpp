@@ -13,15 +13,14 @@ enum VariableType
 class Variable
 {
 private:
-    double lowerBound;
-    double upperBound;
-    double cost;
-    VariableType type = VariableType::CONTINOUS;
-    double solution = 0.0;
-    std::string code;
+    const double lowerBound;
+    const double upperBound;
+    const double cost;
+    const VariableType type = VariableType::CONTINOUS;
+    const std::string code;
 
-public:
-    Variable() : lowerBound(0.0), upperBound(0.0), cost(0.0), solution(0.0){};
+    double solution = 0.0;
+
     Variable(const double &lb,
              const double &ub,
              const double &sol = 0.0,
@@ -33,21 +32,31 @@ public:
                                               type(typ),
                                               code(name),
                                               solution(sol) {}
-    Variable(const Variable &variable) : lowerBound(variable.lowerBound),
-                                         upperBound(variable.upperBound),
-                                         cost(variable.cost),
-                                         type(variable.type),
-                                         code(variable.code),
-                                         solution(variable.solution) {}
+
+public:
+    static Variable *create()
+    {
+        return create(0.0, 0.0, 0.0, 0.0, VariableType::CONTINOUS, "X_null_");
+    }
+
+    static Variable *create(const double &lb,
+                            const double &ub,
+                            const double &sol = 0.0,
+                            const double &cst = 0.0,
+                            const VariableType typ = VariableType::CONTINOUS,
+                            const std::string &name = "x")
+    {
+        return new Variable(lb, ub, sol, cst, typ, name);
+    }
 
     static Variable *of(const Variable &variable)
     {
-        return new Variable(variable.lowerBound,
-                            variable.upperBound,
-                            variable.solution,
-                            variable.cost,
-                            variable.type,
-                            variable.code);
+        return create(variable.lowerBound,
+                      variable.upperBound,
+                      variable.solution,
+                      variable.cost,
+                      variable.type,
+                      variable.code);
     }
 
     double get_lower_bound() const

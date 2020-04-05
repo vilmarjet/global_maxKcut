@@ -8,15 +8,51 @@
 #include <new>
 #include "../Solver/Variable.hpp"
 #include "../Solver/Constraint.hpp"
+#include "../Solver/ConstraintLinear.hpp"
 
 class ViolatedConstraint
 {
 private:
     const double violation; //use for cutting plane algorithm
     const Constraint *constraint;
+    ConstraintLinear *constraintLinear;
 
 public:
-    ViolatedConstraint() : violation(0.0) {}
+    static ViolatedConstraint *create(const double &lb,
+                                      const double &ub,
+                                      const ConstraintType &typ,
+                                      const double &vio)
+    {
+        return create(lb, ub, typ, vio, 0, nullptr, nullptr);
+    }
+
+    static ViolatedConstraint *create(const double &lb,
+                                      const double &ub,
+                                      const ConstraintType &typ,
+                                      const double &vio,
+                                      const int &size,
+                                      const Variable **vars,
+                                      const double *coef)
+    {
+        return new ViolatedConstraint(lb, ub, typ, vio, size, vars, coef);
+    }
+
+    ViolatedConstraint(const double &lb,
+                       const double &ub,
+                       const ConstraintType &typ,
+                       const double &vio,
+                       const int &size,
+                       const Variable **vars,
+                       const double *coef) : constraint(new Constraint()),
+                                             constraintLinear(ConstraintLinear::create(lb, ub, typ)),
+                                             violation(vio)
+    {
+        this->add_coefficients(vars, coef, size);
+    }
+
+    ViolatedConstraint() : violation(0.0)
+    {
+    }
 
     ViolatedConstraint(const std::vector<const Variable *> &vars,
                        const std::vector<double> &coef,
@@ -42,6 +78,16 @@ public:
     const Constraint *get_constraint() const
     {
         return this->constraint;
+    }
+
+    void add_coefficient(const Variable *var, const double &coeff)
+    {
+        constraintLinear->add_coefficient(var, coeff);
+    }
+
+    void add_coefficients(const Variable *const *vars, const double *coeffs, const int size)
+    {
+        constraintLinear->add_coefficients(vars, coeffs, size);
     }
 
     double get_violation() const

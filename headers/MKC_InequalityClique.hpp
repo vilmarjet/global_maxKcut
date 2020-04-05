@@ -30,7 +30,7 @@ public:
 
   ~MKC_InequalityClique() {}
 
-  void find_violated_constraints(const VariablesEdge* variables,
+  void find_violated_constraints(const VariablesEdge *variables,
                                  const MKCInstance *instance,
                                  std::set<ViolatedConstraint *, CompViolatedConstraint> *violated_constraints)
   {
@@ -73,6 +73,14 @@ private:
           {
             double violation = this->rhs - val;
             this->set_edges_in_clique(vertices_in_clique, &variables_in_clique, edges, variables);
+
+            violated_constraints->insert(ViolatedConstraint::create(this->rhs,
+                                                                    variables_in_clique.size(), 
+                                                                    ConstraintType::SUPERIOR_EQUAL, 
+                                                                    violation, 
+                                                                    variables_in_clique.size(),
+                                                                    &variables_in_clique[0],
+                                                                    &coeeficient[0]));
 
             violated_constraints->insert(new ViolatedConstraint(variables_in_clique,
                                                                 coeeficient,

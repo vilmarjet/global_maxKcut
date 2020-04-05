@@ -21,6 +21,7 @@ public:
     ConstraintsSDP(/* args */){}
     ~ConstraintsSDP()
     {
+        
     }
 
     ConstraintSDP * add_constraint(const double &lb,const double &ub,const ConstraintType &typ)

@@ -33,7 +33,7 @@ protected:
 public:
     ~VariablesEdge() {}
 
-    VariablesEdge * populate()
+    VariablesEdge *populate()
     {
         double lower_bound = 0.0;
         double upper_bound = 1.0;
@@ -43,13 +43,12 @@ public:
         {
             const Edge *edge = edges->get_edge_by_index(i);
 
-            const Variable *variable = solver->add_variable(new Variable(lower_bound,
-                                                                         upper_bound,
-                                                                         initial_solution,
-                                                                         edge->get_weight(),
-                                                                         type));
-            int idx = solver->get_variables()->get_index(variable);
-            add_variable(idx, edge, variable);
+            const Variable *variable = solver->add_lp_variable(Variable::create(lower_bound,
+                                                                                upper_bound,
+                                                                                initial_solution,
+                                                                                edge->get_weight(),
+                                                                                type));
+            this->add_variable(edge, variable);
         }
 
         return this;

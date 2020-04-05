@@ -49,24 +49,23 @@ public:
         for (int i = 0; i < edges->get_number_edges(); ++i)
         {
             const Edge *edge = edges->get_edge_by_index(i);
-            int vi = edge->get_vertex_i() - 1 ;
+            int vi = edge->get_vertex_i() - 1;
             int vj = edge->get_vertex_j() - 1;
-            double cost_var =edge->get_weight() / 2.0; 
+            double cost_var = edge->get_weight() / 2.0;
 
             const Variable *variable = var_sdp->add_variable(vi, vj,
-                                                             new Variable(lower_bound,
-                                                                          upper_bound,
-                                                                          initial_solution,
-                                                                          cost_var,
-                                                                          type));
-            int idx = var_sdp->get_index(variable);
-            add_variable(idx, edge, variable);
+                                                             Variable::create(lower_bound,
+                                                                              upper_bound,
+                                                                              initial_solution,
+                                                                              cost_var,
+                                                                              type));
+            add_variable(edge, variable);
         }
 
         return this;
     }
 
-    const SDPVariable<Variable>* get_variable_sdp()
+    const SDPVariable<Variable> *get_variable_sdp()
     {
         return var_sdp;
     }
