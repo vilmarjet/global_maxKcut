@@ -255,10 +255,7 @@ int main(int argc, char *argv[])
 
 
   Solver *solverSDP = SolverFactory::create_solver(TypeSolver::SDP_MOSEK, solverParm);
-  // solverSDP->create_environnement();
   MKC_ModelEdgeSDP modelSDP = MKC_ModelEdgeSDP(new_instance, solverSDP);
-
-
   modelSDP.solve();
 
   model.add_type_inequality(new MKC_InequalityTriangle());

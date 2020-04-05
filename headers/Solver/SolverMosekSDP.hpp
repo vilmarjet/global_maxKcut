@@ -11,11 +11,11 @@
 class SolverMosekSDP : public Solver, SolverMosek
 {
 private:
+
 public:
   SolverMosekSDP(const SolverParam &solverParm) : Solver(solverParm)
   {
     create_environnement();
-    initialize();
   }
   ~SolverMosekSDP()
   {
@@ -27,9 +27,7 @@ public:
     {
       if (this->task == NULL)
       {
-        std::cout << "My god... chegou aqui ? ";
-        std::cin.get();
-        initialize();
+        throw Exception("Null task in solve",  ExceptionType::STOP_EXECUTION);
       }
 
       run_optimizer();
@@ -98,7 +96,7 @@ public:
     }
     case MSK_SOL_STA_DUAL_INFEAS_CER:
     case MSK_SOL_STA_PRIM_INFEAS_CER:
-      throw Exception("Infeasible problem", ExceptionType::DO_NOTHING);
+      throw Exception("Infeasible problem", ExceptionType::STOP_EXECUTION);
       break;
     case MSK_SOL_STA_UNKNOWN:
     {
@@ -118,16 +116,12 @@ public:
 
   void initialize()
   {
-    std::cout << "Begin of initilize";
-
-    create_task(Solver::variables.size(), this->number_constraints);
     initialize_variables_mosek_task(Solver::variables);
     initialize_sdp_variables_mosek_task(&(Solver::variables_sdp));
     initilize_objective_function();
 
     SolverParam param = get_parameter();
     MSK_putintparam(task, MSK_IPAR_INFEAS_REPORT_AUTO, MSK_ON);
-    //r_code = MSK_putintparam(task, MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
     MSK_putintparam(task, MSK_IPAR_NUM_THREADS, param.get_number_threads()); /*Nber of cpus*/
   }
 
@@ -170,25 +164,23 @@ public:
 
   void execute_constraints()
   {
-    size_t size = Solver::constraints_sdp.size();
-
-    std::cout << "size of sdp constraints = " << size;
-    std::cin.get();
+    int size = Solver::constraints_sdp.size();
 
     if (r_code == MSK_RES_OK)
     {
-     // r_code = MSK_appendcons(task, (MSKint32t)size);
+      r_code = MSK_appendcons(task, (MSKint32t)size);
     }
 
     for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
     {
       const ConstraintSDP *constraint = Solver::constraints_sdp.get_constraint(i);
-      add_constraint_SDP(constraint, true);
+      add_constraint_SDP(constraint, false);
     }
 
     if (r_code != MSK_RES_OK)
     {
-      Exception("r_code != MSK_RES_OK in execute_constraints()", ExceptionType::STOP_EXECUTION).execute();
+      std::string msg = "r_code = " + std::to_string(r_code) +"!= MSK_RES_OK in execute_constraints()";
+      Exception(msg, ExceptionType::STOP_EXECUTION).execute();
     }
     //nop
   }
@@ -205,6 +197,7 @@ public:
   void create_environnement()
   {
     r_code = MSK_makeenv(&env, NULL);
+    create_task(0, 0);
   }
 
   void run_optimizer()

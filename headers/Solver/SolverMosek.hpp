@@ -169,9 +169,11 @@ public:
 
     void initialize_sdp_variables_mosek_task(const SDPVariables *vars)
     {
+        
         if (r_code == MSK_RES_OK)
         {
             size_t size = vars->size();
+            
             if (size == 0)
             {
                 return;
@@ -182,6 +184,7 @@ public:
             {
                 DIMBARVAR[i] = vars->get_variable(i)->get_dimension();
             }
+
             r_code = MSK_appendbarvars(task, size, DIMBARVAR);
 
             if (r_code != MSK_RES_OK)
@@ -228,11 +231,7 @@ public:
                                          const bool &is_to_append,
                                          const int &position,
                                          const SDPVariables *variablesSDP)
-    {
-
-        std::cout << "Inside add_constraint_append_mosek_SDP " ;
-        std::cin.get();
-        
+    {      
         double falpha = 1.0; //weight of A will always be 1.0
         if (is_to_append)
         {
@@ -253,7 +252,6 @@ public:
             std::vector<ConstraintCoefficient<Variable>> variables = constraint->get_coefficeints_of_variable(sdp_var);
 
             int non_null_variables = variables.size();
-            std::cout << "non_null_variables = " << non_null_variables;
             std::vector<int> col_idx(non_null_variables);
             std::vector<int> row_idx(non_null_variables);
             std::vector<double> coeff(non_null_variables);
@@ -264,10 +262,6 @@ public:
                 col_idx[j] = sdp_var->get_col_index(var);
                 row_idx[j] = sdp_var->get_row_index(var);
                 coeff[j] = variables[j].get_value();
-
-                std::cout << "col =" << sdp_var->get_col_index(var);
-                std::cout << "row =" << sdp_var->get_row_index(var);
-                std::cout << "val =" << variables[j].get_value();
             }
 
             MSKint64t idx = 100;
@@ -281,22 +275,12 @@ public:
 
             if (r_code == MSK_RES_OK)
             {
-                std::cout << "task = " << task;
-                std::cout << "\n idx = " << idx;
-                std::cout << "n position = " << position;
-                std::cin.get();
-                r_code = MSK_putbaraij(task, position+1,0 /* variablesSDP->get_index(sdp_var)*/, 1, &idx, &falpha);
-                
-            }
-            else{
-                std::cout << "erro before putbaraij" ;
-                std::cin.get();
+                r_code = MSK_putbaraij(task, position,variablesSDP->get_index(sdp_var), 1, &idx, &falpha);  
             }
         }
 
         if (r_code != MSK_RES_OK)
         {
-            std::cout << "r_code = " << r_code;
             Exception("r_code != MSK_RES_OK in add_constraint_mosek_task()", ExceptionType::STOP_EXECUTION)
             .execute();
         }

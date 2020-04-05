@@ -48,6 +48,7 @@ public:
     {
         variablesEdgeSDP = VariablesEdgeSDP::create(solver, instance);
         this->set_objective_function();
+        solver->initialize();
     }
     void set_objective_function()
     {
@@ -99,9 +100,9 @@ public:
 
         for (int i = 0; i < dim; ++i)
         {
-            const Variable *variable = sdp_var->get_variable(5, 5);
+            const Variable *variable = sdp_var->get_variable(i, i);
             ConstraintSDP* constraint = solver->add_constraint_SDP(lowerBound, upperBound, type);
-            constraint->add_coefficient(sdp_var, variable, 0.5);
+            constraint->add_coefficient(sdp_var, variable, coeff);
         }
 
        solver->execute_constraints();
