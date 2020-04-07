@@ -2,7 +2,6 @@
 #define MKC_INSTANCE_HPP
 
 #include "MKCGraph.hpp"
-#include "./Solver/Solver.hpp"
 
 namespace maxkcut
 {

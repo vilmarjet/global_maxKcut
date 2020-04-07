@@ -4,8 +4,6 @@
 #include <cstddef>
 #include "MKCGraphBuilder.hpp"
 #include "MKCInstance.hpp"
-#include "./Solver/Solver.hpp"
-#include "./Solver/SolverFactory.hpp"
 #include <iostream>
 
 namespace maxkcut

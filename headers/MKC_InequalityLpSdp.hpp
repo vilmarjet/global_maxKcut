@@ -10,7 +10,7 @@
 #include "./MKCGraph.hpp"
 #include "./Heuristics/Tabu.hpp"
 #include <cmath> // std::abs
-#include "./Solver/LP_SDPConstraint.hpp"
+#include "./Solver/Constraint/EigenValue/LP_SDPConstraint.hpp"
 
 namespace maxkcut
 {
@@ -22,7 +22,7 @@ public:
 
     void find_violated_constraints(const VariablesEdge *variables,
                                    const MKCInstance *instance,
-                                   std::set<ViolatedConstraint *, CompViolatedConstraint> *violated_constraints)
+                                   LinearViolatedConstraints *violated_constraints)
     {
         LP_SDPConstraint lp_sdp_constraint;
         const MKCGraph *graph = instance->get_graph();

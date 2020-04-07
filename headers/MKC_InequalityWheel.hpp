@@ -55,7 +55,7 @@ public:
 
     void find_violated_constraints(const VariablesEdge *variables,
                                    const MKCInstance *instance,
-                                   std::set<ViolatedConstraint *, CompViolatedConstraint> *violated_constraints)
+                                   LinearViolatedConstraints *violated_constraints)
     {
         try
         {
@@ -83,7 +83,7 @@ public:
 
     void GRASP_heurisistic(const VariablesEdge *variables,
                            const Edges *edges,
-                           std::set<ViolatedConstraint *, CompViolatedConstraint> *violated_constraints)
+                           LinearViolatedConstraints *violated_constraints)
     {
 
         tabu.clean(-1);
@@ -118,12 +118,14 @@ public:
                         {
                             this->add_vertex_in_tabu_list(edges, vertices_in_cycle);
 
-                            violated_constraints->insert(new ViolatedConstraint(variables_in_wheel,
-                                                                                coefficients,
-                                                                                0.0,
-                                                                                this->rhs,
-                                                                                ConstraintType::INFERIOR_EQUAL,
-                                                                                val - this->rhs));
+                            violated_constraints->add_violated_constraint(
+                                LinearViolatedConstraint::create(0.0,
+                                                                 this->rhs,
+                                                                 ConstraintType::INFERIOR_EQUAL,
+                                                                 val - this->rhs,
+                                                                 variables_in_wheel.size(),
+                                                                 &variables_in_wheel[0],
+                                                                 &coefficients[0]));
                         }
                     }
                 }
@@ -242,7 +244,7 @@ public:
             int previous_vertex = v != 0 ? v - 1 : vertices_in_cycle.size() - 1;
 
             const Edge *edge = edges->get_edge_by_vertices(vertices_in_cycle[v],
-                                                                vertices_in_cycle[previous_vertex]);
+                                                           vertices_in_cycle[previous_vertex]);
             if (edge == nullptr)
             {
                 return false;
@@ -430,7 +432,7 @@ public:
             int previous_vertex = v != 0 ? v - 1 : vertices_in_cycle.size() - 1;
 
             const Edge *edge = edges->get_edge_by_vertices(vertices_in_cycle[v],
-                                                                vertices_in_cycle[previous_vertex]);
+                                                           vertices_in_cycle[previous_vertex]);
             if (edge == nullptr)
             {
                 return false;

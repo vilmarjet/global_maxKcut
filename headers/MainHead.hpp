@@ -47,8 +47,9 @@
 
 #include "MKC_CPA.hpp"
 
-#include "./Solver/Solver.hpp"
-#include "./Solver/SolverMosekLp.hpp"
+#include "./Solver/Abstract/Solver.hpp"
+#include "./Solver/Mosek/SolverMosekLp.hpp"
+#include "./Solver/Factory/SolverFactory.hpp"
 
 #include "../../../myFiles/eigen/Eigen/Dense"
 #include "../../../myFiles/eigen/Eigen/Eigenvalues" 

@@ -4,11 +4,10 @@
 #include "./Utils/Exception.hpp"
 #include <string>
 #include <algorithm>
-#include "./Solver/DimensionVariable.hpp"
 
 namespace maxkcut
 {
-class Edge : public DimensionVariable
+class Edge
 {
 private:
     int i, j;

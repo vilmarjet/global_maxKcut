@@ -1,7 +1,7 @@
 #ifndef CUTTING_PLANE_ALGORITHM_HPP
 #define CUTTING_PLANE_ALGORITHM_HPP
 
-#include "./../Solver/Solver.hpp"
+#include "./../Solver/Abstract/Solver.hpp"
 
 /**
  * Steps :

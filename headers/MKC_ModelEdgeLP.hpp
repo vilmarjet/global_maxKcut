@@ -1,11 +1,10 @@
 #ifndef MKC_EDGE_MODEL_LP_HPP
 #define MKC_EDGE_MODEL_LP_HPP
 
-#include "./Solver/Solver.hpp"
+#include "./Solver/Abstract/Solver.hpp"
 #include "./MKCInstance.hpp"
 #include "./MKCGraph.hpp"
-#include "./Solver/Variable.hpp"
-#include "./CPA/ViolatedConstraint.hpp"
+#include "./CPA/LinearViolatedConstraints.hpp"
 #include "./MKC_Inequalities.hpp"
 #include <algorithm> // use of min and max
 #include <set>
@@ -22,7 +21,6 @@ private:
     MKCInstance *instance;
     VariablesEdge *variablesEdge;
     std::vector<MKC_Inequalities *> inequalities_type;
-    std::set<ViolatedConstraint *, CompViolatedConstraint> violated_constraints;
 
 public:
     MKC_ModelEdgeLP(MKCInstance *instance_, Solver *solver_) : instance(instance_),
@@ -30,13 +28,12 @@ public:
     {
         this->initilize();
         inequalities_type.clear();
-        
     }
 
     void solve()
     {
         this->solver->solve();
-        std::cout <<solver->to_string();
+        std::cout << solver->to_string();
     }
 
     void reset_solver()
@@ -62,7 +59,8 @@ public:
 
     void find_violated_constraints(const int &nb_max_ineq)
     {
-        violated_constraints.clear();
+        //violated_constraints.clear();
+        LinearViolatedConstraints *linearViolatedConstraints = LinearViolatedConstraints::create(nb_max_ineq, solver);
         int counter_ineq = 0;
 
         for (std::size_t idx_ineq = 0; idx_ineq < inequalities_type.size(); ++idx_ineq)
@@ -70,15 +68,11 @@ public:
             //@todo: create class for violated constraints and send as parameter or return in get violated inequalities
             inequalities_type[idx_ineq]->find_violated_constraints(this->variablesEdge,
                                                                    this->instance,
-                                                                   &violated_constraints);
+                                                                   linearViolatedConstraints);
         }
 
-        for (std::set<ViolatedConstraint *, CompViolatedConstraint>::iterator it = violated_constraints.begin();
-             it != violated_constraints.end() && counter_ineq < nb_max_ineq;
-             ++it, ++counter_ineq)
-        {
-            solver->add_constraint((*it)->get_constraint());
-        }
+        linearViolatedConstraints->apply_constraints();
+        
 
         std::cout << "Nb constraints after= " << solver->get_nb_constraints();
     }

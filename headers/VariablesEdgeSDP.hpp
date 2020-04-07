@@ -1,8 +1,8 @@
 #ifndef VARIABLESEdgeSDP_CONTAINER_HPP
 #define VARIABLESEdgeSDP_CONTAINER_HPP
 
-#include "./Solver/Solver.hpp"
-#include "./Solver/Variables1D.hpp"
+#include "./Solver/Abstract/Solver.hpp"
+#include "./Solver/Variable/Variable.hpp"
 #include "./Utils/Exception.hpp"
 #include <vector>
 #include <map>
