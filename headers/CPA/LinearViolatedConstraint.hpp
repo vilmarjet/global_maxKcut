@@ -55,7 +55,7 @@ public:
         return violation >= rhs.violation; // inversed (larger to smaller)
     }
 
-    const LinearConstraint *get_constraint() const
+    LinearConstraint *get_constraint() const
     {
         return this->constraintLinear;
     }

@@ -4,42 +4,21 @@
 #include <vector>
 #include "ConstraintSDP.hpp"
 #include "../../Utils/Exception.hpp"
+#include "ConstraintsGeneric.hpp"
 
-class ConstraintsSDP
+class ConstraintsSDP : public ConstraintsGeneric<ConstraintSDP>
 {
 private:
-    std::vector <ConstraintSDP*> constraints;
-    void validate(const int &i) const
-    {
-        if (i <0 || i > size())
-        {
-            Exception("Invalid index in ConstraintsSDP", ExceptionType::STOP_EXECUTION).execute();
-        }
-    }
+    ConstraintsSDP(/* args */) {}
 
 public:
-    ConstraintsSDP(/* args */){}
+    static ConstraintsSDP *create()
+    {
+        return new ConstraintsSDP();
+    }
+
     ~ConstraintsSDP()
     {
-        
-    }
-
-    ConstraintSDP * add_constraint(const double &lb,const double &ub,const ConstraintType &typ)
-    {
-        constraints.push_back(ConstraintSDP::create(lb, ub, typ));
-
-        return constraints[size()-1];
-    }
-
-    const ConstraintSDP * get_constraint(const int &i)
-    {
-        validate(i);
-        return constraints[i];
-    }
-    
-    const size_t size() const
-    {
-        return constraints.size();
     }
 };
 

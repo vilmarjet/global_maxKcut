@@ -61,7 +61,6 @@ public:
     {
         //violated_constraints.clear();
         LinearViolatedConstraints *linearViolatedConstraints = LinearViolatedConstraints::create(nb_max_ineq, solver);
-        int counter_ineq = 0;
 
         for (std::size_t idx_ineq = 0; idx_ineq < inequalities_type.size(); ++idx_ineq)
         {
@@ -74,7 +73,7 @@ public:
         linearViolatedConstraints->apply_constraints();
         
 
-        std::cout << "Nb constraints after= " << solver->get_nb_constraints();
+        std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size();
     }
 
     ~MKC_ModelEdgeLP()

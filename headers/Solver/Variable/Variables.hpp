@@ -15,6 +15,7 @@ class Variables
 protected:
     std::vector<V *> variables;
     std::map<const V *, int> index_variables;
+    int pos_last_appended_variable;
 
     void validate_index(const int &idx) const
     {
@@ -26,8 +27,8 @@ protected:
     }
 
 public:
-    Variables(){};
-    ~Variables(){};
+    Variables():pos_last_appended_variable(-1){}
+    ~Variables(){}
 
     V *add_variable(V *var)
     {
@@ -48,10 +49,23 @@ public:
         return var;
     }
 
-    const V *const get_variable(const int &idx) const
+    V * get_variable(const int &idx) const
     {
         validate_index(idx);
         return variables[idx];
+    }
+
+    V* get_next_variable_to_append()
+    {
+        if (pos_last_appended_variable == size() - 1)
+        {
+            return nullptr;
+        }
+
+        pos_last_appended_variable++;
+
+        return get_variable(pos_last_appended_variable);
+
     }
 
     const int get_index(const V *var) const
@@ -65,6 +79,16 @@ public:
         }
 
         return it_idx->second;
+    }
+
+    int get_number_non_appended_variables() const
+    {
+        return size() -pos_last_appended_variable -1;
+    }
+
+    void reset_position_append_variable() 
+    {
+        pos_last_appended_variable = -1;
     }
 
     int size() const

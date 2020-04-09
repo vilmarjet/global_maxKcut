@@ -9,7 +9,6 @@
 class SolverMosekSDP : public Solver, SolverMosek
 {
 private:
-
 public:
   SolverMosekSDP(const SolverParam &solverParm) : Solver(solverParm)
   {
@@ -25,8 +24,11 @@ public:
     {
       if (this->task == NULL)
       {
-        throw Exception("Null task in solve",  ExceptionType::STOP_EXECUTION);
+        throw Exception("Null task in solve", ExceptionType::STOP_EXECUTION);
       }
+
+      append_variables();
+      append_constraints();
 
       run_optimizer();
 
@@ -64,7 +66,7 @@ public:
     case MSK_SOL_STA_PRIM_AND_DUAL_FEAS:
     case MSK_SOL_STA_OPTIMAL:
     {
-      int size = variables.size();
+      int size = variables->size();
 
       // @todo fix problem with size (why should be at least size*2 ?)
       std::vector<double> var_x(size); //= (double *)calloc(size, sizeof(double));
@@ -87,7 +89,7 @@ public:
 
       for (int i = 0; i < size; ++i)
       {
-        this->variables.set_solution_value(i, var_x[i]);
+        this->variables->set_solution_value(i, var_x[i]);
       }
 
       break;
@@ -114,8 +116,6 @@ public:
 
   void initialize()
   {
-    initialize_variables_mosek_task(Solver::variables);
-    initialize_sdp_variables_mosek_task(&(Solver::variables_sdp));
     initilize_objective_function();
 
     SolverParam param = get_parameter();
@@ -123,40 +123,67 @@ public:
     MSK_putintparam(task, MSK_IPAR_NUM_THREADS, param.get_number_threads()); /*Nber of cpus*/
   }
 
+  void append_variables()
+  {
+    add_linear_variables_mosek_task(get_lp_variables());
+    add_sdp_variables_mosek_task(get_sdp_variables());
+  }
+
   void add_constraint(const LinearConstraint *constraint, bool is_to_append_new = true)
   {
-    this->add_constraint_append_mosek(constraint, is_to_append_new, this->number_constraints, get_lp_variables());
-    ++this->number_constraints;
+    this->add_constraint_append_mosek(constraint, is_to_append_new, get_lp_variables());
   }
 
   void add_constraint_SDP(const ConstraintSDP *constraint, bool is_to_append_new = true)
   {
-    this->add_constraint_append_mosek_SDP(constraint,
-                                          is_to_append_new,
-                                          this->number_constraints,
-                                          &(Solver::variables_sdp));
-    ++this->number_constraints;
+    this->add_constraint_append_mosek_SDP(constraint, is_to_append_new, get_sdp_variables());
   }
 
-  void execute_constraints()
+  void append_constraints()
   {
-    int size = Solver::constraints_sdp.size();
 
-    if (r_code == MSK_RES_OK)
+    /*Linear Constraints*/
+    int size = get_linear_constraints()->get_number_non_appended_constraints();
+    if (size > 0)
     {
-      r_code = MSK_appendcons(task, (MSKint32t)size);
+      if (r_code == MSK_RES_OK)
+      {
+        r_code = MSK_appendcons(task, (MSKint32t)size);
+      }
+
+      for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
+      {
+        const LinearConstraint *constraint = get_linear_constraints()->get_next_constraint_to_append();
+        add_constraint(constraint, false);
+      }
+
+      if (r_code != MSK_RES_OK)
+      {
+        std::string msg = "r_code = " + std::to_string(r_code) + "!= MSK_RES_OK in linear execute_constraints()";
+        Exception(msg, ExceptionType::STOP_EXECUTION).execute();
+      }
     }
 
-    for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
+    /*SDP constraints*/
+    size = get_sdp_constraints()->get_number_non_appended_constraints();
+    if (size > 0)
     {
-      const ConstraintSDP *constraint = Solver::constraints_sdp.get_constraint(i);
-      add_constraint_SDP(constraint, false);
-    }
+      if (r_code == MSK_RES_OK)
+      {
+        r_code = MSK_appendcons(task, (MSKint32t)size);
+      }
 
-    if (r_code != MSK_RES_OK)
-    {
-      std::string msg = "r_code = " + std::to_string(r_code) +"!= MSK_RES_OK in execute_constraints()";
-      Exception(msg, ExceptionType::STOP_EXECUTION).execute();
+      for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
+      {
+        const ConstraintSDP *constraint = get_sdp_constraints()->get_next_constraint_to_append();
+        add_constraint_SDP(constraint, false);
+      }
+
+      if (r_code != MSK_RES_OK)
+      {
+        std::string msg = "r_code = " + std::to_string(r_code) + "!= MSK_RES_OK in execute_constraints()";
+        Exception(msg, ExceptionType::STOP_EXECUTION).execute();
+      }
     }
     //nop
   }
@@ -166,8 +193,9 @@ public:
     this->env = NULL;
     this->r_code = MSK_RES_OK;
 
-    this->number_constraints = 0;
     this->objectiveFunction.update_solution(0.0);
+    this->get_lp_variables()->reset_position_append_variable();
+    this->get_linear_constraints()->reset_position_append_constraint();
   }
 
   void create_environnement()
@@ -198,40 +226,9 @@ public:
       r_code = MSK_putcfix(task, this->objectiveFunction.get_constant_term());
     }
 
-    int size = get_lp_variables()->size();
-
-    for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
-    {
-      const Variable *variable = this->variables.get_variable(i);
-      r_code = MSK_putcj(task, i, -1.0 * variable->get_cost());
-    }
-
     if (r_code == MSK_RES_OK)
     {
       r_code = MSK_putobjsense(task, get_mosek_objective_sense(this->objectiveFunction.get_optimization_sense()));
-    }
-
-    /*For SDP*/
-    MSKint64t idx; //use for index in mosek
-    SDPVariables *vars = &(Solver::variables_sdp);
-    size = vars->size();
-    for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
-    {
-      if (vars->get_variable(i)->get_row_indices()) //check no null
-      {
-        r_code = MSK_appendsparsesymmat(task,
-                                        vars->get_variable(i)->get_dimension(),
-                                        vars->get_variable(i)->get_number_non_null_variables(),
-                                        vars->get_variable(i)->get_col_indices(),
-                                        vars->get_variable(i)->get_row_indices(),
-                                        vars->get_cost_indices(i),
-                                        &idx);
-      }
-      if (r_code == MSK_RES_OK)
-      {
-        double val = vars->get_variable(i)->get_constant_object_function();
-        r_code = MSK_putbarcj(task, i, 1, &idx, &val);
-      }
     }
 
     if (r_code != MSK_RES_OK)

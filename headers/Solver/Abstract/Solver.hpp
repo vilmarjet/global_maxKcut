@@ -11,17 +11,19 @@
 #include <set>
 #include "../Parameter/SolverParam.hpp"
 #include "../Constraint/ConstraintsSDP.hpp"
+#include "../Constraint/ConstraintsSDP.hpp"
+#include "../Constraint/LinearConstraints.hpp"
 
 class Solver
 {
 protected:
-    LPVariables variables;
-    SDPVariables variables_sdp;
+    LPVariables *variables;
+    SDPVariables *variables_sdp;
     ObjectiveFunction objectiveFunction;
     double time_solver;
-    int number_constraints;
     SolverParam param;
-    ConstraintsSDP constraints_sdp;
+    ConstraintsSDP *constraints_sdp;
+    LinearConstraints *constraints_lp;
 
 public:
     virtual void solve() = 0;
@@ -31,45 +33,59 @@ public:
     virtual void finalize_optimization() = 0;
 
     //constraints
-    virtual void add_constraint(const LinearConstraint *constraint, bool is_to_append_new = true) = 0;
-    virtual void execute_constraints() = 0;
-
-    ConstraintSDP *add_constraint_SDP(const double &lb, const double &ub, const ConstraintType &typ)
-    {
-        return constraints_sdp.add_constraint(lb, ub, typ);
-    }
+    virtual void append_constraints() = 0;
+    virtual void append_variables() = 0;
 
     Solver(const SolverParam &solverParm) : objectiveFunction(ObjectiveFunction::create()),
                                             param(solverParm),
-                                            number_constraints(0),
-                                            time_solver(0.0)
+                                            time_solver(0.0),
+                                            constraints_lp(LinearConstraints::create()),
+                                            constraints_sdp(ConstraintsSDP::create()),
+                                            variables(LPVariables::create()),
+                                            variables_sdp(SDPVariables::create())
+
     {
     }
 
-    //add variables and return idx of variable;
-    const Variable *add_lp_variable(Variable *vars)
+    LinearConstraint *add_constraint_linear(LinearConstraint *constraint)
     {
-        return this->variables.add_variable(vars);
+        return constraints_lp->add_constraint(constraint);
+    }
+
+    ConstraintSDP *add_constraint_SDP(ConstraintSDP *constraint)
+    {
+        return constraints_sdp->add_constraint(constraint);
+    }
+
+    //add variables and return idx of variable;
+    Variable *add_linear_variable(Variable *vars)
+    {
+        return this->variables->add_variable(vars);
     }
 
     SDPVariable<Variable> *add_sdp_variable(SDPVariable<Variable> *var)
     {
-        return this->variables_sdp.add_variable(var);
+        return this->variables_sdp->add_variable(var);
     }
 
-    const LPVariables *get_lp_variables()
+    LPVariables *get_lp_variables() const
     {
-        return &this->variables;
+        return this->variables;
     }
 
-    const SDPVariables *get_sdp_variables() const
+    SDPVariables *get_sdp_variables() const
     {
-        return &this->variables_sdp;
+        return this->variables_sdp;
     }
 
-    const LPVariables *get_variables() const
+    LinearConstraints *get_linear_constraints()
     {
-        return &this->variables;
+        return this->constraints_lp;
+    }
+
+    ConstraintsSDP *get_sdp_constraints()
+    {
+        return this-> constraints_sdp;;
     }
 
     //objective function
@@ -78,17 +94,12 @@ public:
         this->objectiveFunction.update_constant_term(cst);
     }
 
-    int get_nb_constraints()
-    {
-        return this->number_constraints;
-    }
-
     void add_time_of_solver(const double &time)
     {
         this->time_solver += time;
     }
 
-    const SolverParam &get_parameter()
+    const SolverParam &get_parameter() const
     {
         return this->param;
     }

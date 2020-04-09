@@ -12,10 +12,15 @@
 
 class LPVariables : public Variables<Variable>
 {
+private:
+    LPVariables(){};
 
 public:
-    LPVariables(){};
     ~LPVariables(){};
+    static LPVariables *create()
+    {
+        return new LPVariables();
+    }
 
     void set_solution_value(const int &idx, const double &val)
     {

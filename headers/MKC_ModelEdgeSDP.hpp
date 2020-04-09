@@ -82,7 +82,8 @@ public:
         //     //solver->add_constraint_single_SDP_variable(idx_sdp_variable, (*it)->get_constraint());
         // }
 
-        std::cout << "Nb constraints after= " << solver->get_nb_constraints();
+        std::cout << "Nb constraints after= ";
+        std::cout << (solver->get_linear_constraints()->size() + solver->get_sdp_constraints()->size());
     }
 
     void diagonal_constraint()
@@ -99,11 +100,11 @@ public:
         for (int i = 0; i < dim; ++i)
         {
             const Variable *variable = sdp_var->get_variable(i, i);
-            ConstraintSDP* constraint = solver->add_constraint_SDP(lowerBound, upperBound, type);
+            ConstraintSDP *constraint = solver->add_constraint_SDP(ConstraintSDP::create(lowerBound, upperBound, type));
             constraint->add_coefficient(sdp_var, variable, coeff);
         }
 
-       solver->execute_constraints();
+        solver->append_constraints();
     }
 
     ~MKC_ModelEdgeSDP()

@@ -169,7 +169,6 @@ public:
     //uses a heuristic approach: find all adjacents vertices of a vertex (min degree) and link all of them
     void set_edges_to_chordal_graph()
     {
-        std::cout<< "chegou \n";
         if (this->is_complete())
         {
             return;
@@ -192,8 +191,6 @@ public:
             vertex = get_vertex_min_degree(vertices_degree, vertices_to_compute);
             vertices_to_compute[vertex] = false; //desactivate vertex
 
-            std::cout << "vertex = " << vertex << "\n";
-
             if (vertices_degree[vertex] >= min_size_degree &&
                 !is_vertex_in_maximal_clique(vertex))
             {
@@ -201,9 +198,6 @@ public:
                 fill_adjacent_vertices(vertex, &adjacent_vertices, vertices_to_compute);
                 adjacent_vertices.push_back(vertex);
                 add_subgraph_to_maximal_Clique(adjacent_vertices);
-
-                MKCUtil::print_vector(adjacent_vertices);
-                std::cout<< "\n";
 
                 //setting up edges
                 for (int i = 0; i < adjacent_vertices.size() - 1; ++i)

@@ -60,7 +60,7 @@ public:
              it != violated_constraints.end() && counter_ineq < user_max_number_inequalities;
              ++it, ++counter_ineq)
         {
-            solver->add_constraint((*it)->get_constraint());
+            solver->add_constraint_linear((*it)->get_constraint());
         }
 
         return counter_ineq;

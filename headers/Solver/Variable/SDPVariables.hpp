@@ -14,9 +14,15 @@ class SDPVariables : public Variables<SDPVariable<Variable>>
 {
 private:
     std::vector<double> cost_index; //cache
+    SDPVariables(){};
 
 public:
-    SDPVariables(){};
+    
+    static SDPVariables *create()
+    {
+        return new SDPVariables();
+    }
+    
     ~SDPVariables(){};
 
     const double *get_cost_indices(const int &idx)
