@@ -48,7 +48,7 @@ public:
     }
     void set_objective_function()
     {
-        double cst = instance->get_graph()->get_edges()->sum_cost_all_edges();
+        double cst = instance->get_graph()->get_edges()->sum_weight_all_edges();
         solver->set_const_objective_function(cst);
     }
 

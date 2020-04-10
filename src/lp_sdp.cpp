@@ -6171,6 +6171,8 @@ inline void Clear_edgeNotViolated_in_SDP(const T_Instance &instance)
 inline void Set_ObFunction_Mosek_SDP(const T_Instance &instance, MSKrescodee &r, MSKtask_t &task, const double &LBsdp)
 {
 
+  
+
   MSKint64t idx;
 
   double cstW = -1.0; // before (-1.0)*((K-1.0)/K); 	/*Poid que matrix W va etres  = (-(k-1)/k)*/
@@ -6199,7 +6201,6 @@ inline void Set_ObFunction_Mosek_SDP(const T_Instance &instance, MSKrescodee &r,
     vl[j] = instance.cij.barc_v[j] / 2.0; // in SDP we should divide for symmetric matrix
   }
 
-
   if (r == MSK_RES_OK)
     r = MSK_appendsparsesymmat(task,
                                instance.DIM,
@@ -6216,6 +6217,7 @@ inline void Set_ObFunction_Mosek_SDP(const T_Instance &instance, MSKrescodee &r,
   if (cstW != 1.0)
     if (r == MSK_RES_OK)
       r = MSK_putcfix(task, -cstW * sumTotalCost + instance.sum_cost); // in sdp we have to add the sum of all the cost in the objective function (bfore sumTotalCost = 0.0)
+  
   //free memory
   delete[] c_i;
   delete[] c_j;

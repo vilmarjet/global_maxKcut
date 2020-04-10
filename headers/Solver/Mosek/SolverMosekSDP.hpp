@@ -24,7 +24,7 @@ public:
     {
       if (this->task == NULL)
       {
-        throw Exception("Null task in solve", ExceptionType::STOP_EXECUTION);
+        initialize();
       }
 
       append_variables();
@@ -73,17 +73,10 @@ public:
       std::vector<double> Obj(2);      //double *Obj = (double *)calloc(2, sizeof(MSKrealt));
 
       //if basic solution is activated
-      if (solsta == MSK_SOL_STA_OPTIMAL)
-      {
-        MSK_getxx(task, MSK_SOL_BAS, &var_x[0]);
-        MSK_getprimalobj(task, MSK_SOL_BAS, &Obj[0]);
-      }
-      else
-      {
-        //Just interior point solution
-        MSK_getxx(task, MSK_SOL_ITR, &var_x[0]);
-        MSK_getprimalobj(task, MSK_SOL_ITR, &Obj[0]);
-      }
+
+      //Just interior point solution
+      MSK_getxx(task, MSK_SOL_ITR, &var_x[0]);
+      MSK_getprimalobj(task, MSK_SOL_ITR, &Obj[0]);
 
       this->objectiveFunction.update_solution(Obj[0]);
 
@@ -116,6 +109,7 @@ public:
 
   void initialize()
   {
+    create_task(get_lp_variables()->size(), get_linear_constraints()->size() + get_sdp_constraints()->size());
     initilize_objective_function();
 
     SolverParam param = get_parameter();
@@ -127,16 +121,6 @@ public:
   {
     add_linear_variables_mosek_task(get_lp_variables());
     add_sdp_variables_mosek_task(get_sdp_variables());
-  }
-
-  void add_constraint(const LinearConstraint *constraint, bool is_to_append_new = true)
-  {
-    this->add_constraint_append_mosek(constraint, is_to_append_new, get_lp_variables());
-  }
-
-  void add_constraint_SDP(const ConstraintSDP *constraint, bool is_to_append_new = true)
-  {
-    this->add_constraint_append_mosek_SDP(constraint, is_to_append_new, get_sdp_variables());
   }
 
   void append_constraints()
@@ -154,7 +138,7 @@ public:
       for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
       {
         const LinearConstraint *constraint = get_linear_constraints()->get_next_constraint_to_append();
-        add_constraint(constraint, false);
+        SolverMosek::add_constraint_append_mosek(constraint, false, get_lp_variables());
       }
 
       if (r_code != MSK_RES_OK)
@@ -176,7 +160,7 @@ public:
       for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
       {
         const ConstraintSDP *constraint = get_sdp_constraints()->get_next_constraint_to_append();
-        add_constraint_SDP(constraint, false);
+        SolverMosek::add_constraint_append_mosek_SDP(constraint, false, get_sdp_variables());
       }
 
       if (r_code != MSK_RES_OK)
@@ -201,7 +185,6 @@ public:
   void create_environnement()
   {
     r_code = MSK_makeenv(&env, NULL);
-    create_task(0, 0);
   }
 
   void run_optimizer()

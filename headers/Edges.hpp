@@ -309,7 +309,7 @@ public:
         return !(this->easy_index_edges[calculate_position_edge(vi, vj)] == -1);
     }
 
-    double sum_cost_all_edges() const
+    double sum_weight_all_edges() const
     {
         double sum = 0.0;
         for (int i = 0; i < this->edges.size(); ++i)
