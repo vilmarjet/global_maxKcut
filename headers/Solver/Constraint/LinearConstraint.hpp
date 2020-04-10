@@ -27,6 +27,12 @@ public:
         return create(0.0, 0.0, EQUAL);
     }
 
+    static LinearConstraint *from(LinearConstraint *linearC)
+    {
+        return (create(linearC->get_lower_bound(), linearC->get_upper_bound(),linearC->get_type()))
+        ->add_coefficients(&(linearC->vec_var[0]), linearC->size());
+    }
+
     static LinearConstraint *create(const double &lb, const double &ub, const ConstraintType &typ)
     {
         return new LinearConstraint(lb, ub, typ);
@@ -48,7 +54,17 @@ public:
         return this;
     }
 
-    const std::vector<ConstraintCoefficient<Variable> *> &get_variables() const
+    LinearConstraint *add_coefficients(ConstraintCoefficient<Variable> ** vec_var, const int &size)
+    {
+        for (int i = 0; i < size; i++)
+        {
+            add_coefficient(vec_var[i]->get_variable(), vec_var[i]->get_value());
+        }
+
+        return this;
+    }
+
+    const std::vector<ConstraintCoefficient<Variable> *> &get_constraint_coefficients() const
     {
         return vec_var;
     }

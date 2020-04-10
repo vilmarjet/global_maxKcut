@@ -12,7 +12,7 @@ namespace maxkcut
 class Edges
 {
 private:
-    std::vector<Edge> edges;
+    std::vector<Edge *> edges;
     std::vector<int> easy_index_edges;
     int number_vertices;
     std::vector<std::vector<int>> vertices_maximal_clique;
@@ -52,7 +52,7 @@ public:
 
         if (this->easy_index_edges[pos_edge_in_easy_indexing] == -1)
         {
-            edges.push_back(Edge(vi, vj, weight));
+            edges.push_back(new Edge(vi, vj, weight));
             this->easy_index_edges[pos_edge_in_easy_indexing] = edges.size() - 1;
             if (is_complete())
             {
@@ -64,7 +64,7 @@ public:
             if (sum_if_repeated == true)
             {
                 int idx = this->easy_index_edges[pos_edge_in_easy_indexing];
-                edges[idx].add_weight(weight);
+                edges[idx]->add_weight(weight);
             }
             else
             {
@@ -78,6 +78,11 @@ public:
     void resize(const int &size)
     {
         edges.resize(size);
+    }
+
+    const std::vector<Edge *> &get_edges() const
+    {
+        return edges;
     }
 
     int get_number_edges_if_complete_grpah() const
@@ -298,7 +303,7 @@ public:
     {
         if (index >= 0 && index < edges.size())
         {
-            return &this->edges[index];
+            return this->edges[index];
         }
 
         return nullptr; //not found
@@ -314,7 +319,7 @@ public:
         double sum = 0.0;
         for (int i = 0; i < this->edges.size(); ++i)
         {
-            sum += edges[i].get_weight();
+            sum += edges[i]->get_weight();
         }
 
         return sum;
@@ -353,10 +358,10 @@ public:
         s += "Edges: \n";
         for (int i = 0; i < get_number_edges(); ++i)
         {
-            int vi = this->edges[i].get_vertex_i();
-            int vj = this->edges[i].get_vertex_j();
+            int vi = this->edges[i]->get_vertex_i();
+            int vj = this->edges[i]->get_vertex_j();
 
-            s += this->edges[i].to_string() + "\n";
+            s += this->edges[i]->to_string() + "\n";
         }
 
         return s;

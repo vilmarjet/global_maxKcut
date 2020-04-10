@@ -235,14 +235,16 @@ public:
         if (r_code == MSK_RES_OK)
         {
             int size = constraint->get_number_non_null_variables();
-            std::vector<int> indx_vars(size);
-            std::vector<double> coef_vals(size);
+            std::vector<int> indx_vars;
+            std::vector<double> coef_vals;
 
-            for (int i = 0; i < size; ++i)
+            indx_vars.reserve(size);
+            coef_vals.reserve(size);
+
+            for (auto constraintCoefficient : constraint->get_constraint_coefficients())
             {
-                const ConstraintCoefficient<Variable> *var = constraint->get_coefficient_constraint_by_index(i);
-                indx_vars[i] = variablesLP->get_index(var->get_variable());
-                coef_vals[i] = var->get_value();
+                indx_vars.push_back(variablesLP->get_index(constraintCoefficient->get_variable()));
+                coef_vals.push_back(constraintCoefficient->get_value());
             }
 
             r_code = MSK_putarow(task,
@@ -276,25 +278,25 @@ public:
                                  constraint->get_lower_bound(),
                                  constraint->get_upper_bound());
 
-        int nb_sdp_variables = constraint->number_sdp_variables();
-
-        for (int i = 0; i < nb_sdp_variables && r_code == MSK_RES_OK; ++i)
+        for (auto sdp_var : constraint->get_sdp_variables())
         {
-            const SDPVariable<Variable> *sdp_var = constraint->get_sdp_variable_by_index(i);
             std::vector<ConstraintCoefficient<Variable> *> variables =
                 constraint->get_coefficeints_of_variable(sdp_var);
 
+            std::vector<int> col_idx, row_idx;
+            std::vector<double> coeff;
             int non_null_variables = variables.size();
-            std::vector<int> col_idx(non_null_variables);
-            std::vector<int> row_idx(non_null_variables);
-            std::vector<double> coeff(non_null_variables);
 
-            for (int j = 0; j < non_null_variables; ++j)
+            col_idx.reserve(non_null_variables);
+            row_idx.reserve(non_null_variables);
+            coeff.reserve(non_null_variables);
+
+            for (auto constraintCoefficient : constraint->get_coefficeints_of_variable(sdp_var))
             {
-                const Variable *var = variables[j]->get_variable();
-                col_idx[j] = sdp_var->get_col_index(var);
-                row_idx[j] = sdp_var->get_row_index(var);
-                coeff[j] = variables[j]->get_value();
+                const Variable *var = constraintCoefficient->get_variable();
+                col_idx.push_back(sdp_var->get_col_index(var));
+                row_idx.push_back(sdp_var->get_row_index(var));
+                coeff.push_back(constraintCoefficient->get_value());
             }
 
             MSKint64t idx = 100;

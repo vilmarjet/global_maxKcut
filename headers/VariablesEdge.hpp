@@ -39,10 +39,8 @@ public:
         double upper_bound = 1.0;
         double initial_solution = 0.0;
         VariableType type = VariableType::CONTINOUS;
-        for (int i = 0; i < edges->get_number_edges(); ++i)
+        for (auto edge : edges->get_edges())
         {
-            const Edge *edge = edges->get_edge_by_index(i);
-
             const Variable *variable = solver->add_linear_variable(Variable::create(lower_bound,
                                                                                     upper_bound,
                                                                                     initial_solution,

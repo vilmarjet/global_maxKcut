@@ -46,9 +46,8 @@ public:
         double upper_bound = 1.0;
         double initial_solution = 0.0;
         VariableType type = VariableType::SDP;
-        for (int i = 0; i < edges->get_number_edges(); ++i)
+        for (auto edge : edges->get_edges())
         {
-            const Edge *edge = edges->get_edge_by_index(i);
             int vi = edge->get_vertex_i() - 1;
             int vj = edge->get_vertex_j() - 1;
             double cost_var = edge->get_weight() / 2.0;

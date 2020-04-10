@@ -64,6 +64,11 @@ public:
         return vec_sdp_var[idx];
     }
 
+    const std::vector<const SDPVariable<Variable> *> & get_sdp_variables() const
+    {
+        return vec_sdp_var;
+    }
+
     const std::vector<ConstraintCoefficient<Variable> *> &get_coefficeints_of_variable(
         const SDPVariable<Variable> *sdp_var) const
     {

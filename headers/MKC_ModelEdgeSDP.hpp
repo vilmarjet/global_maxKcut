@@ -46,7 +46,7 @@ public:
     {
         variablesEdgeSDP = VariablesEdgeSDP::create(solver, instance);
         MKC_InequalitySDPDiagonal::create(solver)->populate();
-        
+
         this->set_objective_function();
         
     }
@@ -65,30 +65,19 @@ public:
 
     void find_violated_constraints(const int &nb_max_ineq)
     {
+        //violated_constraints.clear();
         LinearViolatedConstraints *linearViolatedConstraints = LinearViolatedConstraints::create(nb_max_ineq, solver);
-        int counter_ineq = 0;
 
-        for (std::size_t idx_ineq = 0; idx_ineq < inequalities_type.size(); ++idx_ineq)
+        for (auto type_inequality : inequalities_type)
         {
-            //@todo: create class for violated constraints and send as parameter or return in get violated inequalities
-            inequalities_type[idx_ineq]->find_violated_constraints(this->variablesEdgeSDP,
-                                                                   this->instance,
-                                                                   linearViolatedConstraints);
+            type_inequality->find_violated_constraints(this->variablesEdgeSDP, this->instance, linearViolatedConstraints);
         }
 
-        // for (std::set<ViolatedConstraint *, CompViolatedConstraint>::iterator it = violated_constraints.begin();
-        //      it != violated_constraints.end() && counter_ineq < nb_max_ineq;
-        //      ++it, ++counter_ineq)
-        // {
-        //     int idx_sdp_variable = 0;
-        //     //solver->add_constraint_single_SDP_variable(idx_sdp_variable, (*it)->get_constraint());
-        // }
+        // linearViolatedConstraints->apply_constraints();
+        delete linearViolatedConstraints;
 
-        std::cout << "Nb constraints after= ";
-        std::cout << (solver->get_linear_constraints()->size() + solver->get_sdp_constraints()->size());
+        std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size();
     }
-
-    
 
     ~MKC_ModelEdgeSDP()
     {

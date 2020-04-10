@@ -62,16 +62,13 @@ public:
         //violated_constraints.clear();
         LinearViolatedConstraints *linearViolatedConstraints = LinearViolatedConstraints::create(nb_max_ineq, solver);
 
-        for (std::size_t idx_ineq = 0; idx_ineq < inequalities_type.size(); ++idx_ineq)
+        for (auto type_inequality : inequalities_type)
         {
-            //@todo: create class for violated constraints and send as parameter or return in get violated inequalities
-            inequalities_type[idx_ineq]->find_violated_constraints(this->variablesEdge,
-                                                                   this->instance,
-                                                                   linearViolatedConstraints);
+            type_inequality->find_violated_constraints(this->variablesEdge, this->instance, linearViolatedConstraints);
         }
 
         linearViolatedConstraints->apply_constraints();
-        
+        delete linearViolatedConstraints;
 
         std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size();
     }

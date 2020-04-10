@@ -31,7 +31,7 @@ private:
     Solver *solver;
 
     LinearViolatedConstraints(const int &nb, Solver *solver_) : user_max_number_inequalities(nb),
-                                                                     solver(solver_) {}
+                                                                solver(solver_) {}
 
 public:
     const static int DEFAULT_NUMBER_MAX_VIOLATIONS = 100;
@@ -56,11 +56,14 @@ public:
     int apply_constraints()
     {
         int counter_ineq = 0;
-        for (std::set<LinearViolatedConstraint *, CompViolatedConstraint>::iterator it = violated_constraints.begin();
-             it != violated_constraints.end() && counter_ineq < user_max_number_inequalities;
-             ++it, ++counter_ineq)
+        for (auto p : violated_constraints)
         {
-            solver->add_constraint_linear((*it)->get_constraint());
+            solver->add_constraint_linear(LinearConstraint::from(p->get_constraint()));
+            
+            if(++counter_ineq > user_max_number_inequalities)
+            {
+                break;
+            }
         }
 
         return counter_ineq;
@@ -68,6 +71,10 @@ public:
 
     ~LinearViolatedConstraints()
     {
+        for (auto p : violated_constraints)
+        {
+            delete p;
+        }
     }
 
     void clear()

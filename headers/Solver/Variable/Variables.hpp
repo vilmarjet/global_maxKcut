@@ -27,8 +27,8 @@ protected:
     }
 
 public:
-    Variables():pos_last_appended_variable(-1){}
-    ~Variables(){}
+    Variables() : pos_last_appended_variable(-1) {}
+    ~Variables() {}
 
     V *add_variable(V *var)
     {
@@ -42,20 +42,25 @@ public:
         {
             variables.resize(idx + 1);
         }
-        
+
         variables[idx] = var;
         index_variables.insert(std::pair<const V *, int>(var, idx));
 
         return var;
     }
 
-    V * get_variable(const int &idx) const
+    V *get_variable(const int &idx) const
     {
         validate_index(idx);
         return variables[idx];
     }
 
-    V* get_next_variable_to_append()
+    const std::vector<V *> &get_variables() const
+    {
+        return variables;
+    }
+
+    V *get_next_variable_to_append()
     {
         if (pos_last_appended_variable == size() - 1)
         {
@@ -65,7 +70,6 @@ public:
         pos_last_appended_variable++;
 
         return get_variable(pos_last_appended_variable);
-
     }
 
     const int get_index(const V *var) const
@@ -83,10 +87,10 @@ public:
 
     int get_number_non_appended_variables() const
     {
-        return size() -pos_last_appended_variable -1;
+        return size() - pos_last_appended_variable - 1;
     }
 
-    void reset_position_append_variable() 
+    void reset_position_append_variable()
     {
         pos_last_appended_variable = -1;
     }
