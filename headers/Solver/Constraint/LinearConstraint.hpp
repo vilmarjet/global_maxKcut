@@ -106,10 +106,7 @@ public:
                 return false;
             }
         }
-
-        std::cout << "They are similar";
-        std::cin.get();
-
+        
         return true;
     }
 

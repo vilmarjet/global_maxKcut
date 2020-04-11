@@ -59,7 +59,8 @@ public:
 
   void set_solution()
   {
-    set_mosek_solution_statuss(&solsta, MSK_SOL_ITR);
+    MSKsoltype_enum type_solution = MSK_SOL_ITR;
+    set_mosek_solution_statuss(&solsta, type_solution);
 
     switch (solsta)
     {
@@ -72,17 +73,31 @@ public:
       std::vector<double> var_x(size); //= (double *)calloc(size, sizeof(double));
       std::vector<double> Obj(2);      //double *Obj = (double *)calloc(2, sizeof(MSKrealt));
 
-      //if basic solution is activated
-
       //Just interior point solution
-      MSK_getxx(task, MSK_SOL_ITR, &var_x[0]);
-      MSK_getprimalobj(task, MSK_SOL_ITR, &Obj[0]);
+      MSK_getxx(task, type_solution, &var_x[0]);
+      MSK_getprimalobj(task, type_solution, &Obj[0]);
 
       this->objectiveFunction.update_solution(Obj[0]);
 
       for (int i = 0; i < size; ++i)
       {
-        this->variables->set_solution_value(i, var_x[i]);
+        this->get_lp_variables()->get_variable(i)->update_solution(var_x[i]);
+      }
+
+      for (SDPVariable<Variable> *sdp_var : get_sdp_variables()->get_variables())
+      {
+        int idx = get_sdp_variables()->get_index(sdp_var);
+        std::vector<double> barx(sdp_var->get_total_number_variables());
+        MSK_getbarxj(task, type_solution, idx, &barx[0]);
+        int dim = sdp_var->get_dimension();
+        for (int i = 0; i < dim; ++i)
+        {
+          for (int j = i; j < dim; ++j)
+          {
+            Variable *var = sdp_var->get_variable(i, j);
+            var->update_solution(getValueXij_SDP(i, j, &barx[0], dim));
+          }
+        }
       }
 
       break;
@@ -105,6 +120,25 @@ public:
     default:
       break;
     }
+  }
+
+  inline double getValueXij_SDP(const int &i, const int &j, double *barx, const int &DIM)
+  {
+    int row = i,
+        col = j;
+
+    if (row < col)
+    {
+      std::swap(row, col);
+    }
+
+    int aux = 0;
+    for (int count = 0; count <= row; ++count)
+    {
+      aux += count;
+    }
+
+    return barx[col + row * DIM - aux];
   }
 
   void initialize()

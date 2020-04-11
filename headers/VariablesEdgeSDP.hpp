@@ -23,15 +23,14 @@ public:
     }
 
 private:
-    int dimension;
-    int K;
+    const int dimension;
+    const int K;
     SDPVariable<Variable> *var_sdp;
 
-    VariablesEdgeSDP(Solver *_solver, const MKCInstance *instance) : VariablesEdge(_solver, instance)
-    {
-        this->dimension = instance->get_graph()->get_dimension();
-        this->K = instance->get_K();
-    }
+    VariablesEdgeSDP(Solver *_solver, const MKCInstance *instance) : VariablesEdge(_solver, instance),
+                                                                     K(instance->get_K()),
+                                                                     dimension(instance->get_graph()
+                                                                                   ->get_dimension()) {}
 
 public:
     ~VariablesEdgeSDP() {}
@@ -52,12 +51,12 @@ public:
             int vj = edge->get_vertex_j() - 1;
             double cost_var = edge->get_weight() / 2.0;
 
-            const Variable *variable = var_sdp->add_variable(vi, vj,
-                                                             Variable::create(lower_bound,
-                                                                              upper_bound,
-                                                                              initial_solution,
-                                                                              cost_var,
-                                                                              type));
+            Variable *variable = var_sdp->add_variable(vi, vj,
+                                                       Variable::create(lower_bound,
+                                                                        upper_bound,
+                                                                        initial_solution,
+                                                                        cost_var,
+                                                                        type));
             add_variable(edge, variable);
         }
 
@@ -67,6 +66,20 @@ public:
     const SDPVariable<Variable> *get_variable_sdp()
     {
         return var_sdp;
+    }
+
+    void transforme_SDP_solution()
+    {
+        double LBsdp = -1.0 / (K - 1.0);
+        double UBsdp = 1.0;
+        double divCst = (UBsdp - LBsdp);
+
+        for (auto edge : edges->get_edges())
+        {
+            Variable *var = get_variable(edge);
+            double sdp_value = var->get_solution();
+            var->update_solution((sdp_value - LBsdp) / divCst);
+        }
     }
 };
 } // namespace maxkcut

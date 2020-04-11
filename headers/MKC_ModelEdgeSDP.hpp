@@ -34,6 +34,7 @@ public:
     void solve()
     {
         this->solver->solve();
+        variablesEdgeSDP->transforme_SDP_solution();
         std::cout << solver->to_string();
     }
 
@@ -48,7 +49,6 @@ public:
         MKC_InequalitySDPDiagonal::create(solver)->populate();
 
         this->set_objective_function();
-        
     }
     void set_objective_function()
     {
@@ -65,12 +65,13 @@ public:
 
     void find_violated_constraints(const int &nb_max_ineq)
     {
-        //violated_constraints.clear();
         LinearViolatedConstraints *linearViolatedConstraints = LinearViolatedConstraints::create(nb_max_ineq, solver);
 
         for (auto type_inequality : inequalities_type)
         {
-            type_inequality->find_violated_constraints(this->variablesEdgeSDP, this->instance, linearViolatedConstraints);
+            type_inequality->find_violated_constraints(this->variablesEdgeSDP,
+                                                       this->instance,
+                                                       linearViolatedConstraints);
         }
 
         // linearViolatedConstraints->apply_constraints();

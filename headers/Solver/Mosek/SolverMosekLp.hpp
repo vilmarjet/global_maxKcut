@@ -87,7 +87,7 @@ public:
 
       for (int i = 0; i < size; ++i)
       {
-        this->variables->set_solution_value(i, var_x[i]);
+        this->variables->get_variable(i)->update_solution(var_x[i]);
       }
 
       break;

@@ -12,21 +12,21 @@ template <typename D>
 class Variables1D
 {
 private:
-    std::map<D, const Variable *> variables;
+    std::map<D, Variable *> variables;
 
 public:
     Variables1D() {}
     ~Variables1D() {}
 
 
-    void add_variable(D key, const Variable *var)
+    void add_variable(D key, Variable *var)
     {
         variables.insert(std::make_pair(key, var));
     }
 
-    const Variable *get_variable(D key) const
+    Variable *get_variable(D key) const
     {
-        typename std::map<D, const Variable *>::const_iterator it_const = variables.find(key);
+        typename std::map<D, Variable *>::const_iterator it_const = variables.find(key);
 
         if (it_const == variables.end())
         {

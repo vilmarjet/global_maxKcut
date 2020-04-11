@@ -97,18 +97,6 @@ public:
         return strg;
     }
 
-    const int *get_indices_variables(const LPVariables* solver_variables, std::vector<int> & indices_variables) const
-    {
-        indices_variables.resize(size());
-
-        for (int i=0; i < size(); ++i)
-        {
-            indices_variables[i] = solver_variables->get_index(variables[i]);
-        }
-
-        return &indices_variables[0];
-    }
-
     std::string to_string(const maxkcut::MKCGraph *graph, const LPVariables* variabless) const
     {
         int nb_non_zero_variables = this->size();

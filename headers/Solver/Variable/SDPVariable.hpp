@@ -110,7 +110,7 @@ public:
         return var_created;
     }
 
-    const V *get_variable(const int &vi, const int &vj) const
+    V *get_variable(const int &vi, const int &vj) const
     {
         int pos_index = calculate_position_variable(vi, vj);
 
@@ -152,6 +152,11 @@ public:
     {
         int idx = get_row_col_of_variables(var).first;
         return idx;
+    }
+
+    int get_total_number_variables()
+    {
+        return get_number_variables_for_lower_matrix(this->dimension);
     }
 
     const std::pair<int, int> &get_row_col_of_variables(const V *var) const

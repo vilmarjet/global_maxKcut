@@ -41,11 +41,11 @@ public:
         VariableType type = VariableType::CONTINOUS;
         for (auto edge : edges->get_edges())
         {
-            const Variable *variable = solver->add_linear_variable(Variable::create(lower_bound,
-                                                                                    upper_bound,
-                                                                                    initial_solution,
-                                                                                    -1.0 * edge->get_weight(),
-                                                                                    type));
+            Variable *variable = solver->add_linear_variable(Variable::create(lower_bound,
+                                                                              upper_bound,
+                                                                              initial_solution,
+                                                                              -1.0 * edge->get_weight(),
+                                                                              type));
             this->add_variable(edge, variable);
         }
 
