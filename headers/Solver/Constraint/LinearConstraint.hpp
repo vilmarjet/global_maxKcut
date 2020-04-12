@@ -15,12 +15,6 @@
 
 class LinearConstraint : public ConstraintAbstract
 {
-private:
-    std::vector<ConstraintCoefficient<Variable> *> vec_var;
-    LinearConstraint(const double &lb,
-                     const double &ub,
-                     const ConstraintType &typ) : ConstraintAbstract(lb, ub, typ) {}
-
 public:
     static LinearConstraint *create()
     {
@@ -38,6 +32,13 @@ public:
         return new LinearConstraint(lb, ub, typ);
     }
 
+private:
+    std::vector<ConstraintCoefficient<Variable> *> vec_var;
+    LinearConstraint(const double &lb,
+                     const double &ub,
+                     const ConstraintType &typ) : ConstraintAbstract(lb, ub, typ) {}
+
+public:
     ConstraintCoefficient<Variable> *add_coefficient(const Variable *var, const double &coeff)
     {
         vec_var.push_back(ConstraintCoefficient<Variable>::create(var, coeff));

@@ -63,7 +63,7 @@ public:
         return this;
     }
 
-    const SDPVariable<Variable> *get_variable_sdp()
+    SDPVariable<Variable> *get_variable_sdp() const
     {
         return var_sdp;
     }
@@ -78,6 +78,14 @@ public:
         {
             Variable *var = get_variable(edge);
             double sdp_value = var->get_solution();
+
+            //For sdp the lower and upper bound should be set as constraints
+            //Thus, we need to check if their values are respected.
+            if (sdp_value < LBsdp)
+            {
+                sdp_value = LBsdp;
+            }
+
             var->update_solution((sdp_value - LBsdp) / divCst);
         }
     }

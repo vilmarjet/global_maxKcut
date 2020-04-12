@@ -241,7 +241,6 @@ int main(int argc, char *argv[])
 
   cout << new_instance->get_graph()->to_string();
 
-
   SolverParam solverParm;
   solverParm.set_gap_primal(0.75)
       ->set_gap_tolerance(0.9)
@@ -255,6 +254,17 @@ int main(int argc, char *argv[])
   Solver *solverSDP = SolverFactory::create_solver(TypeSolver::SDP_MOSEK, solverParm);
   MKC_ModelEdgeSDP modelSDP = MKC_ModelEdgeSDP(new_instance, solverSDP);
   modelSDP.solve();
+  cout << "After first ";
+
+  cin.get();
+
+  modelSDP.add_type_inequality(new MKC_InequalityTriangle());
+  modelSDP.add_type_inequality(new MKC_InequalityClique(new_instance->get_K() + 1));
+  modelSDP.add_type_inequality(new MKC_InequalityClique(new_instance->get_K() + 2));
+  modelSDP.add_type_inequality(new MKC_InequalityWheel(3, 1));
+  modelSDP.add_type_inequality(new MKC_InequalityWheel(3, 2));
+  modelSDP.add_type_inequality(new MKC_InequalityLpSdp());
+
 
   model.add_type_inequality(new MKC_InequalityTriangle());
   model.add_type_inequality(new MKC_InequalityClique(new_instance->get_K() + 1));
@@ -263,11 +273,13 @@ int main(int argc, char *argv[])
   model.add_type_inequality(new MKC_InequalityWheel(3, 2));
   model.add_type_inequality(new MKC_InequalityLpSdp());
 
+
   for (int ite = 0; ite < 21; ite++)
   {
     cout << "\n ---> Iteration = " << ite << "\n";
     model.solve();
     model.find_violated_constraints(100);
+
   }
 
   solver->to_string();

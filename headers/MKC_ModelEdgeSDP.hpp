@@ -4,7 +4,7 @@
 #include "./Solver/Abstract/Solver.hpp"
 #include "./MKCInstance.hpp"
 #include "./MKCGraph.hpp"
-#include "MKC_LinearViolatedConstraints.hpp"
+#include "MKC_SDPViolatedConstraints.hpp"
 #include "MKC_Inequalities.hpp"
 #include <algorithm> // use of min and max
 #include <set>
@@ -65,17 +65,19 @@ public:
 
     void find_violated_constraints(const int &nb_max_ineq)
     {
-        LinearViolatedConstraints *linearViolatedConstraints =
-            LinearViolatedConstraints::create(nb_max_ineq,
+        SDPViolatedConstraints *sdpViolatedConstraints =
+            SDPViolatedConstraints::create(nb_max_ineq,
                                               solver,
                                               &inequalities_type,
                                               instance,
-                                              variablesEdgeSDP)->find();
+                                              variablesEdgeSDP)
+                                              ->find()
+                                              ->populate();
 
-        // linearViolatedConstraints->apply_constraints();
-        delete linearViolatedConstraints;
+        delete sdpViolatedConstraints;
 
-        std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size();
+        std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size() + 
+        solver->get_sdp_constraints()->size();
     }
 
     ~MKC_ModelEdgeSDP()

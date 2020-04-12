@@ -16,9 +16,6 @@
 
 class ConstraintSDP : public ConstraintAbstract
 {
-private:
-    std::map<const SDPVariable<Variable> *, std::vector<ConstraintCoefficient<Variable> *>> map_sdp_var;
-    std::vector<const SDPVariable<Variable> *> vec_sdp_var; //fix
 
 public:
     static ConstraintSDP *create()
@@ -33,14 +30,47 @@ public:
         return new ConstraintSDP(lb, ub, typ);
     }
 
+    static ConstraintSDP *from(ConstraintSDP *other)
+    {
+        return new ConstraintSDP(other);
+    }
+
+private:
+    std::map<const SDPVariable<Variable> *, std::vector<ConstraintCoefficient<Variable> *>> map_sdp_var;
+    std::vector<const SDPVariable<Variable> *> vec_sdp_var; //fix
+    ConstraintSDP(ConstraintSDP *other) : ConstraintAbstract(other->lowerBound,
+                                                             other->upperBound, other->type)
+    {
+        for (const SDPVariable<Variable> *sdp_var : other->vec_sdp_var)
+        {
+            for (ConstraintCoefficient<Variable> *constraintCoef : other->get_coefficeints_of_variable(sdp_var))
+            {
+                add_coefficient(sdp_var, constraintCoef->get_variable(), constraintCoef->get_value());
+            }
+        }
+    }
+
     ConstraintSDP(const double &lb,
                   const double &ub,
                   const ConstraintType &typ) : ConstraintAbstract(lb, ub, typ) {}
 
-    void add_coefficient(const SDPVariable<Variable> *sdp_var, const Variable *var, const double &coeff)
+public:
+    ConstraintSDP *add_coefficient(const SDPVariable<Variable> *sdp_var, const Variable *var, const double &coeff)
     {
-        map_sdp_var[sdp_var].push_back(ConstraintCoefficient<Variable>::create(var, coeff));
-        vec_sdp_var.push_back(sdp_var);
+        std::map<const SDPVariable<Variable> *, std::vector<ConstraintCoefficient<Variable> *>>::iterator it;
+        it = map_sdp_var.find(sdp_var);
+
+        if (it == map_sdp_var.end())
+        {
+            vec_sdp_var.push_back(sdp_var);
+            map_sdp_var[sdp_var].push_back(ConstraintCoefficient<Variable>::create(var, coeff));
+        }
+        else
+        {
+            it->second.push_back(ConstraintCoefficient<Variable>::create(var, coeff));
+        }
+
+        return this;
     }
 
     const std::map<const SDPVariable<Variable> *, std::vector<ConstraintCoefficient<Variable> *>> &get_variables() const
@@ -64,7 +94,7 @@ public:
         return vec_sdp_var[idx];
     }
 
-    const std::vector<const SDPVariable<Variable> *> & get_sdp_variables() const
+    const std::vector<const SDPVariable<Variable> *> &get_sdp_variables() const
     {
         return vec_sdp_var;
     }
@@ -84,9 +114,32 @@ public:
         return it->second;
     }
 
-    int size() const 
+    int size() const
     {
-        return number_sdp_variables();   
+        return number_sdp_variables();
+    }
+
+    bool operator==(const ConstraintSDP &other) const
+    {
+        if (this->size() != other.size())
+        {
+            return false;
+        }
+        //FIXME
+        // for (auto sdp_var : vec_sdp_var)
+        // {
+        //     get_coefficeints_of_variable(sdp_var);
+        // }
+
+        // for (int i = 0; i < size; ++i)
+        // {
+        //     if (*(this->get_coefficient_constraint_by_index(i)) != *(other.get_coefficient_constraint_by_index(i)))
+        //     {
+        //         return false;
+        //     }
+        // }
+
+        return false; // it should be true
     }
 
     ~ConstraintSDP()
