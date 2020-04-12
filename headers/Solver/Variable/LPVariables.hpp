@@ -21,12 +21,6 @@ public:
     {
         return new LPVariables();
     }
-
-    // void set_solution_value(const int &idx, const double &val)
-    // {
-    //     validate_index(idx);
-    //     variables[idx]->update_solution(val);
-    // }
 };
 
 #endif

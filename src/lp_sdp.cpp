@@ -252,8 +252,6 @@ int main(int argc, char *argv[])
   MKC_ModelEdgeLP model = MKC_ModelEdgeLP(new_instance, solver);
 
   
-
-
   Solver *solverSDP = SolverFactory::create_solver(TypeSolver::SDP_MOSEK, solverParm);
   MKC_ModelEdgeSDP modelSDP = MKC_ModelEdgeSDP(new_instance, solverSDP);
   modelSDP.solve();

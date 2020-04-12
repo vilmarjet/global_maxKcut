@@ -53,15 +53,19 @@ public:
         this->set_rhs();
     }
 
+    std::string to_string()
+    {
+        return typeid(this).name();
+    }
+
     void find_violated_constraints(const VariablesEdge *variables,
-                                   const MKCInstance *instance,
-                                   LinearViolatedConstraints *violated_constraints)
+                                   const MKCInstance *instance)
     {
         try
         {
             const MKCGraph *graph = instance->get_graph();
 
-            GRASP_heurisistic(variables, graph->get_edges(), violated_constraints);
+            GRASP_heurisistic(variables, graph->get_edges());
         }
         catch (Exception &e)
         {
@@ -82,8 +86,7 @@ public:
     }
 
     void GRASP_heurisistic(const VariablesEdge *variables,
-                           const Edges *edges,
-                           LinearViolatedConstraints *violated_constraints)
+                           const Edges *edges)
     {
 
         tabu.clean(-1);
@@ -118,14 +121,13 @@ public:
                         {
                             this->add_vertex_in_tabu_list(edges, vertices_in_cycle);
 
-                            violated_constraints->add_violated_constraint(
-                                LinearViolatedConstraint::create(0.0,
-                                                                 this->rhs,
-                                                                 ConstraintType::INFERIOR_EQUAL,
-                                                                 val - this->rhs,
-                                                                 variables_in_wheel.size(),
-                                                                 &variables_in_wheel[0],
-                                                                 &coefficients[0]));
+                            add_violated_constraint(LinearViolatedConstraint::create(0.0,
+                                                                                     this->rhs,
+                                                                                     ConstraintType::INFERIOR_EQUAL,
+                                                                                     val - this->rhs,
+                                                                                     variables_in_wheel.size(),
+                                                                                     &variables_in_wheel[0],
+                                                                                     &coefficients[0]));
                         }
                     }
                 }

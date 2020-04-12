@@ -31,19 +31,23 @@ public:
   ~MKC_InequalityClique() {}
 
   void find_violated_constraints(const VariablesEdge *variables,
-                                 const MKCInstance *instance,
-                                 LinearViolatedConstraints *violated_constraints)
+                                 const MKCInstance *instance)
   {
     this->rhs = compute_rhs(instance);
     const Edges *edges = instance->get_graph()->get_edges();
 
-    this->deterministic_heuristic(variables, edges, violated_constraints);
+    this->deterministic_heuristic(variables, edges);
   }
 
+  std::string to_string()
+    {
+        return typeid(this).name();
+    }
+
 private:
+
   void deterministic_heuristic(const VariablesEdge *variables,
-                               const Edges *edges,
-                               LinearViolatedConstraints *violated_constraints)
+                               const Edges *edges)
   {
     try
     {
@@ -74,14 +78,13 @@ private:
             double violation = this->rhs - val;
             this->set_edges_in_clique(vertices_in_clique, &variables_in_clique, edges, variables);
 
-            violated_constraints->add_violated_constraint(
-                LinearViolatedConstraint::create(this->rhs,
-                                                 variables_in_clique.size(),
-                                                 ConstraintType::SUPERIOR_EQUAL,
-                                                 violation,
-                                                 variables_in_clique.size(),
-                                                 &variables_in_clique[0],
-                                                 &coeeficient[0]));
+            add_violated_constraint(LinearViolatedConstraint::create(this->rhs,
+                                                                     variables_in_clique.size(),
+                                                                     ConstraintType::SUPERIOR_EQUAL,
+                                                                     violation,
+                                                                     variables_in_clique.size(),
+                                                                     &variables_in_clique[0],
+                                                                     &coeeficient[0]));
           }
         }
       }

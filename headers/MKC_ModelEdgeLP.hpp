@@ -4,7 +4,7 @@
 #include "./Solver/Abstract/Solver.hpp"
 #include "./MKCInstance.hpp"
 #include "./MKCGraph.hpp"
-#include "./CPA/LinearViolatedConstraints.hpp"
+#include "MKC_LinearViolatedConstraints.hpp"
 #include "./MKC_Inequalities.hpp"
 #include <algorithm> // use of min and max
 #include <set>
@@ -60,14 +60,10 @@ public:
     void find_violated_constraints(const int &nb_max_ineq)
     {
         //violated_constraints.clear();
-        LinearViolatedConstraints *linearViolatedConstraints = LinearViolatedConstraints::create(nb_max_ineq, solver);
+        LinearViolatedConstraints *linearViolatedConstraints =
+            LinearViolatedConstraints::create(nb_max_ineq, solver, &inequalities_type, 
+            instance, variablesEdge)->find()->populate();
 
-        for (auto type_inequality : inequalities_type)
-        {
-            type_inequality->find_violated_constraints(this->variablesEdge, this->instance, linearViolatedConstraints);
-        }
-
-        linearViolatedConstraints->apply_constraints();
         delete linearViolatedConstraints;
 
         std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size();

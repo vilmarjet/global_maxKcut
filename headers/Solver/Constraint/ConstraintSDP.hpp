@@ -84,6 +84,11 @@ public:
         return it->second;
     }
 
+    int size() const 
+    {
+        return number_sdp_variables();   
+    }
+
     ~ConstraintSDP()
     {
     }

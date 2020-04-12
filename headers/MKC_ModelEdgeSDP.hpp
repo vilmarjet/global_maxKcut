@@ -4,8 +4,8 @@
 #include "./Solver/Abstract/Solver.hpp"
 #include "./MKCInstance.hpp"
 #include "./MKCGraph.hpp"
-#include "./CPA/LinearViolatedConstraints.hpp"
-#include "./MKC_Inequalities.hpp"
+#include "MKC_LinearViolatedConstraints.hpp"
+#include "MKC_Inequalities.hpp"
 #include <algorithm> // use of min and max
 #include <set>
 #include <vector>
@@ -65,14 +65,12 @@ public:
 
     void find_violated_constraints(const int &nb_max_ineq)
     {
-        LinearViolatedConstraints *linearViolatedConstraints = LinearViolatedConstraints::create(nb_max_ineq, solver);
-
-        for (auto type_inequality : inequalities_type)
-        {
-            type_inequality->find_violated_constraints(this->variablesEdgeSDP,
-                                                       this->instance,
-                                                       linearViolatedConstraints);
-        }
+        LinearViolatedConstraints *linearViolatedConstraints =
+            LinearViolatedConstraints::create(nb_max_ineq,
+                                              solver,
+                                              &inequalities_type,
+                                              instance,
+                                              variablesEdgeSDP)->find();
 
         // linearViolatedConstraints->apply_constraints();
         delete linearViolatedConstraints;

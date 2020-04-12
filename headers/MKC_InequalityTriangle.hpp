@@ -18,9 +18,13 @@ public:
   {
   }
 
+  std::string to_string()
+    {
+        return typeid(this).name();
+    }
+
   void find_violated_constraints(const VariablesEdge *variables,
-                                 const MKCInstance *instance,
-                                 LinearViolatedConstraints *violated_constraints)
+                                 const MKCInstance *instance)
   {
     try
     {
@@ -64,14 +68,13 @@ public:
             if (sum > this->rhs + maxkcut::EPSILON)
             {
               double coef[] = {-1.0, 1.0, 1.0};
-              violated_constraints->add_violated_constraint(
-                  LinearViolatedConstraint::create(-1.0,
-                                                   1.0,
-                                                   ConstraintType::INFERIOR_EQUAL,
-                                                   sum - this->rhs,
-                                                   3,
-                                                   var_edges,
-                                                   coef));
+              add_violated_constraint(LinearViolatedConstraint::create(-1.0,
+                                                                       1.0,
+                                                                       ConstraintType::INFERIOR_EQUAL,
+                                                                       sum - this->rhs,
+                                                                       3,
+                                                                       var_edges,
+                                                                       coef));
             }
 
             //second contraint -> X_ij - X_hj + X_hi <= 1/
@@ -79,7 +82,7 @@ public:
             if (sum > this->rhs + maxkcut::EPSILON)
             {
               double coef[] = {1.0, -1.0, 1.0};
-              violated_constraints->add_violated_constraint(
+              add_violated_constraint(
                   LinearViolatedConstraint::create(-1.0,
                                                    1.0,
                                                    ConstraintType::INFERIOR_EQUAL,
@@ -94,7 +97,7 @@ public:
             if (sum > this->rhs + maxkcut::EPSILON)
             {
               double coef[] = {1.0, 1.0, -1.0};
-              violated_constraints->add_violated_constraint(
+              add_violated_constraint(
                   LinearViolatedConstraint::create(-1.0,
                                                    1.0,
                                                    ConstraintType::INFERIOR_EQUAL,

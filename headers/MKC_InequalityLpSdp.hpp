@@ -20,9 +20,13 @@ public:
     MKC_InequalityLpSdp() : MKC_Inequalities(0.0) {}
     ~MKC_InequalityLpSdp() {}
 
+    std::string to_string()
+    {
+        return typeid(this).name();
+    }
+
     void find_violated_constraints(const VariablesEdge *variables,
-                                   const MKCInstance *instance,
-                                   LinearViolatedConstraints *violated_constraints)
+                                   const MKCInstance *instance)
     {
         LP_SDPConstraint lp_sdp_constraint;
         const MKCGraph *graph = instance->get_graph();
@@ -64,7 +68,7 @@ public:
             lp_sdp_constraint.fill_ViolatedConstraint_Eigen(coeff_lp_to_sdp,
                                                             const_lp_to_sdp,
                                                             sym_matr_variables,
-                                                            violated_constraints);
+                                                            &violated_constraints);
         }
     }
 };

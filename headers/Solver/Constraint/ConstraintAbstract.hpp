@@ -10,7 +10,6 @@
 #include <string>
 #include <new>
 
-
 class ConstraintAbstract
 {
 
@@ -21,12 +20,13 @@ protected:
     const ConstraintType type;
 
 public:
-
     ConstraintAbstract(const double &lb,
-                  const double &ub,
-                  const ConstraintType &typ) : lowerBound(lb),
-                                               upperBound(ub),
-                                               type(typ){}
+                       const double &ub,
+                       const ConstraintType &typ) : lowerBound(lb),
+                                                    upperBound(ub),
+                                                    type(typ) {}
+
+    virtual int size() const = 0;
 
     double get_lower_bound() const
     {

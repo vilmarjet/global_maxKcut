@@ -29,8 +29,8 @@ public:
 
     static LinearConstraint *from(LinearConstraint *linearC)
     {
-        return (create(linearC->get_lower_bound(), linearC->get_upper_bound(),linearC->get_type()))
-        ->add_coefficients(&(linearC->vec_var[0]), linearC->size());
+        return (create(linearC->get_lower_bound(), linearC->get_upper_bound(), linearC->get_type()))
+            ->add_coefficients(&(linearC->vec_var[0]), linearC->size());
     }
 
     static LinearConstraint *create(const double &lb, const double &ub, const ConstraintType &typ)
@@ -54,7 +54,7 @@ public:
         return this;
     }
 
-    LinearConstraint *add_coefficients(ConstraintCoefficient<Variable> ** vec_var, const int &size)
+    LinearConstraint *add_coefficients(ConstraintCoefficient<Variable> **vec_var, const int &size)
     {
         for (int i = 0; i < size; i++)
         {
@@ -85,7 +85,7 @@ public:
         return vec_var.size();
     }
 
-    int size() const 
+    int size() const
     {
         return get_number_non_null_variables();
     }
@@ -106,7 +106,7 @@ public:
                 return false;
             }
         }
-        
+
         return true;
     }
 
