@@ -6,12 +6,10 @@
 #include <string>
 #include <cmath>
 #include <new>
-#include "./Solver/Variable/Variable.hpp"
-#include "./Solver/Constraint/ConstraintSDP.hpp"
-#include "./CPA/ViolatedConstraint.hpp"
+#include "../Solver/Variable/Variable.hpp"
+#include "../Solver/Constraint/ConstraintSDP.hpp"
+#include "ViolatedConstraint.hpp"
 
-namespace maxkcut
-{
 class SDPViolatedConstraint : public ViolatedConstraint
 {
 
@@ -49,6 +47,12 @@ public:
         return strg;
     }
 
+
+    ConstraintSDP *get_constraint() const
+    {
+        return (ConstraintSDP*)(this->constraint);
+    }
+
     bool operator==(const SDPViolatedConstraint &other) const
     {
         return this->violation == other.violation &&
@@ -60,6 +64,5 @@ public:
         delete constraint;
     }
 };
-} // namespace maxkcut
 
 #endif

@@ -6,12 +6,10 @@
 #include <string>
 #include <cmath>
 #include <new>
-#include "./Solver/Variable/Variable.hpp"
-#include "./Solver/Constraint/LinearConstraint.hpp"
-#include "./CPA/ViolatedConstraint.hpp"
+#include "../Solver/Variable/Variable.hpp"
+#include "../Solver/Constraint/LinearConstraint.hpp"
+#include "ViolatedConstraint.hpp"
 
-namespace maxkcut
-{
 class LinearViolatedConstraint : public ViolatedConstraint
 {
 private:
@@ -56,7 +54,7 @@ public:
 
     static LinearViolatedConstraint *from (LinearViolatedConstraint *violated)
     {
-        return new LinearViolatedConstraint(violated->violation, (LinearConstraint*) (violated->get_constraint()));
+        return new LinearViolatedConstraint(violated->violation, violated->get_constraint());
     }
 
     ConstraintCoefficient<Variable> *add_coefficient(const Variable *var, const double &coeff)
@@ -94,6 +92,5 @@ public:
         delete constraint;
     }
 };
-} // namespace maxkcut
 
 #endif

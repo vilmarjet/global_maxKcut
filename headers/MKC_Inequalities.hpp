@@ -6,7 +6,7 @@
 #include "./MKCGraph.hpp"
 #include "./MKCInstance.hpp"
 #include "./VariablesEdge.hpp"
-#include "MKC_LinearViolatedConstraint.hpp"
+#include "CPA/ViolatedConstraint.hpp"
 #include <vector>
 
 namespace maxkcut

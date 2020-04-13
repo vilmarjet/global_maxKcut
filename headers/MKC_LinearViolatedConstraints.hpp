@@ -7,7 +7,7 @@
 #include <cmath>
 #include <new>
 #include <set>
-#include "MKC_LinearViolatedConstraint.hpp"
+#include "./CPA/LinearViolatedConstraint.hpp"
 #include "./CPA/ViolatedConstraints.hpp"
 #include "MKC_Inequalities.hpp"
 #include "MKCInstance.hpp"
@@ -41,8 +41,8 @@ private:
     LinearViolatedConstraints(const int &nb,
                               Solver *solver_,
                               std::vector<MKC_Inequalities *> *types) : ProcessViolatedConstraints(nb),
-                                                                         solver(solver_),
-                                                                         inequalities_type(types)
+                                                                        solver(solver_),
+                                                                        inequalities_type(types)
 
     {
     }
@@ -69,7 +69,12 @@ public:
         int counter_ineq = 0;
         for (auto constraint : violated_constraints)
         {
-            solver->add_constraint_linear(LinearConstraint::from((LinearConstraint *)(constraint->get_constraint())));
+            if (constraint->get_constraint()->get_type_constraint() != ConstraintType::LINEAR)
+            {
+                continue;
+            }
+
+            solver->add_constraint_linear(LinearConstraint::from((LinearConstraint *)constraint->get_constraint()));
 
             if (++counter_ineq > get_max_number_inequalities())
             {

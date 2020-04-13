@@ -6,7 +6,7 @@
 #include <set>
 #include "../../../../../../myFiles/eigen/Eigen/Dense"
 #include "../../../../../../myFiles/eigen/Eigen/Eigenvalues"
-#include "../../../MKC_LinearViolatedConstraint.hpp"
+#include "../../../CPA/LinearViolatedConstraint.hpp"
 
 class LP_SDPConstraint
 {
@@ -73,7 +73,7 @@ public:
                                                      &coefficients,
                                                      eigen_solver.eigenvectors().col(i));
 
-                violated_constraints->push_back(maxkcut::LinearViolatedConstraint::create(this->rhs,
+                violated_constraints->push_back(LinearViolatedConstraint::create(this->rhs,
                                                                                  (double)dim,
                                                                                  ConstraintBoundKey::SUPERIOR_EQUAL,
                                                                                  violation,

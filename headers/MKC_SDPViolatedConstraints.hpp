@@ -1,7 +1,7 @@
 #ifndef SDP_VIOLATED_CONSTRAINTS_HPP
 #define SDP_VIOLATED_CONSTRAINTS_HPP
 
-#include "MKC_SDPViolatedConstraint.hpp"
+#include "./CPA/SDPViolatedConstraint.hpp"
 #include "./Solver/Constraint/LinearConstraint.hpp"
 
 #include <vector>
@@ -10,7 +10,7 @@
 #include <cmath>
 #include <new>
 #include <set>
-#include "MKC_LinearViolatedConstraint.hpp"
+#include "./CPA/LinearViolatedConstraint.hpp"
 #include "./CPA/ViolatedConstraints.hpp"
 #include "MKC_Inequalities.hpp"
 #include "MKCInstance.hpp"
@@ -108,7 +108,7 @@ public:
         int counter_ineq = 0;
         for (auto constraint : violated_constraints)
         {
-            solver->add_constraint_SDP(ConstraintSDP::from((ConstraintSDP *)(constraint->get_constraint())));
+            solver->add_constraint_SDP(ConstraintSDP::from((ConstraintSDP *)constraint->get_constraint()));
 
             if (++counter_ineq > get_max_number_inequalities())
             {
