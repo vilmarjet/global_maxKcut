@@ -23,7 +23,7 @@ public:
     void fill_ViolatedConstraint_Eigen(const double &coeff_lp_to_sdp, //(double)K / (K - 1); 1.0 = null
                                        const double &const_lp_to_sdp, // (1.0 / (K - 1)); 0.0= null
                                        const std::vector<std::vector<const Variable *>> &sym_matr_variables,
-                                       std::vector<maxkcut::LinearViolatedConstraint *> *violated_constraints)
+                                       std::vector<ViolatedConstraint *> *violated_constraints)
     {
         int dim = sym_matr_variables.size();
         int number_variables_constraint = (dim * (dim - 1)) / 2;
@@ -75,7 +75,7 @@ public:
 
                 violated_constraints->push_back(maxkcut::LinearViolatedConstraint::create(this->rhs,
                                                                                  (double)dim,
-                                                                                 ConstraintType::SUPERIOR_EQUAL,
+                                                                                 ConstraintBoundKey::SUPERIOR_EQUAL,
                                                                                  violation,
                                                                                  variables.size(),
                                                                                  &variables[0],

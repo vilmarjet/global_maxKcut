@@ -10,6 +10,7 @@
 #include "ConstraintCoefficient.hpp"
 #include "ConstraintAbstract.hpp"
 #include "../../Utils/Exception.hpp"
+#include "ConstraintType.hpp"
 #include <string>
 #include <new>
 
@@ -23,11 +24,11 @@ public:
 
     static LinearConstraint *from(LinearConstraint *linearC)
     {
-        return (create(linearC->get_lower_bound(), linearC->get_upper_bound(), linearC->get_type()))
+        return (create(linearC->get_lower_bound(), linearC->get_upper_bound(), linearC->get_bound_key()))
             ->add_coefficients(&(linearC->vec_var[0]), linearC->size());
     }
 
-    static LinearConstraint *create(const double &lb, const double &ub, const ConstraintType &typ)
+    static LinearConstraint *create(const double &lb, const double &ub, const ConstraintBoundKey &typ)
     {
         return new LinearConstraint(lb, ub, typ);
     }
@@ -36,7 +37,7 @@ private:
     std::vector<ConstraintCoefficient<Variable> *> vec_var;
     LinearConstraint(const double &lb,
                      const double &ub,
-                     const ConstraintType &typ) : ConstraintAbstract(lb, ub, typ) {}
+                     const ConstraintBoundKey &typ) : ConstraintAbstract(lb, ub, typ, ConstraintType::LINEAR) {}
 
 public:
     ConstraintCoefficient<Variable> *add_coefficient(const Variable *var, const double &coeff)

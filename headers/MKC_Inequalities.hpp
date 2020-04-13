@@ -14,21 +14,20 @@ namespace maxkcut
 class MKC_Inequalities
 {
 protected:
-    double rhs;
-    std::vector<LinearViolatedConstraint*> violated_constraints;
+    std::vector<ViolatedConstraint*> violated_constraints;
 
 public:
-    MKC_Inequalities(const double &_rhs) : rhs(_rhs) {}
-    virtual void find_violated_constraints(const VariablesEdge *Variables,
-                                           const MKCInstance *instance) = 0;
+    MKC_Inequalities() {}
+
+    virtual void find_violated_constraints() = 0;
     virtual std::string to_string() = 0;
     
-    const std::vector<LinearViolatedConstraint*> &get_constraints() const
+    const std::vector<ViolatedConstraint*> &get_constraints() const
     {
         return  violated_constraints;
     }
 
-    LinearViolatedConstraint *add_violated_constraint(LinearViolatedConstraint * constraint)
+    ViolatedConstraint *add_violated_constraint(ViolatedConstraint * constraint)
     {
         violated_constraints.push_back(constraint);
         return violated_constraints[get_number_constraints() - 1];

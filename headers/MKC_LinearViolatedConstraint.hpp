@@ -7,7 +7,6 @@
 #include <cmath>
 #include <new>
 #include "./Solver/Variable/Variable.hpp"
-#include "./Solver/Constraint/ConstraintType.hpp"
 #include "./Solver/Constraint/LinearConstraint.hpp"
 #include "./CPA/ViolatedConstraint.hpp"
 
@@ -18,7 +17,7 @@ class LinearViolatedConstraint : public ViolatedConstraint
 private:
     LinearViolatedConstraint(const double &lb,
                              const double &ub,
-                             const ConstraintType &typ,
+                             const ConstraintBoundKey &typ,
                              const double &vio,
                              const int &size,
                              const Variable **vars,
@@ -38,7 +37,7 @@ private:
 public:
     static LinearViolatedConstraint *create(const double &lb,
                                             const double &ub,
-                                            const ConstraintType &typ,
+                                            const ConstraintBoundKey &typ,
                                             const double &vio)
     {
         return create(lb, ub, typ, vio, 0, nullptr, nullptr);
@@ -46,7 +45,7 @@ public:
 
     static LinearViolatedConstraint *create(const double &lb,
                                             const double &ub,
-                                            const ConstraintType &typ,
+                                            const ConstraintBoundKey &typ,
                                             const double &vio,
                                             const int &size,
                                             const Variable **vars,
@@ -77,6 +76,11 @@ public:
         strg += "; vioil=" + std::to_string(this->violation);
 
         return strg;
+    }
+
+    LinearConstraint *get_constraint() const
+    {
+        return (LinearConstraint *)constraint;
     }
 
     bool operator==(const LinearViolatedConstraint &other) const

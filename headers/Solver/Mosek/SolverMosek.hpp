@@ -20,7 +20,7 @@ public:
     SolverMosek() : task(NULL), env(NULL), r_code(MSK_RES_OK), position_constraints(0) {}
     //virtual void set_type_mosek_solver() = 0;
 
-    MSKboundkeye get_mosek_constraint_type(const ConstraintType &type)
+    MSKboundkeye get_mosek_constraint_bound_key(const ConstraintBoundKey &type)
     {
         switch (type)
         {
@@ -227,7 +227,7 @@ public:
 
         r_code = MSK_putconbound(task,
                                  position_constraints,
-                                 get_mosek_constraint_type(constraint->get_type()),
+                                 this->get_mosek_constraint_bound_key(constraint->get_bound_key()),
                                  constraint->get_lower_bound(),
                                  constraint->get_upper_bound());
 
@@ -274,7 +274,7 @@ public:
 
         r_code = MSK_putconbound(task,
                                  position_constraints,
-                                 get_mosek_constraint_type(constraint->get_type()),
+                                 this->get_mosek_constraint_bound_key(constraint->get_bound_key()),
                                  constraint->get_lower_bound(),
                                  constraint->get_upper_bound());
 

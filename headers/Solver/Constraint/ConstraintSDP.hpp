@@ -10,6 +10,7 @@
 #include "../Variable/SDPVariable.hpp"
 #include "ConstraintCoefficient.hpp"
 #include "ConstraintAbstract.hpp"
+#include "ConstraintType.hpp"
 #include "../../Utils/Exception.hpp"
 #include <string>
 #include <new>
@@ -25,7 +26,7 @@ public:
 
     static ConstraintSDP *create(const double &lb,
                                  const double &ub,
-                                 const ConstraintType &typ)
+                                 const ConstraintBoundKey &typ)
     {
         return new ConstraintSDP(lb, ub, typ);
     }
@@ -39,7 +40,9 @@ private:
     std::map<const SDPVariable<Variable> *, std::vector<ConstraintCoefficient<Variable> *>> map_sdp_var;
     std::vector<const SDPVariable<Variable> *> vec_sdp_var; //fix
     ConstraintSDP(ConstraintSDP *other) : ConstraintAbstract(other->lowerBound,
-                                                             other->upperBound, other->type)
+                                                             other->upperBound, 
+                                                             other->bound_key,
+                                                             other->type)
     {
         for (const SDPVariable<Variable> *sdp_var : other->vec_sdp_var)
         {
@@ -52,7 +55,7 @@ private:
 
     ConstraintSDP(const double &lb,
                   const double &ub,
-                  const ConstraintType &typ) : ConstraintAbstract(lb, ub, typ) {}
+                  const ConstraintBoundKey &typ) : ConstraintAbstract(lb, ub, typ, ConstraintType::SYMMETRIC) {}
 
 public:
     ConstraintSDP *add_coefficient(const SDPVariable<Variable> *sdp_var, const Variable *var, const double &coeff)

@@ -19,7 +19,7 @@ private:
 protected:
     double lowerBound;
     double upperBound;
-    ConstraintType type;
+    ConstraintBoundKey type;
 
     std::vector<const Variable *> variables;
     std::vector<double> coefficients;
@@ -33,7 +33,7 @@ public:
                const std::vector<double> &coef,
                const double &lb,
                const double &ub,
-               const ConstraintType &typ) : variables(vars),
+               const ConstraintBoundKey &typ) : variables(vars),
                                             coefficients(coef),
                                             lowerBound(lb),
                                             upperBound(ub),
@@ -43,7 +43,7 @@ public:
                const int &size,
                const double &lb,
                const double &ub,
-               const ConstraintType &typ) : lowerBound(lb),
+               const ConstraintBoundKey &typ) : lowerBound(lb),
                                             upperBound(ub),
                                             type(typ)
     {
@@ -76,7 +76,7 @@ public:
         return &this->coefficients[0];
     }
 
-    ConstraintType get_type() const
+    ConstraintBoundKey get_type() const
     {
         return this->type;
     }

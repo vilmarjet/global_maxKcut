@@ -6,6 +6,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include "ConstraintBoundKey.hpp"
 #include "ConstraintType.hpp"
 #include <string>
 #include <new>
@@ -17,14 +18,17 @@ private:
 protected:
     const double lowerBound;
     const double upperBound;
+    const ConstraintBoundKey bound_key;
     const ConstraintType type;
 
 public:
     ConstraintAbstract(const double &lb,
                        const double &ub,
-                       const ConstraintType &typ) : lowerBound(lb),
+                       const ConstraintBoundKey &bk,
+                       const ConstraintType &tp) : lowerBound(lb),
                                                     upperBound(ub),
-                                                    type(typ) {}
+                                                    bound_key(bk),
+                                                    type(tp) {}
 
     virtual int size() const = 0;
 
@@ -38,7 +42,12 @@ public:
         return this->upperBound;
     }
 
-    ConstraintType get_type() const
+    const ConstraintBoundKey &get_bound_key() const
+    {
+        return this->bound_key;
+    }
+
+    const ConstraintType &get_type_constraint() const 
     {
         return this->type;
     }

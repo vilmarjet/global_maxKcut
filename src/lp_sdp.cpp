@@ -258,22 +258,6 @@ int main(int argc, char *argv[])
 
   cin.get();
 
-  modelSDP.add_type_inequality(new MKC_InequalityTriangle());
-  modelSDP.add_type_inequality(new MKC_InequalityClique(new_instance->get_K() + 1));
-  modelSDP.add_type_inequality(new MKC_InequalityClique(new_instance->get_K() + 2));
-  modelSDP.add_type_inequality(new MKC_InequalityWheel(3, 1));
-  modelSDP.add_type_inequality(new MKC_InequalityWheel(3, 2));
-  modelSDP.add_type_inequality(new MKC_InequalityLpSdp());
-
-
-  model.add_type_inequality(new MKC_InequalityTriangle());
-  model.add_type_inequality(new MKC_InequalityClique(new_instance->get_K() + 1));
-  model.add_type_inequality(new MKC_InequalityClique(new_instance->get_K() + 2));
-  model.add_type_inequality(new MKC_InequalityWheel(3, 1));
-  model.add_type_inequality(new MKC_InequalityWheel(3, 2));
-  model.add_type_inequality(new MKC_InequalityLpSdp());
-
-
   for (int ite = 0; ite < 21; ite++)
   {
     cout << "\n ---> Iteration = " << ite << "\n";

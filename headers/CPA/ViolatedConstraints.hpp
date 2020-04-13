@@ -18,7 +18,7 @@ struct CompViolatedConstraint
     }
 };
 
-class ViolatedConstraints
+class ProcessViolatedConstraints
 {
 protected:
     std::set<ViolatedConstraint *, CompViolatedConstraint> violated_constraints;
@@ -26,11 +26,11 @@ protected:
 
 public:
     const static int DEFAULT_NUMBER_MAX_VIOLATIONS = 100;
-    ViolatedConstraints(const int &nb) : max_number_inequalities(nb) {}
-    ~ViolatedConstraints() {}
+    ProcessViolatedConstraints(const int &nb) : max_number_inequalities(nb) {}
+    ~ProcessViolatedConstraints() {}
 
-    virtual ViolatedConstraints* populate() = 0;
-    virtual ViolatedConstraints* find() = 0;
+    virtual ProcessViolatedConstraints* populate() = 0;
+    virtual ProcessViolatedConstraints* find() = 0;
 
     ViolatedConstraint *add_violated_constraint(ViolatedConstraint *constraint)
     {
@@ -39,7 +39,7 @@ public:
         return *it;
     }
 
-    ViolatedConstraints *add_violated_constraints (ViolatedConstraint **constraint, const int &size)
+    ProcessViolatedConstraints *add_violated_constraints (ViolatedConstraint **constraint, const int &size)
     {
         for (int i=0; i<size; ++i)
         {

@@ -13,47 +13,46 @@
 #include "MKCInstance.hpp"
 namespace maxkcut
 {
-class LinearViolatedConstraints : public ViolatedConstraints
+class LinearViolatedConstraints : public ProcessViolatedConstraints
 {
-private:
-    Solver *solver;
-    const std::vector<MKC_Inequalities *> *inequalities_type;
-    const MKCInstance *instance;
-    const VariablesEdge *variablesEdge;
-
-    LinearViolatedConstraints(const int &nb,
-                              Solver *solver_,
-                              std::vector<MKC_Inequalities *> *types,
-                              const MKCInstance *instance_,
-                              const VariablesEdge *variablesEdge_) : ViolatedConstraints(nb),
-                                                                     solver(solver_),
-                                                                     inequalities_type(types),
-                                                                     instance(instance_),
-                                                                     variablesEdge(variablesEdge_)
-    {
-    }
-
 public:
     static LinearViolatedConstraints *create()
     {
-        return create(DEFAULT_NUMBER_MAX_VIOLATIONS, nullptr, nullptr, nullptr, nullptr);
+        return create(DEFAULT_NUMBER_MAX_VIOLATIONS, nullptr, nullptr);
     }
 
     static LinearViolatedConstraints *create(const int &nb,
                                              Solver *solver_,
-                                             std::vector<MKC_Inequalities *> * types,
-                                             MKCInstance *instance,
-                                             VariablesEdge * variablesEdge)
+                                             std::vector<MKC_Inequalities *> *types)
     {
-        return new LinearViolatedConstraints(nb, solver_, types, instance, variablesEdge);
+        return new LinearViolatedConstraints(nb, solver_, types);
     }
 
+    static LinearViolatedConstraints *create(Solver *solver_,
+                                             std::vector<MKC_Inequalities *> *types)
+    {
+        return create(DEFAULT_NUMBER_MAX_VIOLATIONS, solver_, types);
+    }
+
+private:
+    Solver *solver;
+    const std::vector<MKC_Inequalities *> *inequalities_type;
+
+    LinearViolatedConstraints(const int &nb,
+                              Solver *solver_,
+                              std::vector<MKC_Inequalities *> *types) : ProcessViolatedConstraints(nb),
+                                                                         solver(solver_),
+                                                                         inequalities_type(types)
+
+    {
+    }
+
+public:
     LinearViolatedConstraints *find()
     {
-        
         for (auto inequality : *inequalities_type)
         {
-            inequality->find_violated_constraints(variablesEdge, instance);
+            inequality->find_violated_constraints();
             for (auto violated_constraint : inequality->get_constraints())
             {
                 add_violated_constraint(violated_constraint);

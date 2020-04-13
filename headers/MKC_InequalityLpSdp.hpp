@@ -16,8 +16,32 @@ namespace maxkcut
 {
 class MKC_InequalityLpSdp : public MKC_Inequalities
 {
+
 public:
-    MKC_InequalityLpSdp() : MKC_Inequalities(0.0) {}
+    static MKC_InequalityLpSdp *create()
+    {
+        return new MKC_InequalityLpSdp(nullptr, nullptr);
+    }
+
+    static MKC_InequalityLpSdp *create(const VariablesEdge *variables_, const MKCInstance *instance_)
+    {
+        return new MKC_InequalityLpSdp(variables_, instance_);
+    }
+
+private:
+    const VariablesEdge *variables;
+    const MKCInstance *instance;
+    double rhs;
+
+    MKC_InequalityLpSdp(const VariablesEdge *variables_,
+                        const MKCInstance *instance_) : variables(variables_),
+                                                        instance(instance_),
+                                                        rhs(0.0)
+
+    {
+    }
+
+public:
     ~MKC_InequalityLpSdp() {}
 
     std::string to_string()
@@ -25,8 +49,7 @@ public:
         return typeid(this).name();
     }
 
-    void find_violated_constraints(const VariablesEdge *variables,
-                                   const MKCInstance *instance)
+    void find_violated_constraints()
     {
         LP_SDPConstraint lp_sdp_constraint;
         const MKCGraph *graph = instance->get_graph();

@@ -7,7 +7,6 @@
 #include <cmath>
 #include <new>
 #include "./Solver/Variable/Variable.hpp"
-#include "./Solver/Constraint/ConstraintType.hpp"
 #include "./Solver/Constraint/ConstraintSDP.hpp"
 #include "./CPA/ViolatedConstraint.hpp"
 
@@ -19,7 +18,7 @@ class SDPViolatedConstraint : public ViolatedConstraint
 public:
     static SDPViolatedConstraint *create(const double &lb,
                                          const double &ub,
-                                         const ConstraintType &typ,
+                                         const ConstraintBoundKey &typ,
                                          const double &vio)
     {
         return new SDPViolatedConstraint(lb, ub, typ, vio);
@@ -28,7 +27,7 @@ public:
 private:
     SDPViolatedConstraint(const double &lb,
                           const double &ub,
-                          const ConstraintType &typ,
+                          const ConstraintBoundKey &typ,
                           const double &vio) : ViolatedConstraint(vio,
                                                                   ConstraintSDP::create(lb, ub, typ))
     {

@@ -18,16 +18,16 @@
 
 namespace maxkcut
 {
-class SDPViolatedConstraints : public ViolatedConstraints
+class ProcessSDPViolatedConstraints : public ProcessViolatedConstraints
 {
 public:
-    static SDPViolatedConstraints *create(const int &nb,
-                                          Solver *solver_,
-                                          std::vector<MKC_Inequalities *> *types,
-                                          const MKCInstance *instance,
-                                          const VariablesEdgeSDP *variablesEdge)
+    static ProcessSDPViolatedConstraints *create(const int &nb,
+                                                 Solver *solver_,
+                                                 std::vector<MKC_Inequalities *> *types,
+                                                 const MKCInstance *instance,
+                                                 const VariablesEdgeSDP *variablesEdge)
     {
-        return new SDPViolatedConstraints(nb, solver_, types, instance, variablesEdge);
+        return new ProcessSDPViolatedConstraints(nb, solver_, types, instance, variablesEdge);
     }
 
 private:
@@ -36,15 +36,15 @@ private:
     const MKCInstance *instance;
     const VariablesEdgeSDP *variablesEdgeSDP;
 
-    SDPViolatedConstraints(const int &nb,
-                           Solver *solver_,
-                           std::vector<MKC_Inequalities *> *types,
-                           const MKCInstance *instance_,
-                           const VariablesEdgeSDP *variablesEdge_) : ViolatedConstraints(nb),
-                                                                     solver(solver_),
-                                                                     inequalities_type(types),
-                                                                     instance(instance_),
-                                                                     variablesEdgeSDP(variablesEdge_)
+    ProcessSDPViolatedConstraints(const int &nb,
+                                  Solver *solver_,
+                                  std::vector<MKC_Inequalities *> *types,
+                                  const MKCInstance *instance_,
+                                  const VariablesEdgeSDP *variablesEdge_) : ProcessViolatedConstraints(nb),
+                                                                            solver(solver_),
+                                                                            inequalities_type(types),
+                                                                            instance(instance_),
+                                                                            variablesEdgeSDP(variablesEdge_)
     {
     }
 
@@ -67,23 +67,20 @@ private:
     }
 
 public:
-    ~SDPViolatedConstraints() {}
+    ~ProcessSDPViolatedConstraints() {}
 
-    SDPViolatedConstraints *find()
+    ProcessSDPViolatedConstraints *find()
     {
         for (auto inequality : *inequalities_type)
         {
-            inequality->find_violated_constraints(variablesEdgeSDP, instance);
+            inequality->find_violated_constraints();
             for (auto violated_constraint : inequality->get_constraints())
             {
-                add_violated_constraint_from_linear_to_sdp(violated_constraint);
+                add_violated_constraint_from_linear_to_sdp((LinearViolatedConstraint *)violated_constraint);
             }
 
             inequality->reset();
         }
-
-        std::cout << get_number_violated_constraints();
-        std::cin.get();
 
         return this;
     }
@@ -91,11 +88,11 @@ public:
     void add_violated_constraint_from_linear_to_sdp(LinearViolatedConstraint *violatedLinearConstraint)
     {
 
-        LinearConstraint *linearC = (LinearConstraint *)(violatedLinearConstraint->get_constraint());
+        LinearConstraint *linearC = violatedLinearConstraint->get_constraint();
         SDPViolatedConstraint *sdp_viol = (SDPViolatedConstraint *)add_violated_constraint(
             SDPViolatedConstraint::create(linearC->get_lower_bound(),
                                           linearC->get_upper_bound(),
-                                          linearC->get_type(),
+                                          linearC->get_bound_key(),
                                           violatedLinearConstraint->get_violation()));
 
         for (ConstraintCoefficient<Variable> *constraintCoeff : linearC->get_constraint_coefficients())
@@ -106,7 +103,7 @@ public:
         }
     }
 
-    SDPViolatedConstraints *populate()
+    ProcessSDPViolatedConstraints *populate()
     {
         int counter_ineq = 0;
         for (auto constraint : violated_constraints)

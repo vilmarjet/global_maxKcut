@@ -3,9 +3,8 @@
 
 enum ConstraintType
 {
-    EQUAL,          // (=)
-    INFERIOR_EQUAL, // (<=)
-    SUPERIOR_EQUAL, //(>=)
+    LINEAR,          
+    SYMMETRIC, 
 };
 
 #endif

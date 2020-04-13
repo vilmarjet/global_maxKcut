@@ -14,17 +14,32 @@ class MKC_InequalityTriangle : public MKC_Inequalities
 {
 
 public:
-  MKC_InequalityTriangle(/* args */) : MKC_Inequalities(1.0)
+  static MKC_InequalityTriangle *create()
+  {
+    return new MKC_InequalityTriangle(nullptr, nullptr);
+  }
+
+  static MKC_InequalityTriangle *create(const VariablesEdge *variables_, const MKCInstance *instance_)
+  {
+    return new MKC_InequalityTriangle(variables_, instance_);
+  }
+
+private:
+  const VariablesEdge *variables;
+  const MKCInstance *instance;
+  const double rhs;
+
+  MKC_InequalityTriangle(const VariablesEdge *variables_,
+                         const MKCInstance *instance_) : variables(variables_),
+                                                         instance(instance_),
+                                                         rhs(1.0)
+
   {
   }
 
-  std::string to_string()
-    {
-        return typeid(this).name();
-    }
+public:
 
-  void find_violated_constraints(const VariablesEdge *variables,
-                                 const MKCInstance *instance)
+  void find_violated_constraints()
   {
     try
     {
@@ -69,8 +84,8 @@ public:
             {
               double coef[] = {-1.0, 1.0, 1.0};
               add_violated_constraint(LinearViolatedConstraint::create(-1.0,
-                                                                       1.0,
-                                                                       ConstraintType::INFERIOR_EQUAL,
+                                                                       this->rhs,
+                                                                       ConstraintBoundKey::INFERIOR_EQUAL,
                                                                        sum - this->rhs,
                                                                        3,
                                                                        var_edges,
@@ -84,8 +99,8 @@ public:
               double coef[] = {1.0, -1.0, 1.0};
               add_violated_constraint(
                   LinearViolatedConstraint::create(-1.0,
-                                                   1.0,
-                                                   ConstraintType::INFERIOR_EQUAL,
+                                                   this->rhs,
+                                                   ConstraintBoundKey::INFERIOR_EQUAL,
                                                    sum - this->rhs,
                                                    3,
                                                    var_edges,
@@ -99,8 +114,8 @@ public:
               double coef[] = {1.0, 1.0, -1.0};
               add_violated_constraint(
                   LinearViolatedConstraint::create(-1.0,
-                                                   1.0,
-                                                   ConstraintType::INFERIOR_EQUAL,
+                                                   this->rhs,
+                                                   ConstraintBoundKey::INFERIOR_EQUAL,
                                                    sum - this->rhs,
                                                    3,
                                                    var_edges,
@@ -125,6 +140,11 @@ public:
       Exception ept = Exception(msg, ExceptionType::STOP_EXECUTION);
       ept.execute();
     }
+  }
+
+  std::string to_string()
+  {
+    return typeid(this).name();
   }
 
   ~MKC_InequalityTriangle() {}

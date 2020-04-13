@@ -12,6 +12,12 @@
 #include "VariablesEdgeSDP.hpp"
 #include "MKC_InequalitySDPDiagonal.hpp"
 
+#include "MKC_Inequalities.hpp"
+#include "MKC_InequalityTriangle.hpp"
+#include "MKC_InequalityClique.hpp"
+#include "MKC_InequalityWheel.hpp"
+#include "MKC_InequalityLpSdp.hpp"
+
 namespace maxkcut
 {
 
@@ -48,6 +54,8 @@ public:
         variablesEdgeSDP = VariablesEdgeSDP::create(solver, instance);
         MKC_InequalitySDPDiagonal::create(solver)->populate();
 
+        initialize_constraints();
+
         this->set_objective_function();
     }
     void set_objective_function()
@@ -63,21 +71,30 @@ public:
         this->inequalities_type.push_back(ineq_type);
     }
 
+    void initialize_constraints()
+    {
+        add_type_inequality(MKC_InequalityTriangle::create(variablesEdgeSDP, instance));
+        add_type_inequality(MKC_InequalityClique::create(variablesEdgeSDP, instance, instance->get_K() + 1));
+        add_type_inequality(MKC_InequalityClique::create(variablesEdgeSDP, instance, instance->get_K() + 2));
+        add_type_inequality(MKC_InequalityWheel::create(variablesEdgeSDP, instance));
+        add_type_inequality(MKC_InequalityWheel::create(variablesEdgeSDP, instance, 3, 2));
+        add_type_inequality(MKC_InequalityLpSdp::create(variablesEdgeSDP, instance));
+    }
+
     void find_violated_constraints(const int &nb_max_ineq)
     {
-        SDPViolatedConstraints *sdpViolatedConstraints =
-            SDPViolatedConstraints::create(nb_max_ineq,
-                                              solver,
-                                              &inequalities_type,
-                                              instance,
-                                              variablesEdgeSDP)
-                                              ->find()
-                                              ->populate();
+        ProcessSDPViolatedConstraints *sdpViolatedConstraints =
+            ProcessSDPViolatedConstraints::create(nb_max_ineq,
+                                                  solver,
+                                                  &inequalities_type,
+                                                  instance,
+                                                  variablesEdgeSDP)
+                ->find()
+                ->populate();
 
         delete sdpViolatedConstraints;
 
-        std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size() + 
-        solver->get_sdp_constraints()->size();
+        std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size() + solver->get_sdp_constraints()->size();
     }
 
     ~MKC_ModelEdgeSDP()

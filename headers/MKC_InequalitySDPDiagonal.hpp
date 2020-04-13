@@ -3,7 +3,6 @@
 
 
 #include "./Solver/Abstract/Solver.hpp"
-#include "./Solver/Constraint/ConstraintType.hpp"
 #include "./Solver/Constraint/ConstraintSDP.hpp"
 #include "./Solver/Variable/Variable.hpp"
 
@@ -30,7 +29,7 @@ public:
         int dim = sdp_var->get_dimension();
         double lowerBound = 1.0;
         double upperBound = 1.0;
-        ConstraintType type = ConstraintType::EQUAL;
+        ConstraintBoundKey type = ConstraintBoundKey::EQUAL;
         double coeff = 1.0;
 
         for (int i = 0; i < dim; ++i)
@@ -40,7 +39,6 @@ public:
             constraint->add_coefficient(sdp_var, variable, coeff);
         }
 
-        // solver->append_constraints();
     }
 
     ~MKC_InequalitySDPDiagonal() {}

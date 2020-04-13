@@ -11,6 +11,12 @@
 #include <vector>
 #include "VariablesEdge.hpp"
 
+#include "MKC_Inequalities.hpp"
+#include "MKC_InequalityTriangle.hpp"
+#include "MKC_InequalityClique.hpp"
+#include "MKC_InequalityWheel.hpp"
+#include "MKC_InequalityLpSdp.hpp"
+
 namespace maxkcut
 {
 
@@ -26,8 +32,8 @@ public:
     MKC_ModelEdgeLP(MKCInstance *instance_, Solver *solver_) : instance(instance_),
                                                                solver(solver_)
     {
-        this->initilize();
         inequalities_type.clear();
+        this->initilize();
     }
 
     void solve()
@@ -44,8 +50,24 @@ public:
     void initilize()
     {
         variablesEdge = VariablesEdge::create(solver, instance);
+
+        initialize_constraints();
+
         this->set_objective_function();
     }
+
+    void initialize_constraints()
+    {
+
+        add_type_inequality(MKC_InequalityTriangle::create(variablesEdge, instance));
+        add_type_inequality(MKC_InequalityClique::create(variablesEdge, instance, instance->get_K() + 1));
+        add_type_inequality(MKC_InequalityClique::create(variablesEdge, instance, instance->get_K() + 2));
+        add_type_inequality(MKC_InequalityWheel::create(variablesEdge, instance));
+        add_type_inequality(MKC_InequalityWheel::create(variablesEdge, instance, 3, 2));
+        add_type_inequality(MKC_InequalityLpSdp::create(variablesEdge, instance));
+
+    }
+
     void set_objective_function()
     {
         double cst = instance->get_graph()->get_edges()->sum_weight_all_edges();
@@ -61,8 +83,9 @@ public:
     {
         //violated_constraints.clear();
         LinearViolatedConstraints *linearViolatedConstraints =
-            LinearViolatedConstraints::create(nb_max_ineq, solver, &inequalities_type, 
-            instance, variablesEdge)->find()->populate();
+            LinearViolatedConstraints::create(nb_max_ineq, solver, &inequalities_type)
+                ->find()
+                ->populate();
 
         delete linearViolatedConstraints;
 
