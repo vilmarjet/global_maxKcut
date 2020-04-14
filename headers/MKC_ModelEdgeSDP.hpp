@@ -5,14 +5,13 @@
 #include "./MKCInstance.hpp"
 #include "./MKCGraph.hpp"
 #include "MKC_SDPViolatedConstraints.hpp"
-#include "MKC_Inequalities.hpp"
 #include <algorithm> // use of min and max
 #include <set>
 #include <vector>
 #include "VariablesEdgeSDP.hpp"
 #include "MKC_InequalitySDPDiagonal.hpp"
 
-#include "MKC_Inequalities.hpp"
+#include "./CPA/ViolatedConstraints.hpp"
 #include "MKC_InequalityTriangle.hpp"
 #include "MKC_InequalityClique.hpp"
 #include "MKC_InequalityWheel.hpp"
@@ -27,7 +26,7 @@ private:
     Solver *solver;
     MKCInstance *instance;
     VariablesEdgeSDP *variablesEdgeSDP;
-    std::vector<MKC_Inequalities *> inequalities_type;
+    std::vector<ViolatedConstraints *> inequalities_type;
 
 public:
     MKC_ModelEdgeSDP(MKCInstance *instance_, Solver *solver_) : instance(instance_),
@@ -66,7 +65,7 @@ public:
         solver->set_const_objective_function(cst);
     }
 
-    void add_type_inequality(MKC_Inequalities *ineq_type)
+    void add_type_inequality(ViolatedConstraints *ineq_type)
     {
         this->inequalities_type.push_back(ineq_type);
     }
@@ -83,8 +82,8 @@ public:
 
     void find_violated_constraints(const int &nb_max_ineq)
     {
-        ProcessSDPViolatedConstraints *sdpViolatedConstraints =
-            ProcessSDPViolatedConstraints::create(nb_max_ineq,
+        ProcessorSDPViolatedConstraints *sdpViolatedConstraints =
+            ProcessorSDPViolatedConstraints::create(nb_max_ineq,
                                                   solver,
                                                   &inequalities_type,
                                                   instance,

@@ -3,14 +3,14 @@
 
 #include <set>
 #include <vector>
-#include "./MKC_Inequalities.hpp"
+#include "./CPA/ViolatedConstraints.hpp"
 #include "./MKCUtil.hpp"
 #include "./Solver/Abstract/Solver.hpp"
 
 namespace maxkcut
 {
 // TRIANGLE CONTRAINT -> X_ij + X_hj - X_hi <= 1
-class MKC_InequalityTriangle : public MKC_Inequalities
+class MKC_InequalityTriangle : public ViolatedConstraints
 {
 
 public:

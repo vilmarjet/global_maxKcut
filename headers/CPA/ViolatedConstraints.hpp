@@ -1,63 +1,47 @@
-#ifndef CPA_VIOLATED_CONSTRAINTS_HPP
-#define CPA_VIOLATED_CONSTRAINTS_HPP
+#ifndef MKC_INEQUALITIESSS_HPP
+#define MKC_INEQUALITIESSS_HPP
 
+
+#include "../Solver/Abstract/Solver.hpp"
+#include "../MKCGraph.hpp"
+#include "../MKCInstance.hpp"
+#include "../VariablesEdge.hpp"
 #include "ViolatedConstraint.hpp"
-#include <set>
+#include <vector>
 
-struct CompViolatedConstraint
-{
-    double ZERO = 1e-6;
-    bool operator()(const ViolatedConstraint *lhs, const ViolatedConstraint *rhs)
-    {
-        if (std::abs(lhs->get_violation() - rhs->get_violation()) <= ZERO)
-        {
-            return lhs->get_constraint()->size() <= rhs->get_constraint()->size();
-        }
 
-        return lhs->get_violation() >= rhs->get_violation();
-    }
-};
-
-class ProcessViolatedConstraints
+class ViolatedConstraints
 {
 protected:
-    std::set<ViolatedConstraint *, CompViolatedConstraint> violated_constraints;
-    const int max_number_inequalities;
+    std::vector<ViolatedConstraint*> violated_constraints;
 
 public:
-    const static int DEFAULT_NUMBER_MAX_VIOLATIONS = 100;
-    ProcessViolatedConstraints(const int &nb) : max_number_inequalities(nb) {}
-    ~ProcessViolatedConstraints() {}
+    ViolatedConstraints() {}
 
-    virtual ProcessViolatedConstraints* populate() = 0;
-    virtual ProcessViolatedConstraints* find() = 0;
-
-    ViolatedConstraint *add_violated_constraint(ViolatedConstraint *constraint)
+    virtual void find_violated_constraints() = 0;
+    virtual std::string to_string() = 0;
+    
+    const std::vector<ViolatedConstraint*> &get_constraints() const
     {
-        std::set<ViolatedConstraint *, CompViolatedConstraint>::iterator it =
-            violated_constraints.insert(constraint).first;
-        return *it;
+        return  violated_constraints;
     }
 
-    ProcessViolatedConstraints *add_violated_constraints (ViolatedConstraint **constraint, const int &size)
+    ViolatedConstraint *add_violated_constraint(ViolatedConstraint * constraint)
     {
-        for (int i=0; i<size; ++i)
-        {
-            add_violated_constraint(constraint[i]);
-        }
-
-        return this;
+        violated_constraints.push_back(constraint);
+        return violated_constraints[get_number_constraints() - 1];
     }
 
-    int get_number_violated_constraints() const
+    int get_number_constraints () const
     {
         return violated_constraints.size();
     }
 
-    const int &get_max_number_inequalities() const
+    void reset()
     {
-        return max_number_inequalities;
+        violated_constraints.clear();
     }
+
 };
 
 #endif

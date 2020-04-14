@@ -11,36 +11,36 @@
 #include <new>
 #include <set>
 #include "./CPA/LinearViolatedConstraint.hpp"
+#include "./CPA/ProcessorViolatedConstraints.hpp"
 #include "./CPA/ViolatedConstraints.hpp"
-#include "MKC_Inequalities.hpp"
 #include "MKCInstance.hpp"
 #include "VariablesEdgeSDP.hpp"
 
 namespace maxkcut
 {
-class ProcessSDPViolatedConstraints : public ProcessViolatedConstraints
+class ProcessorSDPViolatedConstraints : public ProcessorViolatedConstraints
 {
 public:
-    static ProcessSDPViolatedConstraints *create(const int &nb,
+    static ProcessorSDPViolatedConstraints *create(const int &nb,
                                                  Solver *solver_,
-                                                 std::vector<MKC_Inequalities *> *types,
+                                                 std::vector<ViolatedConstraints *> *types,
                                                  const MKCInstance *instance,
                                                  const VariablesEdgeSDP *variablesEdge)
     {
-        return new ProcessSDPViolatedConstraints(nb, solver_, types, instance, variablesEdge);
+        return new ProcessorSDPViolatedConstraints(nb, solver_, types, instance, variablesEdge);
     }
 
 private:
     Solver *solver;
-    const std::vector<MKC_Inequalities *> *inequalities_type;
+    const std::vector<ViolatedConstraints *> *inequalities_type;
     const MKCInstance *instance;
     const VariablesEdgeSDP *variablesEdgeSDP;
 
-    ProcessSDPViolatedConstraints(const int &nb,
+    ProcessorSDPViolatedConstraints(const int &nb,
                                   Solver *solver_,
-                                  std::vector<MKC_Inequalities *> *types,
+                                  std::vector<ViolatedConstraints *> *types,
                                   const MKCInstance *instance_,
-                                  const VariablesEdgeSDP *variablesEdge_) : ProcessViolatedConstraints(nb),
+                                  const VariablesEdgeSDP *variablesEdge_) : ProcessorViolatedConstraints(nb),
                                                                             solver(solver_),
                                                                             inequalities_type(types),
                                                                             instance(instance_),
@@ -67,9 +67,9 @@ private:
     }
 
 public:
-    ~ProcessSDPViolatedConstraints() {}
+    ~ProcessorSDPViolatedConstraints() {}
 
-    ProcessSDPViolatedConstraints *find()
+    ProcessorSDPViolatedConstraints *find()
     {
         for (auto inequality : *inequalities_type)
         {
@@ -103,7 +103,7 @@ public:
         }
     }
 
-    ProcessSDPViolatedConstraints *populate()
+    ProcessorSDPViolatedConstraints *populate()
     {
         int counter_ineq = 0;
         for (auto constraint : violated_constraints)

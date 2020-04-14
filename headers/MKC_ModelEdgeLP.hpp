@@ -5,13 +5,12 @@
 #include "./MKCInstance.hpp"
 #include "./MKCGraph.hpp"
 #include "MKC_LinearViolatedConstraints.hpp"
-#include "./MKC_Inequalities.hpp"
 #include <algorithm> // use of min and max
 #include <set>
 #include <vector>
 #include "VariablesEdge.hpp"
 
-#include "MKC_Inequalities.hpp"
+#include "./CPA/ViolatedConstraints.hpp"
 #include "MKC_InequalityTriangle.hpp"
 #include "MKC_InequalityClique.hpp"
 #include "MKC_InequalityWheel.hpp"
@@ -26,7 +25,7 @@ private:
     Solver *solver;
     MKCInstance *instance;
     VariablesEdge *variablesEdge;
-    std::vector<MKC_Inequalities *> inequalities_type;
+    std::vector<ViolatedConstraints *> inequalities_type;
 
 public:
     MKC_ModelEdgeLP(MKCInstance *instance_, Solver *solver_) : instance(instance_),
@@ -74,7 +73,7 @@ public:
         solver->set_const_objective_function(cst);
     }
 
-    void add_type_inequality(MKC_Inequalities *ineq_type)
+    void add_type_inequality(ViolatedConstraints *ineq_type)
     {
         this->inequalities_type.push_back(ineq_type);
     }
@@ -82,8 +81,8 @@ public:
     void find_violated_constraints(const int &nb_max_ineq)
     {
         //violated_constraints.clear();
-        LinearViolatedConstraints *linearViolatedConstraints =
-            LinearViolatedConstraints::create(nb_max_ineq, solver, &inequalities_type)
+        ProcessorLinearViolatedConstraints *linearViolatedConstraints =
+            ProcessorLinearViolatedConstraints::create(nb_max_ineq, solver, &inequalities_type)
                 ->find()
                 ->populate();
 

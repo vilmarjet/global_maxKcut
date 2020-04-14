@@ -8,39 +8,39 @@
 #include <new>
 #include <set>
 #include "./CPA/LinearViolatedConstraint.hpp"
+#include "./CPA/ProcessorViolatedConstraints.hpp"
 #include "./CPA/ViolatedConstraints.hpp"
-#include "MKC_Inequalities.hpp"
 #include "MKCInstance.hpp"
 namespace maxkcut
 {
-class LinearViolatedConstraints : public ProcessViolatedConstraints
+class ProcessorLinearViolatedConstraints : public ProcessorViolatedConstraints
 {
 public:
-    static LinearViolatedConstraints *create()
+    static ProcessorLinearViolatedConstraints *create()
     {
         return create(DEFAULT_NUMBER_MAX_VIOLATIONS, nullptr, nullptr);
     }
 
-    static LinearViolatedConstraints *create(const int &nb,
+    static ProcessorLinearViolatedConstraints *create(const int &nb,
                                              Solver *solver_,
-                                             std::vector<MKC_Inequalities *> *types)
+                                             std::vector<ViolatedConstraints *> *types)
     {
-        return new LinearViolatedConstraints(nb, solver_, types);
+        return new ProcessorLinearViolatedConstraints(nb, solver_, types);
     }
 
-    static LinearViolatedConstraints *create(Solver *solver_,
-                                             std::vector<MKC_Inequalities *> *types)
+    static ProcessorLinearViolatedConstraints *create(Solver *solver_,
+                                             std::vector<ViolatedConstraints *> *types)
     {
         return create(DEFAULT_NUMBER_MAX_VIOLATIONS, solver_, types);
     }
 
 private:
     Solver *solver;
-    const std::vector<MKC_Inequalities *> *inequalities_type;
+    const std::vector<ViolatedConstraints *> *inequalities_type;
 
-    LinearViolatedConstraints(const int &nb,
+    ProcessorLinearViolatedConstraints(const int &nb,
                               Solver *solver_,
-                              std::vector<MKC_Inequalities *> *types) : ProcessViolatedConstraints(nb),
+                              std::vector<ViolatedConstraints *> *types) : ProcessorViolatedConstraints(nb),
                                                                         solver(solver_),
                                                                         inequalities_type(types)
 
@@ -48,7 +48,7 @@ private:
     }
 
 public:
-    LinearViolatedConstraints *find()
+    ProcessorLinearViolatedConstraints *find()
     {
         for (auto inequality : *inequalities_type)
         {
@@ -64,7 +64,7 @@ public:
         return this;
     }
 
-    LinearViolatedConstraints *populate()
+    ProcessorLinearViolatedConstraints *populate()
     {
         int counter_ineq = 0;
         for (auto constraint : violated_constraints)
@@ -85,7 +85,7 @@ public:
         return this;
     }
 
-    ~LinearViolatedConstraints()
+    ~ProcessorLinearViolatedConstraints()
     {
         for (auto p : violated_constraints)
         {

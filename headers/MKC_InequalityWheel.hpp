@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "./MKC_Inequalities.hpp"
+#include "./CPA/ViolatedConstraints.hpp"
 #include "./MKCUtil.hpp"
 #include "./Utils/Exception.hpp"
 #include "./MKCGraph.hpp"
@@ -17,7 +17,7 @@ namespace maxkcut
 
 // Inequality of type
 // sum(u,v_i) - sum(v_{i-1},v_i) - u_{1,2} <= rhs
-class MKC_InequalityWheel : public MKC_Inequalities
+class MKC_InequalityWheel : public ViolatedConstraints
 {
 
 public:

@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "./MKC_Inequalities.hpp"
+#include "./CPA/ViolatedConstraints.hpp"
 #include "./MKCUtil.hpp"
 #include "./Utils/Exception.hpp"
 #include "./MKCGraph.hpp"
@@ -14,7 +14,7 @@
 
 namespace maxkcut
 {
-class MKC_InequalityLpSdp : public MKC_Inequalities
+class MKC_InequalityLpSdp : public ViolatedConstraints
 {
 
 public:

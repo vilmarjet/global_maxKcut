@@ -39,12 +39,6 @@
 
 #include "VariablesEdge.hpp"
 
-#include "MKC_Inequalities.hpp"
-#include "MKC_InequalityTriangle.hpp"
-#include "MKC_InequalityClique.hpp"
-#include "MKC_InequalityWheel.hpp"
-#include "MKC_InequalityLpSdp.hpp"
-
 #include "MKC_CPA.hpp"
 
 #include "./Solver/Abstract/Solver.hpp"
