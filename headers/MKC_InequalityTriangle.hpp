@@ -6,6 +6,7 @@
 #include "./CPA/ViolatedConstraints.hpp"
 #include "./MKCUtil.hpp"
 #include "./Solver/Abstract/Solver.hpp"
+#include "MKCInstance.hpp"
 
 namespace maxkcut
 {

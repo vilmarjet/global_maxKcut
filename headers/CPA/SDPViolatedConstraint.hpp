@@ -22,6 +22,12 @@ public:
         return new SDPViolatedConstraint(lb, ub, typ, vio);
     }
 
+    static SDPViolatedConstraint *create(const double &vio,
+                                         ConstraintSDP *constraintSDP)
+    {
+        return new SDPViolatedConstraint(vio, constraintSDP);
+    }
+
 private:
     SDPViolatedConstraint(const double &lb,
                           const double &ub,
@@ -31,8 +37,15 @@ private:
     {
     }
 
+    SDPViolatedConstraint(const double &vio,
+                          ConstraintSDP *constraintSDP) : ViolatedConstraint(vio, constraintSDP)
+    {
+    }
+
 public:
-    SDPViolatedConstraint *add_coefficient(const SDPVariable<Variable> *sdp_var, const Variable *var, const double &coeff)
+    SDPViolatedConstraint *add_coefficient(const SDPVariable<Variable> *sdp_var,
+                                           const Variable *var,
+                                           const double &coeff)
     {
         ((ConstraintSDP *)constraint)->add_coefficient(sdp_var, var, coeff);
         return this;
@@ -47,10 +60,9 @@ public:
         return strg;
     }
 
-
     ConstraintSDP *get_constraint() const
     {
-        return (ConstraintSDP*)(this->constraint);
+        return (ConstraintSDP *)(this->constraint);
     }
 
     bool operator==(const SDPViolatedConstraint &other) const

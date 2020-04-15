@@ -4,7 +4,7 @@
 #include "./Solver/Abstract/Solver.hpp"
 #include "./MKCInstance.hpp"
 #include "./MKCGraph.hpp"
-#include "MKC_LinearViolatedConstraints.hpp"
+#include "MKC_ProcessorLinearViolatedConstraints.hpp"
 #include <algorithm> // use of min and max
 #include <set>
 #include <vector>
@@ -82,8 +82,8 @@ public:
     {
         //violated_constraints.clear();
         ProcessorLinearViolatedConstraints *linearViolatedConstraints =
-            ProcessorLinearViolatedConstraints::create(nb_max_ineq, solver, &inequalities_type)
-                ->find()
+            ProcessorLinearViolatedConstraints::create(nb_max_ineq, solver)
+                ->find_violation(&inequalities_type[0], inequalities_type.size())
                 ->populate();
 
         delete linearViolatedConstraints;

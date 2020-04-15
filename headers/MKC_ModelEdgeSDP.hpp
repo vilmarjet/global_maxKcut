@@ -4,7 +4,7 @@
 #include "./Solver/Abstract/Solver.hpp"
 #include "./MKCInstance.hpp"
 #include "./MKCGraph.hpp"
-#include "MKC_SDPViolatedConstraints.hpp"
+#include "MKC_ProcessorSDPViolatedConstraints.hpp"
 #include <algorithm> // use of min and max
 #include <set>
 #include <vector>
@@ -16,6 +16,7 @@
 #include "MKC_InequalityClique.hpp"
 #include "MKC_InequalityWheel.hpp"
 #include "MKC_InequalityLpSdp.hpp"
+#include "MKC_InequalitySDPBound.hpp"
 
 namespace maxkcut
 {
@@ -27,6 +28,7 @@ private:
     MKCInstance *instance;
     VariablesEdgeSDP *variablesEdgeSDP;
     std::vector<ViolatedConstraints *> inequalities_type;
+    MKC_InequalitySDPBound* boundIneq;
 
 public:
     MKC_ModelEdgeSDP(MKCInstance *instance_, Solver *solver_) : instance(instance_),
@@ -39,6 +41,7 @@ public:
     void solve()
     {
         this->solver->solve();
+        boundIneq->find_violated_bound_constraints_sdp();
         variablesEdgeSDP->transforme_SDP_solution();
         std::cout << solver->to_string();
     }
@@ -52,6 +55,7 @@ public:
     {
         variablesEdgeSDP = VariablesEdgeSDP::create(solver, instance);
         MKC_InequalitySDPDiagonal::create(solver)->populate();
+        boundIneq = MKC_InequalitySDPBound::create(variablesEdgeSDP, instance);
 
         initialize_constraints();
 
@@ -84,11 +88,11 @@ public:
     {
         ProcessorSDPViolatedConstraints *sdpViolatedConstraints =
             ProcessorSDPViolatedConstraints::create(nb_max_ineq,
-                                                  solver,
-                                                  &inequalities_type,
-                                                  instance,
-                                                  variablesEdgeSDP)
-                ->find()
+                                                    solver,
+                                                    this->instance,
+                                                    this->variablesEdgeSDP)
+                ->find_violation(&inequalities_type[0], inequalities_type.size())
+                ->find_violation(boundIneq)
                 ->populate();
 
         delete sdpViolatedConstraints;
