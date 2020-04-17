@@ -272,6 +272,9 @@ public:
             r_code = MSK_appendcons(task, 1);
         }
 
+        std::cout << "constraint : " << constraint->to_string();
+        std::cin.get();
+
         r_code = MSK_putconbound(task,
                                  position_constraints,
                                  this->get_mosek_constraint_bound_key(constraint->get_bound_key()),
@@ -280,12 +283,9 @@ public:
 
         for (auto sdp_var : constraint->get_sdp_variables())
         {
-            std::vector<ConstraintCoefficient<Variable> *> variables =
-                constraint->get_coefficeints_of_variable(sdp_var);
-
             std::vector<int> col_idx, row_idx;
             std::vector<double> coeff;
-            int non_null_variables = variables.size();
+            int non_null_variables = constraint->get_coefficeints_of_variable(sdp_var).size();
 
             col_idx.reserve(non_null_variables);
             row_idx.reserve(non_null_variables);

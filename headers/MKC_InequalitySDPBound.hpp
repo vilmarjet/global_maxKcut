@@ -67,12 +67,9 @@ public:
                 }
             }
         }
-
-        std::cout << "Found " << get_number_constraints();
-        std::cin.get();
     }
 
-    inline void add_violation(const SDPVariable<Variable> *sdp_var, const Variable *var, const int &viol)
+    inline void add_violation(const SDPVariable<Variable> *sdp_var, const Variable *var, const double &viol)
     {
 
         SDPViolatedConstraint *constraint = (SDPViolatedConstraint *)
@@ -81,9 +78,19 @@ public:
         constraint->add_coefficient(sdp_var, var, 0.5);
     }
 
-    std::string to_string()
+    std::string to_string() const override
     {
-        return "To be implemented";
+        std::string print;
+        print = "In MKC_InequalitySDPBound \n";
+        print += "Nb of constraints = " + std::to_string(violated_constraints.size()) + "\n";
+
+        for (auto violated_constraint : violated_constraints)
+        {
+            print += ((SDPViolatedConstraint*)violated_constraint)->to_string();
+            print += "\n";
+        }
+
+        return print;
     }
 };
 } // namespace maxkcut

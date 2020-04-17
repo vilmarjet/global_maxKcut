@@ -76,7 +76,7 @@ public:
         return strg;
     }
 
-    LinearConstraint *get_constraint() const
+    LinearConstraint *get_constraint() const override
     {
         return (LinearConstraint *)constraint;
     }

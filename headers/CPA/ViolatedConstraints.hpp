@@ -19,7 +19,7 @@ public:
     ViolatedConstraints() {}
 
     virtual void find_violated_constraints() = 0;
-    virtual std::string to_string() = 0;
+    virtual std::string to_string() const = 0;
     
     const std::vector<ViolatedConstraint*> &get_constraints() const
     {

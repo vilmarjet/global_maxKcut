@@ -62,7 +62,6 @@ private:
     }
 
 public:
-    ~ProcessorSDPViolatedConstraints() {}
 
     ProcessorSDPViolatedConstraints *find_violation(ViolatedConstraints **inequalities_type, const size_t &size)
     {
@@ -122,6 +121,7 @@ public:
         int counter_ineq = 0;
         for (auto constraint : violated_constraints)
         {
+            std::cout << constraint->to_string() << "\n";
             solver->add_constraint_SDP(ConstraintSDP::from((ConstraintSDP *)constraint->get_constraint()));
 
             if (++counter_ineq > get_max_number_inequalities())
@@ -131,6 +131,14 @@ public:
         }
 
         return this;
+    }
+
+    ~ProcessorSDPViolatedConstraints() 
+    {
+         for (auto p : violated_constraints)
+        {
+            delete p;
+        }
     }
 };
 } // namespace maxkcut

@@ -52,6 +52,25 @@ public:
         return this->type;
     }
 
+    const double &get_rhs() const 
+    {
+        switch (bound_key)
+        {
+        case ConstraintBoundKey::EQUAL:
+            return lowerBound;
+
+        case ConstraintBoundKey::INFERIOR_EQUAL:
+            return upperBound;
+
+        case ConstraintBoundKey::SUPERIOR_EQUAL:
+            return lowerBound;
+
+        default:
+            Exception("Bound not defined", ExceptionType::STOP_EXECUTION).execute();
+            return lowerBound;
+        }
+    }
+
     ~ConstraintAbstract()
     {
     }

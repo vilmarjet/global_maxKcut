@@ -258,8 +258,8 @@ int main(int argc, char *argv[])
   for (int ite = 0; ite < 21; ite++)
   {
     cout << "\n ---> Iteration = " << ite << "\n";
-    model.solve();
-    model.find_violated_constraints(100);
+    modelSDP.solve();
+    modelSDP.find_violated_constraints(100);
 
   }
 

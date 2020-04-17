@@ -96,14 +96,7 @@ public:
 
     std::string to_string() const
     {
-        std::string s;
-
-        s = std::to_string(this->lowerBound) +
-            "<= " + this->code + " <= " + std::to_string(this->upperBound);
-        s += "; Cost=" + std::to_string(this->cost);
-        s += "; Solution=" + std::to_string(this->solution);
-
-        return s;
+        return this->code;
     }
 
     ~Variable() {}

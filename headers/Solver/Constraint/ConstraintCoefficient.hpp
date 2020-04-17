@@ -50,6 +50,7 @@ public:
         return !(*(this) == other);
     }
 
+
     ~ConstraintCoefficient()
     {
     }

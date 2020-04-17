@@ -51,10 +51,10 @@ public:
         return this;
     }
 
-    std::string to_string() const
+    std::string to_string() const override
     {
         std::string strg;
-        strg = ((LinearConstraint *)constraint)->to_string();
+        strg = ((ConstraintSDP *)constraint)->to_string();
         strg += "; vioil=" + std::to_string(this->violation);
 
         return strg;

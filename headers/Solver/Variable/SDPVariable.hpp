@@ -19,6 +19,7 @@ private:
     const double constant_object_function;
     std::vector<int> row_index;
     std::vector<int> col_index;
+    const std::string label;
 
     std::map<const V *, std::pair<int, int>> variables_by_row_col;
 
@@ -72,9 +73,10 @@ private:
     }
 
 public:
-    SDPVariable(const int &dim, double cost = 0.0) : dimension(dim),
+    SDPVariable(const int &dim, double cost = 0.0, const std::string &label_ = "X") : dimension(dim),
                                                      number_variables(get_number_variables_for_lower_matrix(dim)),
-                                                     constant_object_function(cost)
+                                                     constant_object_function(cost),
+                                                     label(label_)
     {
         int number_variables = get_number_variables_for_lower_matrix(dim);
         this->variables.resize(number_variables);
@@ -176,7 +178,7 @@ public:
 
     std::string to_string() const
     {
-        return "SDP Variable";
+        return label;
     }
 
     ~SDPVariable() {}

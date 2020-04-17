@@ -191,6 +191,8 @@ public:
         r_code = MSK_appendcons(task, (MSKint32t)size);
       }
 
+      std::cout << "in append_constraints of SDP, size = " << size << "\n"; 
+
       for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
       {
         const ConstraintSDP *constraint = get_sdp_constraints()->get_next_constraint_to_append();

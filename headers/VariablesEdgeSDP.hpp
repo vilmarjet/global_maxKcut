@@ -38,7 +38,8 @@ public:
     VariablesEdgeSDP *populate()
     {
         double const_sdp_var = (-1.0) * ((this->K - 1.0) / this->K);
-        var_sdp = solver->add_sdp_variable(new SDPVariable<Variable>(dimension, const_sdp_var));
+        std::string label = "X_0";
+        var_sdp = solver->add_sdp_variable(new SDPVariable<Variable>(dimension, const_sdp_var, label));
 
         //todo: Impemente populate
         double lower_bound = -1.0 / (K - 1.0);
@@ -50,13 +51,14 @@ public:
             int vi = edge->get_vertex_i() - 1;
             int vj = edge->get_vertex_j() - 1;
             double cost_var = edge->get_weight() / 2.0;
-
+            std::string label = "x_" + edge->to_string(); 
             Variable *variable = var_sdp->add_variable(vi, vj,
                                                        Variable::create(lower_bound,
                                                                         upper_bound,
                                                                         initial_solution,
                                                                         cost_var,
-                                                                        type));
+                                                                        type,
+                                                                        label));
             add_variable(edge, variable);
         }
 

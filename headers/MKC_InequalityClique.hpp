@@ -66,7 +66,7 @@ public:
     this->deterministic_heuristic();
   }
 
-  std::string to_string()
+  std::string to_string() const
   {
     return typeid(this).name();
   }

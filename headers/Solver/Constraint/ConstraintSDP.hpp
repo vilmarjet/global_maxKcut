@@ -40,7 +40,7 @@ private:
     std::map<const SDPVariable<Variable> *, std::vector<ConstraintCoefficient<Variable> *>> map_sdp_var;
     std::vector<const SDPVariable<Variable> *> vec_sdp_var; //fix
     ConstraintSDP(ConstraintSDP *other) : ConstraintAbstract(other->lowerBound,
-                                                             other->upperBound, 
+                                                             other->upperBound,
                                                              other->bound_key,
                                                              other->type)
     {
@@ -143,6 +143,30 @@ public:
         // }
 
         return false; // it should be true
+    }
+
+    std::string to_string() const
+    {
+        std::string msg = "";
+
+        for (auto sdp_var : vec_sdp_var)
+        {
+            msg += sdp_var->to_string() + "[";
+            for (auto coeffvar : get_coefficeints_of_variable(sdp_var))
+            {
+                if (coeffvar->get_value() > 0.0)
+                {
+                    msg += " +";
+                }
+                msg += std::to_string(coeffvar->get_value()) + "*" + coeffvar->get_variable()->to_string();
+            }
+            msg += "]";
+        }
+
+        msg += " " + ConstraintBoundKeyString::to_string(get_bound_key());
+        msg += std::to_string(get_rhs()); 
+
+        return msg;
     }
 
     ~ConstraintSDP()

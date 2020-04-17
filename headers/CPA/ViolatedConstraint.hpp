@@ -2,6 +2,7 @@
 #define CPA_VIOLATED_CONSTRAINT_HPP
 
 #include "../Solver/Constraint/ConstraintAbstract.hpp"
+#include <string>
 
 class ViolatedConstraint
 {
@@ -17,12 +18,17 @@ public:
         delete constraint;
     }
 
+    virtual std::string to_string() const
+    {
+        return "Not implemented";
+    }
+
     const double &get_violation() const
     {
         return this->violation;
     }
 
-    ConstraintAbstract *get_constraint() const
+    virtual ConstraintAbstract *get_constraint() const
     {
         return this->constraint;
     }
