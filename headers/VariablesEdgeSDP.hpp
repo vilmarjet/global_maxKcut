@@ -69,30 +69,6 @@ public:
     {
         return var_sdp;
     }
-
-    void transforme_SDP_solution()
-    {
-        double LBsdp = -1.0 / (K - 1.0);
-        double UBsdp = 1.0;
-        double divCst = (UBsdp - LBsdp);
-
-        for (auto var : get_variable_sdp()->get_variables())
-        {
-
-            std::cout << var->to_string() << " = " << std::to_string(var->get_solution()) << "\n";
-            std::cin.get();
-            double sdp_value = var->get_solution();
-
-            //For sdp the lower and upper bound should be set as constraints
-            //Thus, we need to check if their values are respected.
-            if (sdp_value < LBsdp)
-            {
-                sdp_value = LBsdp;
-            }
-
-            var->update_solution((sdp_value - LBsdp) / divCst);
-        }
-    }
 };
 } // namespace maxkcut
 
