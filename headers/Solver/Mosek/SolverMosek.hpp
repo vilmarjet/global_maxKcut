@@ -272,9 +272,6 @@ public:
             r_code = MSK_appendcons(task, 1);
         }
 
-        std::cout << "constraint : " << constraint->to_string();
-        std::cin.get();
-
         r_code = MSK_putconbound(task,
                                  position_constraints,
                                  this->get_mosek_constraint_bound_key(constraint->get_bound_key()),

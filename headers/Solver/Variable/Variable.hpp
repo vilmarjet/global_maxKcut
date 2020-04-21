@@ -34,9 +34,9 @@ private:
                                               solution(sol) {}
 
 public:
-    static Variable *create()
+    static Variable *create(const std::string name = "x")
     {
-        return create(0.0, 0.0, 0.0, 0.0, VariableType::CONTINOUS, "X_null_");
+        return create(0.0, 0.0, 0.0, 0.0, VariableType::CONTINOUS, name);
     }
 
     static Variable *create(const double &lb,
@@ -44,7 +44,7 @@ public:
                             const double &sol = 0.0,
                             const double &cst = 0.0,
                             const VariableType typ = VariableType::CONTINOUS,
-                            const std::string &name = "x")
+                            const std::string name = "x")
     {
         return new Variable(lb, ub, sol, cst, typ, name);
     }

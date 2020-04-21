@@ -35,14 +35,13 @@ public:
                                                                 solver(solver_)
     {
         this->initilize();
-        inequalities_type.clear();
     }
 
     void solve()
     {
         this->solver->solve();
         boundIneq->find_violated_bound_constraints_sdp();
-        variablesEdgeSDP->transforme_SDP_solution();
+        transforme_SDP_solution();
         std::cout << solver->to_string();
     }
 
@@ -98,6 +97,27 @@ public:
         delete sdpViolatedConstraints;
 
         std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size() + solver->get_sdp_constraints()->size();
+    }
+
+    void transforme_SDP_solution()
+    {
+        double LBsdp = -1.0 / (instance->get_K() - 1.0);
+        double UBsdp = 1.0;
+        double divCst = (UBsdp - LBsdp);
+
+        for (auto var : variablesEdgeSDP->get_variable_sdp()->get_variables())
+        {
+            double sdp_value = var->get_solution();
+
+            //For sdp the lower and upper bound should be set as constraints
+            //Thus, we need to check if their values are respected.
+            if (sdp_value < LBsdp)
+            {
+                sdp_value = LBsdp;
+            }
+
+            var->update_solution((sdp_value - LBsdp) / divCst);
+        }
     }
 
     ~MKC_ModelEdgeSDP()

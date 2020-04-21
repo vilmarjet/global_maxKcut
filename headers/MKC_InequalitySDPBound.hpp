@@ -51,20 +51,14 @@ public:
     {
         SDPVariable<Variable> *sdp_var = variables->get_variable_sdp();
 
-        int dim = sdp_var->get_dimension();
-
-        for (int i = 0; i < dim - 1; ++i)
+        for (auto var : sdp_var->get_variables())
         {
-            for (int j = i + 1; j < dim; ++j)
-            {
-                Variable *var = sdp_var->get_variable(i, j);
-                double sdp_value = var->get_solution();
-                double diff = LBsdp - sdp_value;
+            double sdp_value = var->get_solution();
+            double diff = LBsdp - sdp_value;
 
-                if (diff > EPSILON)
-                {
-                    add_violation(sdp_var, var, diff);
-                }
+            if (diff > EPSILON)
+            {
+                add_violation(sdp_var, var, diff);
             }
         }
     }
@@ -86,7 +80,7 @@ public:
 
         for (auto violated_constraint : violated_constraints)
         {
-            print += ((SDPViolatedConstraint*)violated_constraint)->to_string();
+            print += ((SDPViolatedConstraint *)violated_constraint)->to_string();
             print += "\n";
         }
 

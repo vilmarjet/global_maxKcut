@@ -62,7 +62,6 @@ private:
     }
 
 public:
-
     ProcessorSDPViolatedConstraints *find_violation(ViolatedConstraints **inequalities_type, const size_t &size)
     {
         for (size_t i = 0; i < size; ++i)
@@ -98,30 +97,12 @@ public:
         return this;
     }
 
-    void add_violated_constraint_from_linear_to_sdp(LinearViolatedConstraint *violatedLinearConstraint)
-    {
-
-        LinearConstraint *linearC = violatedLinearConstraint->get_constraint();
-        SDPViolatedConstraint *sdp_viol = (SDPViolatedConstraint *)add_violated_constraint(
-            SDPViolatedConstraint::create(linearC->get_lower_bound(),
-                                          linearC->get_upper_bound(),
-                                          linearC->get_bound_key(),
-                                          violatedLinearConstraint->get_violation()));
-
-        for (ConstraintCoefficient<Variable> *constraintCoeff : linearC->get_constraint_coefficients())
-        {
-            sdp_viol->add_coefficient(variablesEdgeSDP->get_variable_sdp(),
-                                      constraintCoeff->get_variable(),
-                                      transforme_LpIneq01_in_SDPineq(constraintCoeff->get_value()));
-        }
-    }
-
     ProcessorSDPViolatedConstraints *populate()
     {
         int counter_ineq = 0;
         for (auto constraint : violated_constraints)
         {
-            std::cout << constraint->to_string() << "\n";
+            //std::cout << constraint->to_string() << "\n";
             solver->add_constraint_SDP(ConstraintSDP::from((ConstraintSDP *)constraint->get_constraint()));
 
             if (++counter_ineq > get_max_number_inequalities())
@@ -133,9 +114,44 @@ public:
         return this;
     }
 
-    ~ProcessorSDPViolatedConstraints() 
+    void add_violated_constraint_from_linear_to_sdp(LinearViolatedConstraint *violatedLinearConstraint)
     {
-         for (auto p : violated_constraints)
+
+        LinearConstraint *linearC = violatedLinearConstraint->get_constraint();
+        double increase_rhs = compute_increase_rhs_LP_to_SDP(linearC);
+
+        SDPViolatedConstraint *sdp_viol = (SDPViolatedConstraint *)add_violated_constraint(
+            SDPViolatedConstraint::create(linearC->get_lower_bound() + increase_rhs,
+                                          linearC->get_upper_bound() + increase_rhs,
+                                          linearC->get_bound_key(),
+                                          violatedLinearConstraint->get_violation()));
+
+        for (ConstraintCoefficient<Variable> *constraintCoeff : linearC->get_constraint_coefficients())
+        {
+            sdp_viol->add_coefficient(variablesEdgeSDP->get_variable_sdp(),
+                                      constraintCoeff->get_variable(),
+                                      transforme_LpIneq01_in_SDPineq(constraintCoeff->get_value()));
+        }
+    }
+
+    double compute_increase_rhs_LP_to_SDP(LinearConstraint *linearC)
+    {
+        double sum = 0.0;
+        double LBsdp = -1.0 / (instance->get_K() - 1.0);
+        double UBsdp = 1.0;
+        double mulCst = LBsdp/(UBsdp - LBsdp);
+
+        for (ConstraintCoefficient<Variable> *constraintCoeff : linearC->get_constraint_coefficients())
+        {
+            sum += constraintCoeff->get_value() * mulCst;
+        }
+
+        return sum;
+    }
+
+    ~ProcessorSDPViolatedConstraints()
+    {
+        for (auto p : violated_constraints)
         {
             delete p;
         }

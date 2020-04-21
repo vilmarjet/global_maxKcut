@@ -127,7 +127,7 @@ public:
     int row = i,
         col = j;
 
-    if (row < col)
+    if (row > col)
     {
       std::swap(row, col);
     }
@@ -225,7 +225,7 @@ public:
 
   void run_optimizer()
   {
-    r_code = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr);
+    // r_code = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr);
     /* Run optimizer */
     if (r_code == MSK_RES_OK)
     {

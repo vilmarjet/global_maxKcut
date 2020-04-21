@@ -51,7 +51,7 @@ public:
             int vi = edge->get_vertex_i() - 1;
             int vj = edge->get_vertex_j() - 1;
             double cost_var = edge->get_weight() / 2.0;
-            std::string label = "x_" + edge->to_string(); 
+            std::string label = "x_(" + std::to_string(vi) + "," + std::to_string(vj) + ")"; 
             Variable *variable = var_sdp->add_variable(vi, vj,
                                                        Variable::create(lower_bound,
                                                                         upper_bound,
@@ -76,9 +76,11 @@ public:
         double UBsdp = 1.0;
         double divCst = (UBsdp - LBsdp);
 
-        for (auto edge : edges->get_edges())
+        for (auto var : get_variable_sdp()->get_variables())
         {
-            Variable *var = get_variable(edge);
+
+            std::cout << var->to_string() << " = " << std::to_string(var->get_solution()) << "\n";
+            std::cin.get();
             double sdp_value = var->get_solution();
 
             //For sdp the lower and upper bound should be set as constraints

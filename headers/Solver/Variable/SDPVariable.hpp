@@ -73,10 +73,12 @@ private:
     }
 
 public:
-    SDPVariable(const int &dim, double cost = 0.0, const std::string &label_ = "X") : dimension(dim),
-                                                     number_variables(get_number_variables_for_lower_matrix(dim)),
-                                                     constant_object_function(cost),
-                                                     label(label_)
+    SDPVariable(const int &dim,
+                double cost = 0.0,
+                const std::string &label_ = "X") : dimension(dim),
+                                                   number_variables(get_number_variables_for_lower_matrix(dim)),
+                                                   constant_object_function(cost),
+                                                   label(label_)
     {
         int number_variables = get_number_variables_for_lower_matrix(dim);
         this->variables.resize(number_variables);
@@ -86,7 +88,9 @@ public:
             for (int col = row; col < this->dimension; ++col)
             {
                 int pos = calculate_position_variable(row, col);
-                this->variables[pos] = Variable::create();/*FIXME*/
+                std::string label = "x_(" + std::to_string(row) + "," + std::to_string(col) + ")";
+                this->variables[pos] = Variable::create(label); /*FIXME*/
+
                 const V *var = this->variables[pos];
                 variables_by_row_col
                     .insert(std::pair<const V *, std::pair<int, int>>(var, std::pair<int, int>(row, col)));
@@ -101,13 +105,19 @@ public:
         Exception(error, ExceptionType::STOP_EXECUTION).execute();
     }
 
-    V *add_variable(const int &vi, const int &vj, V *var)
+    /**
+     * @param row is row index of varialbe
+     * @param col is the column index of variable in SDP variable 
+     * @param var is variable to be added. 
+     * @return the parameter *var;
+     **/
+    V *add_variable(const int &row, const int &col, V *var)
     {
-        int pos_index = calculate_position_variable(vi, vj);
+        int pos_index = calculate_position_variable(row, col);
 
         V *var_created = this->add_variable_with_index(var, pos_index);
 
-        add_new_indices(vi, vj, var_created);
+        add_new_indices(row, col, var_created);
 
         return var_created;
     }
@@ -170,7 +180,8 @@ public:
         if (it == variables_by_row_col.end())
         {
             Exception("Object does not exist in SDPVariable::get_row_col_of_variables",
-                            ExceptionType::STOP_EXECUTION). execute();
+                      ExceptionType::STOP_EXECUTION)
+                .execute();
         }
 
         return it->second;
