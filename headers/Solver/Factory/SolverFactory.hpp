@@ -5,12 +5,14 @@
 #include "../Mosek/SolverMosekLp.hpp"
 #include "../Mosek/SolverMosekEarlyTerminationLP.hpp"
 #include "../Mosek/SolverMosekSDP.hpp"
+#include "../Mosek/SolverMosekSDPEalyTermination.hpp"
 
 enum class TypeSolver
 {
     LP_MOSEK,
     LP_EARLY_MOSEK,
-    SDP_MOSEK
+    SDP_MOSEK,
+    SDP_EARLY_MOSEK
 };
 
 class SolverFactory
@@ -28,6 +30,8 @@ public:
             return new SolverMosekEarlyTerminationLP(solverParm);
         case TypeSolver::SDP_MOSEK:
             return new SolverMosekSDP(solverParm);
+        case TypeSolver::SDP_EARLY_MOSEK:
+            return new SolverMosekSDPEarlyTermination(solverParm);
         default:
             return new SolverMosekLp(solverParm);
         }

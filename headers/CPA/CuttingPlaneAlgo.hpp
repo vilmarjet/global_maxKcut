@@ -2,7 +2,8 @@
 #define CUTTING_PLANE_ALGORITHM_HPP
 
 #include "./../Solver/Abstract/Solver.hpp"
-
+#include "../Models/ModelAbstract.hpp"
+#include "./Parameter/CPAParam.hpp"
 /**
  * Steps :
  *  1) Solve
@@ -12,11 +13,14 @@
 class CuttingPlaneAlgorithm
 {
 private:
-    Solver *solver;
+    ModelAbstract *model;
+    const CPAParam param;
     // Params parameters;
 
 public:
-    CuttingPlaneAlgorithm(Solver *solver_) : solver(solver_)
+    CuttingPlaneAlgorithm(ModelAbstract *model_, const CPAParam &param_) : model(model_),
+                                                                              param(param_)
+
     {
     }
 
@@ -29,9 +33,8 @@ public:
     void solve()
     {
         // this->solver->solve();
-        std::cout<<"Chegou Solver brother";
+        std::cout << "Chegou Solver brother";
     }
-
 };
 
 #endif

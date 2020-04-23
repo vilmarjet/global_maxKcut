@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
   MKC_ModelEdgeLP model = MKC_ModelEdgeLP(new_instance, solver);
 
   
-  Solver *solverSDP = SolverFactory::create_solver(TypeSolver::SDP_MOSEK, solverParm);
+  Solver *solverSDP = SolverFactory::create_solver(TypeSolver::SDP_EARLY_MOSEK, solverParm);
   MKC_ModelEdgeSDP modelSDP = MKC_ModelEdgeSDP(new_instance, solverSDP);
   modelSDP.solve();
 
@@ -260,6 +260,7 @@ int main(int argc, char *argv[])
     cout << "\n ---> Iteration = " << ite << "\n";
     modelSDP.solve();
     modelSDP.find_violated_constraints(100);
+    // cin.get();
 
   }
 

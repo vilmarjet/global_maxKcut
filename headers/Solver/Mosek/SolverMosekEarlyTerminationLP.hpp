@@ -4,66 +4,19 @@
 #include "SolverMosek.hpp"
 #include "../Abstract/Solver.hpp"
 
-class SolverMosekEarlyTerminationLP : public Solver, SolverMosek
+class SolverMosekEarlyTerminationLP : public SolverMosekLp
 {
 private:
     bool early_termination;
     int number_consective_early_termination;
 
 public:
-    SolverMosekEarlyTerminationLP(const SolverParam &solverParm) : Solver(solverParm)
+    SolverMosekEarlyTerminationLP(const SolverParam &solverParm) : SolverMosekLp(solverParm)
     {
         early_termination = false;
         number_consective_early_termination = 0;
     }
     ~SolverMosekEarlyTerminationLP() {}
-
-    void solve()
-    {
-        try
-        {
-            if (this->task == NULL)
-            {
-                initialize();
-            }
-
-            append_variables();
-            append_constraints();
-
-            run_optimizer();
-
-            set_solution();
-            add_time_of_solver(get_time_optimization());
-
-            finalize_optimization();
-        }
-        catch (const Exception &e)
-        {
-            e.execute();
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << e.what() << '\n';
-        }
-        catch (...)
-        {
-            Exception e = Exception("Not handled exception set varialbe \n", ExceptionType::STOP_EXECUTION);
-            e.execute();
-        }
-    }
-
-    void initialize()
-    {
-        create_task(get_lp_variables()->size(), get_linear_constraints()->size());
-        initilize_objective_function();
-
-        
-        SolverParam param = get_parameter();
-        MSK_putintparam(task, MSK_IPAR_NUM_THREADS, param.get_number_threads()); /*Nber of cpus*/
-
-        //Controls whether the interior-point optimizer also computes an optimal basis.
-        r_code = MSK_putintparam(task, MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
-    }
 
     void set_mosek_solution_status(MSKsolstae *solsta)
     {
@@ -77,7 +30,7 @@ public:
         }
     }
 
-    void run_optimizer()
+    void run_optimizer() override
     {
         if (early_termination)
         {
@@ -106,7 +59,7 @@ public:
         }
     }
 
-    void finalize_optimization()
+    void finalize_optimization() override
     {
         if (early_termination)
         {
@@ -124,29 +77,9 @@ public:
         }
     }
 
-    void initilize_objective_function()
-    {
-        if (r_code == MSK_RES_OK)
-        {
-            r_code = MSK_putcfix(task, this->objectiveFunction.get_constant_term());
-        }
-
-        if (r_code == MSK_RES_OK)
-        {
-            r_code = MSK_putobjsense(task, get_mosek_objective_sense(this->objectiveFunction.get_optimization_sense()));
-        }
-
-        if (r_code != MSK_RES_OK)
-        {
-            throw Exception("r_code != MSK_RES_OK in initilize_Objective_function()", ExceptionType::STOP_EXECUTION);
-        }
-    }
-
-    void set_solution()
+    void set_solution() override
     {
         set_mosek_solution_status(&solsta);
-
-        std::cout << "\n @@@@@ Solution status  = " << solsta << "\n";
 
         switch (solsta)
         {
@@ -209,55 +142,10 @@ public:
         }
     }
 
-    void add_constraint(const LinearConstraint *constraint, bool is_to_append_new = true)
+    void reset_solver() override
     {
-        this->add_constraint_append_mosek(constraint, is_to_append_new, get_lp_variables());
-    }
-
-    void append_constraints()
-    {
-        /*Linear Constraints*/
-        int size = get_linear_constraints()->get_number_non_appended_constraints();
-        if (size > 0)
-        {
-            if (r_code == MSK_RES_OK)
-            {
-                r_code = MSK_appendcons(task, (MSKint32t)size);
-            }
-
-            for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
-            {
-                const LinearConstraint *constraint = get_linear_constraints()->get_next_constraint_to_append();
-                add_constraint(constraint, false);
-            }
-
-            if (r_code != MSK_RES_OK)
-            {
-                std::string msg = "r_code = " + std::to_string(r_code) + "!= MSK_RES_OK in linear execute_constraints()";
-                Exception(msg, ExceptionType::STOP_EXECUTION).execute();
-            }
-        }
-    }
-
-    void append_variables()
-    {
-        add_linear_variables_mosek_task(get_lp_variables());
-    }
-
-    void reset_solver()
-    {
-        this->task = NULL;
-        this->env = NULL;
-        this->r_code = MSK_RES_OK;
-
-        this->objectiveFunction.update_solution(0.0);
-        this->get_linear_constraints()->reset_position_append_constraint();
+        SolverMosekLp::reset_solver();
         this->get_lp_variables()->reset_position_append_variable();
-    }
-
-    void create_environnement()
-    {
-        r_code = MSK_makeenv(&env, NULL);
     }
 };
 

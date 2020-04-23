@@ -6,7 +6,7 @@
 #include "../../Utils/Exception.hpp"
 #include <stdlib.h> //malloc
 
-class SolverMosekSDP : public Solver, SolverMosek
+class SolverMosekSDP : public Solver, public SolverMosek
 {
 private:
 public:
@@ -52,7 +52,7 @@ public:
     }
   }
 
-  void finalize_optimization()
+  virtual void finalize_optimization()
   {
     //nop
   }
@@ -207,7 +207,7 @@ public:
     }
     //nop
   }
-  void reset_solver()
+  virtual void reset_solver()
   {
     this->task = NULL;
     this->env = NULL;
@@ -223,7 +223,7 @@ public:
     r_code = MSK_makeenv(&env, NULL);
   }
 
-  void run_optimizer()
+  virtual void run_optimizer() override
   {
     // r_code = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr);
     /* Run optimizer */

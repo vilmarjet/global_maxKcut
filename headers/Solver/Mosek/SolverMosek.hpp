@@ -69,6 +69,8 @@ public:
         printf("%s", str);
     } /* printstr */
 
+
+
     /**
     * Create task for mosek problem
     * @param nb_variables is number of variables in problem
@@ -83,7 +85,7 @@ public:
         }
     }
 
-    void run_optimizer()
+    virtual void run_optimizer()
     {
         r_code = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr);
         /* Run optimizer */
@@ -214,6 +216,12 @@ public:
             throw Exception("r_code != MSK_RES_OK in initialize_sdp_variables_mosek_task",
                             ExceptionType::STOP_EXECUTION);
         }
+    }
+
+
+    MSKtask_t &get_task()
+    {
+        return this->task;
     }
 
     void add_constraint_append_mosek(const LinearConstraint *constraint,

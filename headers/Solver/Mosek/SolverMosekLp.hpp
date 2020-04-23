@@ -6,7 +6,8 @@
 #include "../../Utils/Exception.hpp"
 #include <stdlib.h> //malloc
 
-class SolverMosekLp : public Solver, SolverMosek
+class SolverMosekLp : public Solver,
+                      public SolverMosek
 {
 private:
 public:
@@ -55,7 +56,7 @@ public:
     //nop
   }
 
-  void set_solution()
+  virtual void set_solution()
   {
     set_mosek_solution_statuss(&solsta, MSK_SOL_BAS);
 
@@ -159,7 +160,7 @@ public:
     add_linear_variables_mosek_task(get_lp_variables());
   }
 
-  void reset_solver()
+  virtual void reset_solver()
   {
     this->task = NULL;
     this->env = NULL;

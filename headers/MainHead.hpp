@@ -39,7 +39,7 @@
 
 #include "VariablesEdge.hpp"
 
-#include "MKC_CPA.hpp"
+#include "./CPA/CuttingPlaneAlgo.hpp"
 
 #include "./Solver/Abstract/Solver.hpp"
 #include "./Solver/Mosek/SolverMosekLp.hpp"
