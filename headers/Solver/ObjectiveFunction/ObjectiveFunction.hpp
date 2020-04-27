@@ -39,14 +39,14 @@ public:
         this->solution = sol;
     }
 
-    double get_constant_term() const
+    const double &get_constant_term() const
     {
         return this->constant_term;
     }
 
-    double get_solution() const
+    const double &get_solution_value() const
     {
-        return this->constant_term;
+        return this->solution;
     }
 
     SenseOptimization get_optimization_sense() const

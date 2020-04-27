@@ -87,7 +87,7 @@ public:
 
     virtual void run_optimizer()
     {
-        r_code = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr);
+        // r_code = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr);
         /* Run optimizer */
         if (r_code == MSK_RES_OK)
         {

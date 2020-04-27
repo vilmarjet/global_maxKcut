@@ -10,11 +10,14 @@ class SolverMosekLp : public Solver,
                       public SolverMosek
 {
 private:
+  bool is_early_termination;
+
 public:
-  SolverMosekLp(const SolverParam &solverParm) : Solver(solverParm) {}
-  ~SolverMosekLp()
+  SolverMosekLp(const SolverParam &solverParm) : Solver(solverParm), is_early_termination(false)
   {
+    create_environnement();
   }
+  ~SolverMosekLp() {}
 
   void solve()
   {
@@ -56,9 +59,39 @@ public:
     //nop
   }
 
-  virtual void set_solution()
+  void set_mosek_solution_status(MSKsolstae *solsta)
   {
-    set_mosek_solution_statuss(&solsta, MSK_SOL_BAS);
+    if (is_early_termination)
+    {
+      set_mosek_solution_statuss(solsta, MSK_SOL_ITR);
+    }
+    else
+    {
+      set_mosek_solution_statuss(solsta, MSK_SOL_BAS);
+    }
+  }
+
+  void update_termination_param(TerminationParam *early_param, const bool &is_early)
+  {
+    is_early_termination = is_early;
+    if (is_early_termination)
+    {
+      r_code = MSK_putintparam(task, MSK_IPAR_INTPNT_BASIS, MSK_BI_NEVER); //Controls whether the interior-point optimizer also computes an optimal basis.
+
+      r_code = MSK_putdouparam(task, MSK_DPAR_INTPNT_TOL_MU_RED, early_param->get_gap_tolerance());           //Relative complementarity gap tolerance.
+      r_code = MSK_putdouparam(task, MSK_DPAR_INTPNT_TOL_PFEAS, early_param->get_gap_primal());               // primal feasibility
+      r_code = MSK_putdouparam(task, MSK_DPAR_INTPNT_TOL_DFEAS, early_param->get_gap_tolerance());            // dual feasibility
+      r_code = MSK_putdouparam(task, MSK_DPAR_INTPNT_TOL_REL_GAP, early_param->get_gap_relative_tolerance()); // Tol to optimality
+    }
+    else
+    {
+      r_code = MSK_putintparam(task, MSK_IPAR_INTPNT_BASIS, MSK_BI_ALWAYS);
+    }
+  }
+
+  void set_solution()
+  {
+    set_mosek_solution_status(&solsta);
 
     switch (solsta)
     {
@@ -72,13 +105,15 @@ public:
       std::vector<double> Obj(2);      //double *Obj = (double *)calloc(2, sizeof(MSKrealt));
 
       //if basic solution is activated
-      if (solsta == MSK_SOL_STA_OPTIMAL)
+      if (!is_early_termination)
       {
+        std::cout << "\n**** optimal  \n";
         MSK_getxx(task, MSK_SOL_BAS, &var_x[0]);
         MSK_getprimalobj(task, MSK_SOL_BAS, &Obj[0]);
       }
       else
       {
+        std::cout << "\n ***** Not optimal  \n";
         //Just interior point solution
         MSK_getxx(task, MSK_SOL_ITR, &var_x[0]);
         MSK_getprimalobj(task, MSK_SOL_ITR, &Obj[0]);
@@ -104,25 +139,33 @@ public:
       /* If the solutions status is unknown, print the termination code
         indicating why the optimizer terminated prematurely. */
       MSK_getcodedesc(trmcode, symname, desc);
-      std::printf("The optimizer terminitated with code: %s\n", symname);
+      std::printf("The optimizer terminitated with code (MSK_SOL_STA_UNKNOWN): %s\n", symname);
       throw Exception("Unknown solution LP problem", ExceptionType::STOP_EXECUTION);
       break;
     }
     default:
+      char symname[MSK_MAX_STR_LEN];
+      char desc[MSK_MAX_STR_LEN];
+      MSK_getcodedesc(trmcode, symname, desc);
+      std::printf("The optimizer terminitated with code: %s\n", symname);
+      throw Exception("Unknown status", ExceptionType::STOP_EXECUTION);
+      break;
       break;
     }
   }
 
   void initialize()
   {
+
+    
     create_task(get_lp_variables()->size(), get_linear_constraints()->size());
     initilize_objective_function();
 
-    SolverParam param = get_parameter();
     MSK_putintparam(task, MSK_IPAR_NUM_THREADS, param.get_number_threads()); /*Nber of cpus*/
 
     //Controls whether the interior-point optimizer also computes an optimal basis.
     r_code = MSK_putintparam(task, MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
+    update_termination_param(TerminationParamBuilder<std::nullptr_t>::create()->build(), false);
   }
 
   void add_constraint(const LinearConstraint *constraint, bool is_to_append_new = true)

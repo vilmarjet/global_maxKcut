@@ -3,9 +3,7 @@
 
 #include "../Abstract/Solver.hpp"
 #include "../Mosek/SolverMosekLp.hpp"
-#include "../Mosek/SolverMosekEarlyTerminationLP.hpp"
 #include "../Mosek/SolverMosekSDP.hpp"
-#include "../Mosek/SolverMosekSDPEalyTermination.hpp"
 
 enum class TypeSolver
 {
@@ -26,12 +24,8 @@ public:
         {
         case TypeSolver::LP_MOSEK:
             return new SolverMosekLp(solverParm);
-        case TypeSolver::LP_EARLY_MOSEK:
-            return new SolverMosekEarlyTerminationLP(solverParm);
         case TypeSolver::SDP_MOSEK:
             return new SolverMosekSDP(solverParm);
-        case TypeSolver::SDP_EARLY_MOSEK:
-            return new SolverMosekSDPEarlyTermination(solverParm);
         default:
             return new SolverMosekLp(solverParm);
         }

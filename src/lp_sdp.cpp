@@ -231,29 +231,42 @@ using namespace maxkcut;
 int main(int argc, char *argv[])
 {
   int a = 0;
-  MKCInstance* new_instance = MKCInstanceBuilder<std::nullptr_t>::create()
-                                 ->set_graph()
-                                 ->set_graph_input_file(argv[1])
-                                 ->set_type_graph(GraphType::CHORDAL)
-                                 ->end_graph()
-                                 ->set_K(3)
-                                 ->build();
+  MKCInstance *new_instance = MKCInstanceBuilder<std::nullptr_t>::create()
+                                  ->set_graph()
+                                  ->set_graph_input_file(argv[1])
+                                  ->set_type_graph(GraphType::CHORDAL)
+                                  ->end_graph()
+                                  ->set_K(3)
+                                  ->build();
 
   cout << new_instance->get_graph()->to_string();
 
   SolverParam solverParm;
-  solverParm.set_gap_primal(0.75)
-      ->set_gap_tolerance(0.9)
-      ->set_gap_relative_tolerance(0.75);
+  CPAParam *cpaParam = CPAParamBuilder<std::nullptr_t>::create()
+                           ->set_number_max_iterations(20)
+                           ->set_number_max_violated_constraints(100)
 
-  Solver *solver = SolverFactory::create_solver(TypeSolver::LP_EARLY_MOSEK, solverParm);
-  solver->create_environnement();
-  MKC_ModelEdgeLP model = MKC_ModelEdgeLP(new_instance, solver);
+                           ->set_early_termination(3)
+                           ->set_gap_primal(0.75)
+                           ->set_gap_relative_tolerance(0.75)
+                           ->set_gap_tolerance(0.90)
+                           ->end()
 
-  
-  Solver *solverSDP = SolverFactory::create_solver(TypeSolver::SDP_EARLY_MOSEK, solverParm);
-  MKC_ModelEdgeSDP modelSDP = MKC_ModelEdgeSDP(new_instance, solverSDP);
+                           ->build();
+
+  MKC_ModelEdgeLP *model = new MKC_ModelEdgeLP(new_instance,
+                                          SolverFactory::create_solver(TypeSolver::LP_MOSEK, solverParm));
+
+  CuttingPlaneAlgorithm *cpa = new CuttingPlaneAlgorithm(model, cpaParam);
+
+  MKC_ModelEdgeSDP modelSDP = MKC_ModelEdgeSDP(new_instance,
+                                               SolverFactory::create_solver(TypeSolver::SDP_MOSEK, solverParm));
+
   modelSDP.solve();
+
+  cpa->execute();
+  cout << "End CPA ";
+  cin.get();
 
   for (int ite = 0; ite < 21; ite++)
   {
@@ -261,10 +274,8 @@ int main(int argc, char *argv[])
     modelSDP.solve();
     modelSDP.find_violated_constraints(100);
     // cin.get();
-
   }
 
-  solver->to_string();
   cin.get();
 
   sdpEdgeConst.size = 0;
@@ -6163,8 +6174,6 @@ inline void Clear_edgeNotViolated_in_SDP(const T_Instance &instance)
 inline void Set_ObFunction_Mosek_SDP(const T_Instance &instance, MSKrescodee &r, MSKtask_t &task, const double &LBsdp)
 {
 
-  
-
   MSKint64t idx;
 
   double cstW = -1.0; // before (-1.0)*((K-1.0)/K); 	/*Poid que matrix W va etres  = (-(k-1)/k)*/
@@ -6209,7 +6218,7 @@ inline void Set_ObFunction_Mosek_SDP(const T_Instance &instance, MSKrescodee &r,
   if (cstW != 1.0)
     if (r == MSK_RES_OK)
       r = MSK_putcfix(task, -cstW * sumTotalCost + instance.sum_cost); // in sdp we have to add the sum of all the cost in the objective function (bfore sumTotalCost = 0.0)
-  
+
   //free memory
   delete[] c_i;
   delete[] c_j;

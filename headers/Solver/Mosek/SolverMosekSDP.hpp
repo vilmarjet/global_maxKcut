@@ -143,12 +143,13 @@ public:
 
   void initialize()
   {
+    
     create_task(get_lp_variables()->size(), get_linear_constraints()->size() + get_sdp_constraints()->size());
     initilize_objective_function();
 
-    SolverParam param = get_parameter();
-    MSK_putintparam(task, MSK_IPAR_INFEAS_REPORT_AUTO, MSK_ON);
+    //MSK_putintparam(task, MSK_IPAR_INFEAS_REPORT_AUTO, MSK_ON);
     MSK_putintparam(task, MSK_IPAR_NUM_THREADS, param.get_number_threads()); /*Nber of cpus*/
+    update_termination_param(TerminationParamBuilder<std::nullptr_t>::create()->build(), false);
   }
 
   void append_variables()
@@ -191,7 +192,7 @@ public:
         r_code = MSK_appendcons(task, (MSKint32t)size);
       }
 
-      std::cout << "in append_constraints of SDP, size = " << size << "\n"; 
+      std::cout << "in append_constraints of SDP, size = " << size << "\n";
 
       for (int i = 0; i < size && r_code == MSK_RES_OK; ++i)
       {
@@ -223,21 +224,6 @@ public:
     r_code = MSK_makeenv(&env, NULL);
   }
 
-  virtual void run_optimizer() override
-  {
-    // r_code = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr);
-    /* Run optimizer */
-    if (r_code == MSK_RES_OK)
-    {
-      r_code = MSK_optimizetrm(task, NULL);
-    }
-
-    if (r_code != MSK_RES_OK)
-    {
-      throw Exception("r_code not MSK_RES_OK in run_optimizer()", ExceptionType::STOP_EXECUTION);
-    }
-  }
-
   void initilize_objective_function()
   {
     if (r_code == MSK_RES_OK)
@@ -253,6 +239,24 @@ public:
     if (r_code != MSK_RES_OK)
     {
       Exception("r_code != MSK_RES_OK in initilize_Objective_function()", ExceptionType::STOP_EXECUTION).execute();
+    }
+  }
+
+  void update_termination_param(TerminationParam *early_param, const bool &is_early)
+  {
+    if (is_early)
+    {
+      r_code = MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_MU_RED, early_param->get_gap_tolerance());           //Relative complementarity gap tolerance.
+      r_code = MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_PFEAS, early_param->get_gap_primal());               // primal feasibility
+      r_code = MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_DFEAS, early_param->get_gap_tolerance());            // dual feasibility
+      r_code = MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_REL_GAP, early_param->get_gap_relative_tolerance()); // Tol to optimality
+    }
+    else
+    {
+      r_code = MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_MU_RED, CONSTANTS::ZERO);  //Relative complementarity gap tolerance.
+      r_code = MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_PFEAS, CONSTANTS::ZERO);   // primal feasibility
+      r_code = MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_DFEAS, CONSTANTS::ZERO);   // dual feasibility
+      r_code = MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_REL_GAP, CONSTANTS::ZERO); // Tol to optimality
     }
   }
 };

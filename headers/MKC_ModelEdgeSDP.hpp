@@ -21,10 +21,9 @@
 namespace maxkcut
 {
 
-class MKC_ModelEdgeSDP
+class MKC_ModelEdgeSDP : public ModelAbstract
 {
 private:
-    Solver *solver;
     MKCInstance *instance;
     VariablesEdgeSDP *variablesEdgeSDP;
     std::vector<ViolatedConstraints *> inequalities_type;
@@ -32,17 +31,19 @@ private:
 
 public:
     MKC_ModelEdgeSDP(MKCInstance *instance_, Solver *solver_) : instance(instance_),
-                                                                solver(solver_)
+                                                                ModelAbstract(solver_)
     {
         this->initilize();
     }
 
-    void solve()
+    MKC_ModelEdgeSDP *solve()
     {
         this->solver->solve();
         boundIneq->find_violated_bound_constraints_sdp();
         transforme_SDP_solution();
         std::cout << solver->to_string();
+
+        return this;
     }
 
     void reset_solver()
@@ -83,7 +84,7 @@ public:
         add_type_inequality(MKC_InequalityLpSdp::create(variablesEdgeSDP, instance));
     }
 
-    void find_violated_constraints(const int &nb_max_ineq)
+    MKC_ModelEdgeSDP *find_violated_constraints(const int &nb_max_ineq)
     {
         ProcessorSDPViolatedConstraints *sdpViolatedConstraints =
             ProcessorSDPViolatedConstraints::create(nb_max_ineq,
@@ -97,6 +98,8 @@ public:
         delete sdpViolatedConstraints;
 
         std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size() + solver->get_sdp_constraints()->size();
+
+        return this;
     }
 
     void transforme_SDP_solution()

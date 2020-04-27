@@ -13,6 +13,8 @@
 #include "../Constraint/ConstraintsSDP.hpp"
 #include "../Constraint/ConstraintsSDP.hpp"
 #include "../Constraint/LinearConstraints.hpp"
+#include "../Utils/Constants.hpp"
+#include "../Parameter/TerminationParam.hpp"
 
 class Solver
 {
@@ -35,6 +37,7 @@ public:
     //constraints
     virtual void append_constraints() = 0;
     virtual void append_variables() = 0;
+    virtual void update_termination_param(TerminationParam *early_param, const bool &is_early) = 0;
 
     Solver(const SolverParam &solverParm) : objectiveFunction(ObjectiveFunction::create()),
                                             param(solverParm),
@@ -45,6 +48,7 @@ public:
                                             variables_sdp(SDPVariables::create())
 
     {
+       
     }
 
     LinearConstraint *add_constraint_linear(LinearConstraint *constraint)
@@ -85,7 +89,13 @@ public:
 
     ConstraintsSDP *get_sdp_constraints()
     {
-        return this-> constraints_sdp;;
+        return this->constraints_sdp;
+        ;
+    }
+
+    virtual const double &get_optimal_solution_value()
+    {
+        return  this->objectiveFunction.get_solution_value();
     }
 
     //objective function
@@ -112,6 +122,14 @@ public:
         // s += this->variables.to_string();
 
         return s;
+    }
+
+    ~Solver()
+    {
+        delete variables;
+        delete variables_sdp;
+        delete constraints_sdp;
+        delete constraints_lp;
     }
 };
 

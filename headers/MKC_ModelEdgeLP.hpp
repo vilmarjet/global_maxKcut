@@ -15,30 +15,31 @@
 #include "MKC_InequalityClique.hpp"
 #include "MKC_InequalityWheel.hpp"
 #include "MKC_InequalityLpSdp.hpp"
+#include "./Models/ModelAbstract.hpp"
 
 namespace maxkcut
 {
 
-class MKC_ModelEdgeLP
+class MKC_ModelEdgeLP : public ModelAbstract
 {
 private:
-    Solver *solver;
     MKCInstance *instance;
     VariablesEdge *variablesEdge;
     std::vector<ViolatedConstraints *> inequalities_type;
 
 public:
     MKC_ModelEdgeLP(MKCInstance *instance_, Solver *solver_) : instance(instance_),
-                                                               solver(solver_)
+                                                               ModelAbstract(solver_)
     {
         inequalities_type.clear();
         this->initilize();
     }
 
-    void solve()
+    MKC_ModelEdgeLP *solve()
     {
         this->solver->solve();
         std::cout << solver->to_string();
+        return this;
     }
 
     void reset_solver()
@@ -64,7 +65,6 @@ public:
         add_type_inequality(MKC_InequalityWheel::create(variablesEdge, instance));
         add_type_inequality(MKC_InequalityWheel::create(variablesEdge, instance, 3, 2));
         add_type_inequality(MKC_InequalityLpSdp::create(variablesEdge, instance));
-
     }
 
     void set_objective_function()
@@ -78,7 +78,7 @@ public:
         this->inequalities_type.push_back(ineq_type);
     }
 
-    void find_violated_constraints(const int &nb_max_ineq)
+    MKC_ModelEdgeLP *find_violated_constraints(const int &nb_max_ineq)
     {
         //violated_constraints.clear();
         ProcessorLinearViolatedConstraints *linearViolatedConstraints =
@@ -89,6 +89,7 @@ public:
         delete linearViolatedConstraints;
 
         std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size();
+        return this;
     }
 
     ~MKC_ModelEdgeLP()
