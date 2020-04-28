@@ -16,7 +16,7 @@ private:
              TerminationParam *early_param_,
              const bool &is_early_termination_,
              const int &nb,
-             const int &nb_violate) : number_max_iterations(number_max_iterations),
+             const int &nb_violate) : number_max_iterations(number_max_iterations_),
                                       termination_param(early_param_),
                                       is_early(is_early_termination_),
                                       number_iterations_before_optimality(nb),

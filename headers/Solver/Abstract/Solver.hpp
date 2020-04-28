@@ -93,7 +93,7 @@ public:
         ;
     }
 
-    virtual const double &get_optimal_solution_value()
+    virtual const double &get_optimal_solution_value() const
     {
         return  this->objectiveFunction.get_solution_value();
     }

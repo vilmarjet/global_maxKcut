@@ -13,45 +13,30 @@
  */
 class CuttingPlaneAlgorithm
 {
-private:
+protected:
     ModelAbstract *model;
     CPAParam *param;
-    int counter_iterations_non_optim;
-    double current_solution_value;
-    double previous_solution_value;
 
 public:
     CuttingPlaneAlgorithm(ModelAbstract *model_, CPAParam *param_) : model(model_),
                                                                      param(param_)
 
     {
-        counter_iterations_non_optim = param->get_number_iterations_between_optimality();
-        current_solution_value = 0.0;
     }
 
-    ~CuttingPlaneAlgorithm()
-    {
-    }
+    virtual void solve_model() = 0;
+    virtual void find_violate_constraints() = 0;
 
-    void execute()
+    virtual void execute()
     {
-        for (int i = 0;
-             !is_stopping_criteria(i);
-             ++i)
+        for (int i = 0; !is_stopping_criteria(i); ++i)
         {
-            model->update_solver_termination_param(param->get_solver_termination(),
-                                                   is_early_termination());
-            model->solve();
-            model->find_violated_constraints(param->get_number_max_violated_constraints());
-
-            set_solution();
-            
-
-            std::cout << "i = " << i << "solution_value = " << current_solution_value << "\n";
+            solve_model();
+            find_violate_constraints();
         }
     }
 
-    bool is_stopping_criteria(const int &iteration)
+    virtual bool is_stopping_criteria(const int &iteration)
     {
         if (iteration == 0)
         {
@@ -63,38 +48,12 @@ public:
             return true;
         }
 
-        if (iteration > 2)
-        {
-            if (CONSTANTS::is_zero(previous_solution_value - current_solution_value))
-            {
-                return true;
-            }
-        }
-
         return false;
     }
 
-    //TODO: CHECK IF IT IS OPTIM.... 
-    void set_solution()
+    ~CuttingPlaneAlgorithm()
     {
-    previous_solution_value = current_solution_value;
-            current_solution_value = model->get_optimal_solution_value();
-    }
-
-    bool is_early_termination()
-    {
-        if (param->is_early_termination())
-        {
-            if (counter_iterations_non_optim < param->get_number_iterations_between_optimality())
-            {
-                counter_iterations_non_optim++;
-                return true;
-            }
-
-            counter_iterations_non_optim = 0;
-        }
-
-        return false;
+        delete param;
     }
 };
 

@@ -84,7 +84,7 @@ public:
         add_type_inequality(MKC_InequalityLpSdp::create(variablesEdgeSDP, instance));
     }
 
-    MKC_ModelEdgeSDP *find_violated_constraints(const int &nb_max_ineq)
+    int find_violated_constraints(const int &nb_max_ineq)
     {
         ProcessorSDPViolatedConstraints *sdpViolatedConstraints =
             ProcessorSDPViolatedConstraints::create(nb_max_ineq,
@@ -95,11 +95,14 @@ public:
                 ->find_violation(boundIneq)
                 ->populate();
 
+
+         int nb_violations = sdpViolatedConstraints->get_number_violated_constraints();
+
         delete sdpViolatedConstraints;
 
         std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size() + solver->get_sdp_constraints()->size();
 
-        return this;
+        return nb_violations;
     }
 
     void transforme_SDP_solution()

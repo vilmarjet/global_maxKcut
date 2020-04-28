@@ -36,6 +36,9 @@ easyTriangle:
 easy20: 
 	  ./lp_sdp8 ./resource/instance20.txt 3 1 1 0 0 0 0 10
 
+easy7: 
+	  ./lp_sdp8 ./resource/instance7.txt 3 -3 1 4 1 0 2 10
+
 
 .PHONY: clean test all
 

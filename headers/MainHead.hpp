@@ -45,7 +45,7 @@
 #include "./Solver/Mosek/SolverMosekLp.hpp"
 #include "./Solver/Factory/SolverFactory.hpp"
 
-#include "./CPA/CuttingPlaneAlgo.hpp"
+#include "MKC_CuttingPlane.hpp"
 
 #include "../../../myFiles/eigen/Eigen/Dense"
 #include "../../../myFiles/eigen/Eigen/Eigenvalues" 

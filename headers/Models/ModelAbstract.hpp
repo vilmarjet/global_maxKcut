@@ -12,11 +12,13 @@ public:
     ModelAbstract(Solver *solver_) : solver(solver_) {}
 
     virtual ModelAbstract *solve() = 0;
-    virtual ModelAbstract *find_violated_constraints(const int &nb_max_ineq) = 0;
-    virtual double get_optimal_solution_value()
+    virtual int find_violated_constraints(const int &nb_max_ineq) = 0;
+    
+    const Solver * get_solver() const 
     {
-        return solver->get_optimal_solution_value();
-    } 
+        return this->solver;
+    }
+    
     ModelAbstract *update_solver_termination_param(TerminationParam* param, const bool &is_early)
     {
         solver->update_termination_param(param, is_early);

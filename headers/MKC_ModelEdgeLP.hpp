@@ -78,7 +78,7 @@ public:
         this->inequalities_type.push_back(ineq_type);
     }
 
-    MKC_ModelEdgeLP *find_violated_constraints(const int &nb_max_ineq)
+    int find_violated_constraints(const int &nb_max_ineq)
     {
         //violated_constraints.clear();
         ProcessorLinearViolatedConstraints *linearViolatedConstraints =
@@ -86,10 +86,12 @@ public:
                 ->find_violation(&inequalities_type[0], inequalities_type.size())
                 ->populate();
 
+        int nb_violations = linearViolatedConstraints->get_number_violated_constraints();
+
         delete linearViolatedConstraints;
 
         std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size();
-        return this;
+        return nb_violations;
     }
 
     ~MKC_ModelEdgeLP()

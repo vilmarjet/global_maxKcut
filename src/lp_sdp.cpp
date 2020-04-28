@@ -246,36 +246,30 @@ int main(int argc, char *argv[])
                            ->set_number_max_iterations(20)
                            ->set_number_max_violated_constraints(100)
 
-                           ->set_early_termination(3)
-                           ->set_gap_primal(0.75)
-                           ->set_gap_relative_tolerance(0.75)
-                           ->set_gap_tolerance(0.90)
+                           ->set_early_termination(1)
+                           ->set_gap_primal(0.05)
+                           ->set_gap_relative_tolerance(0.05)
+                           ->set_gap_tolerance(0.05)
                            ->end()
 
                            ->build();
 
   MKC_ModelEdgeLP *model = new MKC_ModelEdgeLP(new_instance,
-                                          SolverFactory::create_solver(TypeSolver::LP_MOSEK, solverParm));
+                                               SolverFactory::create_solver(TypeSolver::LP_MOSEK, solverParm));
 
-  CuttingPlaneAlgorithm *cpa = new CuttingPlaneAlgorithm(model, cpaParam);
+  MKC_CuttingPlane *cpa = new MKC_CuttingPlane(model, cpaParam);
 
-  MKC_ModelEdgeSDP modelSDP = MKC_ModelEdgeSDP(new_instance,
-                                               SolverFactory::create_solver(TypeSolver::SDP_MOSEK, solverParm));
+  MKC_ModelEdgeSDP *modelSDP = new MKC_ModelEdgeSDP(new_instance,
+                                                   SolverFactory::create_solver(TypeSolver::SDP_MOSEK, solverParm));
 
-  modelSDP.solve();
+  MKC_CuttingPlane *cpaSDP = new MKC_CuttingPlane(modelSDP, cpaParam);
 
   cpa->execute();
-  cout << "End CPA ";
+  cout << "\n ***** End CPA  LP ****** \n ";
   cin.get();
 
-  for (int ite = 0; ite < 21; ite++)
-  {
-    cout << "\n ---> Iteration = " << ite << "\n";
-    modelSDP.solve();
-    modelSDP.find_violated_constraints(100);
-    // cin.get();
-  }
-
+  cpaSDP->execute();
+  cout << "\n ***** End cpaSDP ****** \n ";
   cin.get();
 
   sdpEdgeConst.size = 0;
