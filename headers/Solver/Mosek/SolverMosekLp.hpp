@@ -59,16 +59,21 @@ public:
     //nop
   }
 
-  void set_mosek_solution_status(MSKsolstae *solsta)
+  MSKsoltype_enum set_mosek_solution_status(MSKsolstae *solsta)
   {
+    MSKsoltype_enum statusType;
     if (is_early_termination)
     {
+      statusType = MSK_SOL_ITR;
       set_mosek_solution_statuss(solsta, MSK_SOL_ITR);
     }
     else
     {
+      statusType = MSK_SOL_BAS;
       set_mosek_solution_statuss(solsta, MSK_SOL_BAS);
     }
+
+    return statusType;
   }
 
   void update_termination_param(TerminationParam *early_param, const bool &is_early)
@@ -91,7 +96,7 @@ public:
 
   void set_solution()
   {
-    set_mosek_solution_status(&solsta);
+    MSKsoltype_enum statusType = set_mosek_solution_status(&solsta);
 
     switch (solsta)
     {
@@ -105,19 +110,9 @@ public:
       std::vector<double> Obj(2);      //double *Obj = (double *)calloc(2, sizeof(MSKrealt));
 
       //if basic solution is activated
-      if (!is_early_termination)
-      {
-        std::cout << "\n**** optimal  \n";
-        MSK_getxx(task, MSK_SOL_BAS, &var_x[0]);
-        MSK_getprimalobj(task, MSK_SOL_BAS, &Obj[0]);
-      }
-      else
-      {
-        std::cout << "\n ***** Not optimal  \n";
-        //Just interior point solution
-        MSK_getxx(task, MSK_SOL_ITR, &var_x[0]);
-        MSK_getprimalobj(task, MSK_SOL_ITR, &Obj[0]);
-      }
+
+      MSK_getxx(task, statusType, &var_x[0]);
+      MSK_getprimalobj(task, statusType, &Obj[0]);
 
       this->objectiveFunction.update_solution(Obj[0]);
 
@@ -157,7 +152,6 @@ public:
   void initialize()
   {
 
-    
     create_task(get_lp_variables()->size(), get_linear_constraints()->size());
     initilize_objective_function();
 

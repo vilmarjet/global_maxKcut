@@ -5,6 +5,7 @@
 #include "../Models/ModelAbstract.hpp"
 #include "./Parameter/CPAParam.hpp"
 #include "../Solver/Parameter/TerminationParam.hpp"
+#include "../Solver/Utils/Constants.hpp"
 /**
  * Steps :
  *  1) Solve
@@ -29,11 +30,16 @@ public:
 
     virtual void execute()
     {
+        DEBUG_MSG("***Start CPA ***");
+
         for (int i = 0; !is_stopping_criteria(i); ++i)
         {
             solve_model();
             find_violate_constraints();
+            
         }
+
+        DEBUG_MSG("***END CPA ***");
     }
 
     virtual bool is_stopping_criteria(const int &iteration)

@@ -1,6 +1,16 @@
 #ifndef CONSTANTS_SOLVER_HPPP
 #define CONSTANTS_SOLVER_HPPP
 
+#include <chrono>
+#include <ctime>   
+
+#define ISDEBUG true
+
+#define DEBUG_MSG(x) do { \
+  std::time_t end_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); \
+  if (ISDEBUG) { std::cout <<std::ctime(&end_time) <<  x << std::endl; } \
+} while (0)
+
 namespace CONSTANTS
 {
 static const double ZERO = 1e-6;
