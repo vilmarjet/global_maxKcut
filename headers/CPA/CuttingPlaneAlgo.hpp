@@ -1,11 +1,16 @@
 #ifndef CUTTING_PLANE_ALGORITHM_HPP2
 #define CUTTING_PLANE_ALGORITHM_HPP2
 
+#define LOG_LEVEL 3 //info
+
 #include "./../Solver/Abstract/Solver.hpp"
 #include "../Models/ModelAbstract.hpp"
 #include "./Parameter/CPAParam.hpp"
 #include "../Solver/Parameter/TerminationParam.hpp"
-#include "../Solver/Utils/Constants.hpp"
+#include "../Solver/Utils/Logger.hpp"
+
+
+
 /**
  * Steps :
  *  1) Solve
@@ -30,7 +35,7 @@ public:
 
     virtual void execute()
     {
-        DEBUG_MSG("***Start CPA ***");
+        Log::INFO("***Start CPA ***");
 
         for (int i = 0; !is_stopping_criteria(i); ++i)
         {
@@ -39,7 +44,7 @@ public:
             
         }
 
-        DEBUG_MSG("***END CPA ***");
+        Log::INFO("***END CPA ***");
     }
 
     virtual bool is_stopping_criteria(const int &iteration)
