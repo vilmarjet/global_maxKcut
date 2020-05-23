@@ -180,7 +180,7 @@ typedef struct T_Branch
   double	lowerboud; // father lb
   double	upperbound;// father ub 
   double      	seq;  //to rank in the select strategy 
-  double      	Level_tree;
+  int      	Level_tree;
   long 		lastVarFix;
   long 		lastPartFix;  
   
@@ -396,6 +396,10 @@ inline bool Set_Clque_in_MaximalClique (const int &vertex, std::vector <int>neig
 inline void Add_edgeInstance (T_Instance& instance, const int & J, const int & I);
 
 
+//Heuristic
+void DoAllHeuristicFiles(char *argv[], T_Instance &instance);
+
+
 
 //MOSEK
 // inline void setObjFunction_andVarBounds__LPmosek(const T_Instance &instance, MSKrescodee  &r, MSKtask_t    &task, MSKenv_t &env);
@@ -507,6 +511,8 @@ void set_pre_inequalities_VP2 (T_Instance &instance);
 void set_pre_inequalities_VP3(T_Instance &instance);
 void Eigenvaleu_ForSomeVertices(T_Instance &instance,MKC_ConstraintLPtoSDPPopulate &PopVecProp, const  std::vector<int> &Vec_Vertices, const double &counterMaxNeg );
 void FindNegatifEigenvaleu_Chordal(T_Instance &instance,MKC_ConstraintLPtoSDPPopulate &PopVecProp);
+
+void FindGapIneqNegatifEigenvalue(T_Instance &instance, MKC_ConstraintLPtoSDPPopulate &PopVecProp);
 
 
 

@@ -35,16 +35,15 @@ public:
 
     virtual void execute()
     {
-        Log::INFO("***Start CPA ***");
+        Log::INFO("*** Start CPA ***");
 
         for (int i = 0; !is_stopping_criteria(i); ++i)
         {
             solve_model();
             find_violate_constraints();
-            
         }
 
-        Log::INFO("***END CPA ***");
+        Log::INFO("*** END CPA ***");
     }
 
     virtual bool is_stopping_criteria(const int &iteration)

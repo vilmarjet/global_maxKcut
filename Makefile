@@ -34,10 +34,14 @@ easyTriangle:
 	  ./lp_sdp8 ./resource/instance5.txt 3 1 1 0 0 0 0 10
 
 easy20: 
-	  ./lp_sdp8 ./resource/instance20.txt 3 1 1 0 0 0 0 10
+	  ./lp_sdp8 ./resource/instance20.txt 3 -3 1 0 0 0 0 10
 
 easy7: 
 	  ./lp_sdp8 ./resource/instance7.txt 3 -3 1 4 1 0 2 10
+
+easybqp50: 
+	  ./lp_sdp8 ./resource/bqp50_6.txt 3 -3 1 1 5 2 1 3
+
 
 
 .PHONY: clean test all

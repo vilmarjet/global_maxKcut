@@ -166,8 +166,6 @@ std::ofstream file_ITE,
 
 int CLEAN = 2; // it was equals to 2
 
-//Cplex global vars
-
 int SIMPLEXITE = 0;
 int LastConstraint = 0;
 bool COMPLET_EIG = false;
@@ -208,7 +206,7 @@ bool BY_PARTITION_BB = true; //true= By vertex (polytomic = K), false= by edge (
 int TYPE_BRANCH = BnB;
 std::vector<T_constraint> ExtraCONST_BB;
 
-double seqqq_BB = 0.0;
+int seqqq_BB = 0;
 double *redcost_BB;
 MSKrescodee r_BB; //mosek Parameters
 MSKtask_t task_BB = NULL;
@@ -217,6 +215,7 @@ MSKenv_t env_BB = NULL;
 double SDP_FirstSol;
 int TYPE_SOLVER_BB = 3;
 double Last_parameter_BB;
+int Pos_Last_parameter_BB;
 
 std::vector<std::vector<int>> bestPartitions_BB;
 
@@ -230,7 +229,7 @@ using namespace maxkcut;
 
 int main(int argc, char *argv[])
 {
-  int a = 0;
+
   MKCInstance *new_instance = MKCInstanceBuilder<std::nullptr_t>::create()
                                   ->set_graph()
                                   ->set_graph_input_file(argv[1])
@@ -276,6 +275,7 @@ int main(int argc, char *argv[])
   sdpEdgeConst.varI.clear();
   sdpEdgeConst.varJ.clear();
 
+  MatrixXd m(2, 4);
   double time3;
   T_Instance instance; //Store information of instance
 
@@ -298,17 +298,17 @@ int main(int argc, char *argv[])
   //Read Instance
   Lire_Instance(FileLecture, instance); //Function to read
 
-  // printvector(instance.cij.barc_i);
-
   //******* Set FILE of final results
   // *****
   set_FileNames(argv, fileResult);
 
   //FIle with iteation information
-  set_FileNamesITE(argv, fileResult_ITE);
-  file_ITE.open(fileResult_ITE.c_str());
-
-  WriteIteration_FILE(instance, file_ITE, FileLecture, -1);
+  if (false)
+  {
+    set_FileNamesITE(argv, fileResult_ITE);
+    file_ITE.open(fileResult_ITE.c_str());
+    WriteIteration_FILE(instance, file_ITE, FileLecture, -1);
+  }
 
   //file Iteration BB
   set_FileNamesITE_BB(argv, fileResult_ITE_BB);
@@ -317,9 +317,8 @@ int main(int argc, char *argv[])
 
   // ***** end of files
   //  cout << "d =" <<  ((double)( instance.edge_nb ))/((instance.DIM*(instance.DIM-1))/2) << endl;
-
   bool IS_SPARSE = instance.edge_nb < 0.4 * (instance.DIM * (instance.DIM - 1) * 0.5);
-  bool PRINT_ITERATIONS = true;
+  bool PRINT_ITERATIONS = false;
 
   //  IS_SPARSE = false;
   if (IS_SPARSE)
@@ -343,6 +342,9 @@ int main(int argc, char *argv[])
     DO_EIG_INEQ_FROM_SDP = true;
   }
 
+  if (instance.DIM <= 50) /*no need to do that*/
+    MAXTIME = 40;
+
   /********* Special types of Solver (LP mostely)*********/
   //Study before and after
   if (SDP_SEP == 99)
@@ -362,94 +364,59 @@ int main(int argc, char *argv[])
     /*Two formulations that uses Node variables for LP formulations*/
     if (SDP_SEP == 10)
     {
+      //	 BuildCompleteGraph(instance);
       set_NodeEdge_Formulation(instance); /*Edge-node formulation see My thesis*/
       SDP_SEP = 0;                        // return to LP type of solver
     }
     else if (SDP_SEP == 11)
     {
-      /*It is working just for complete graph (error formulations or code ?!)*/
+      /*ExtendedRepresentative  is working just for complete graph (error formulations or code ?!)*/
       BuildCompleteGraph(instance);
       ISCOMPLETE_GRAPH = true;
       //Set_RepresentativeVar(instance); /*Old extended*/
       Set_ExtendedRepresentativeVar(instance); /*Extended formulations proposed in http://dx.doi.org/10.1016/j.endm.2016.03.044*/
       SDP_SEP = 0;                             // return to LP type of solver
     }
+    else if (SDP_SEP == 12)
+    {
+      //	 BuildCompleteGraph(instance);
+      set_NodeEdge_Formulation(instance); /*Edge-node formulation see My thesis*/
+      SDP_SEP = -2;                       // return to LP type of solver
+    }
+    else if (SDP_SEP != -3 && SDP_SEP != -2 && SDP_SEP != -1 && SDP_SEP != 0 && SDP_SEP != 1)
+    {
+      cout << "Unknown SDP_SEP  type. Exiting major error";
+      exit(1);
+    }
   }
   /****************************/
-
-  if (instance.DIM > 0)
+  //
+  //
+  bool DOHEURISTIC = false; //to do the Heuristic analysis
+  PRINT_ITERATIONS = true;
+  if (!DOHEURISTIC)
   {
-    CuttingPlane_Optimization(instance, PRINT_ITERATIONS);
+    if (instance.DIM > 0)
+    {
+      CuttingPlane_Optimization(instance, PRINT_ITERATIONS); //first cutting plane (more complete one... it has to be changed)
+    }
+    else
+    {
+      WriteIteration_FILE_BB(file_ITE_BB, 1, 0, instance.sum_cost, instance.sum_cost, 0.0, getCurrentTime_Double(start));
+      return 0;
+    }
+    BranchAndBound(instance);
   }
   else
-  {
-    //     cout << "The solution is trivial with solution = " << instance.sum_cost << endl;
-    WriteIteration_FILE_BB(file_ITE_BB, 1, 0, instance.sum_cost, instance.sum_cost, 0.0, getCurrentTime_Double(start));
-    return 0;
-  }
-
-  //   cout <<"Fin do 1 Cutting plane"; cin.get();
-
-  BranchAndBound(instance);
-
-  //  bool DOHEURISTIC = true;
-  //  if (false){
-  //  	 clock_t start2 = std::clock();
-  //  	double LB = VNS_Heuristic_FeasibleSoltion (instance);
-  //  	instance.ObSol = LB;
-  //  	time_IPM_iteration  = getCurrentTime_Double(start2);
-  //  	WriteIteration_FILE(instance, file_ITE,FileLecture, -2); //Writing last iteration
-  //  }
-  //  if (DOHEURISTIC){
-
-  //    clock_t start2 = std::clock();
-  //    ICH_Heuristique(instance); cout << ", time = " << getCurrentTime_Double(start2)<< endl;
-
-  //    start2 = std::clock(); std::vector<int> OriginVertices2;
-  //   cout << "\nVal ICH NOVO =" << ICH_Heuristique_Ghaddar_main(instance) <<", time = " << getCurrentTime_Double(start2)<< endl;
-  //    cout << "Val ICH =" << ICH_Heuristique_Ghaddar(instance, OriginVertices2, instance) <<", time = " << getCurrentTime_Double(start2)<< endl;
-  //    cout << "Val MOH=" << MultipleSearch_Heuristic_FeasibleSoltion(instance);
-  //     cout << "Val VNS=" << VNS_Heuristic_FeasibleSoltion (instance);
-  //    TabuOptimum_Heuristic_FeasibleSoltion (instance);
-  //    Grasp_Heuristic_FeasibleSoltion (instance);
-  //    Hybrid_GraspAndTabu(instance);
-  //  }//end if DOHEURISTIC
-
-  //   MAXTIME = 10;
-  //   CuttingPlane_Optimization(instance, PRINT_ITERATIONS);
-
-  //  bool DOHEURISTIC_d = true;
-  //     if (DOHEURISTIC_d){
-  //    clock_t start2 = std::clock();
-  //	double valll; int nbRound = 5;
-  ////    ICH_Heuristique(instance); cout << ", time = " << getCurrentTime_Double(start2)<< endl;
-
-  //    start2 = std::clock(); std::vector<int> OriginVertices2;
-  //    ICH_Heuristique_Ghaddar(instance, OriginVertices2, instance);cout << ", time = " << getCurrentTime_Double(start2)<< endl;
-  //	start2 = std::clock();   valll = 0.0;
-  //	for (int i=0; i< nbRound; ++i )
-  //    valll += MultipleSearch_Heuristic_FeasibleSoltion(instance);
-  //	cout << "MOH Value = " << valll/nbRound << ", time = " << getCurrentTime_Double(start2)/nbRound<<  endl;
-
-  //	start2 = std::clock();   valll = 0.0;
-  //	for (int i=0; i< nbRound; ++i )c
-  //    valll +=VNS_Heuristic_FeasibleSoltion (instance);
-  //	cout << "VNS Value = " << valll/nbRound << ", time = " << getCurrentTime_Double(start2)/nbRound<<  endl;
-  ////    TabuOptimum_Heuristic_FeasibleSoltion (instance);
-  //	start2 = std::clock();   valll = 0.0;
-  //	for (int i=0; i< nbRound; ++i )
-  //    valll += Grasp_Heuristic_FeasibleSoltion (instance);
-
-  //	cout << "GRASP Value = " << valll/nbRound << ", time = " << getCurrentTime_Double(start2)/nbRound<<  endl;
-  ////    Hybrid_GraspAndTabu(instance);
-  //  }//end if DOHEURISTIC
+  { //test of heuristic methods
+    DoAllHeuristicFiles(argv, instance);
+  } //end if DOHEURISTIC
 
   return 0;
 }
 
 double BranchAndBound(T_Instance &instance)
 {
-
   //	cout << "*************************" << endl ;
   //	cout << "***Branch and Bound ********" << endl;
   //	cout << "*************************" << endl ;
@@ -461,9 +428,9 @@ double BranchAndBound(T_Instance &instance)
   bool NEW_TASK = false;
   bool R, IsOK = true, NotOK = false;
   int counter = 0;
-  int freqLB = 20, freqLB_BIG = 500; //if (SDP_SEP == -2)freqLB = 150;
+  int freqLB = 20, freqLB_BIG = 20000; //if (SDP_SEP == -2)freqLB = 150;
 
-  double MAXTIME_BB = 4800;
+  double MAXTIME_BB = 21600;
   double lb, bestLowerBound, previousLB = 0;      // heuristic methodc
   double bestUpperBound, LocalUb, previousUB = 0; // highest in B&B list
 
@@ -482,7 +449,6 @@ double BranchAndBound(T_Instance &instance)
   std::vector<std::vector<int>> Partitions;
 
   //    cout << SDP_SEP; cin.get();
-
   //    if (SDP_SEP == -2)
   //      Set_IneqFuncObj(instance, 6669); //This way we limit our next solutions to be inferior than first solution. Impotant when we use Upperbound from Nikiforov
 
@@ -516,7 +482,6 @@ double BranchAndBound(T_Instance &instance)
     //calculate a lower bound  (not for all candidates)
     if ((counter % freqLB == 0) || ListBB.size() == 1)
     {
-
       lb = VNS_Heuristic_FeasibleSoltion(instance);
       if (lb > bestLowerBound)
       {
@@ -531,7 +496,7 @@ double BranchAndBound(T_Instance &instance)
       //Print screen
       if (bestLowerBound > previousLB + epslon || bestUpperBound < previousUB - epslon || counter % freqLB_BIG == 0)
       {
-        // 		PrintScreen_BB(counter,ListBB.size() ,bestLowerBound,bestUpperBound,100*(bestUpperBound-bestLowerBound)/bestLowerBound, getCurrentTime_Double(start_BB));
+        PrintScreen_BB(counter,ListBB.size() ,bestLowerBound,bestUpperBound,100*(bestUpperBound-bestLowerBound)/bestLowerBound, getCurrentTime_Double(start_BB));
         WriteIteration_FILE_BB(file_ITE_BB, counter, ListBB.size(), bestLowerBound, bestUpperBound, 100 * (bestUpperBound - bestLowerBound) / bestLowerBound, getCurrentTime_Double(start_BB));
         previousUB = bestUpperBound;
         previousLB = bestLowerBound;
@@ -563,7 +528,17 @@ double BranchAndBound(T_Instance &instance)
       }
       else
       { //branch and cut  (BnC)
-        R = CuttingPlane_Simple_for_BB(*it_branch->ptxInst, &Partitions, fixvar, BY_PARTITION_BB, &bestLowerBound, 1, (*it_branch).ExtraCONST);
+
+        // Pos_Last_parameter_BB Define frequency of cutting plane algo
+        if (Pos_Last_parameter_BB == 0 || (*it_branch).Level_tree % (Pos_Last_parameter_BB) == 0)
+        {
+          R = CuttingPlane_Simple_for_BB(*it_branch->ptxInst, &Partitions, fixvar, BY_PARTITION_BB, &bestLowerBound, 1, (*it_branch).ExtraCONST);
+        }
+        else
+        {
+          ExtraCONST_BB = (*it_branch).ptxInst->CONST = (*it_branch).ExtraCONST;                                                     //use the same constraitns of its genitor
+          R = Solve_SubProblem_BB(*it_branch->ptxInst, &Partitions, fixvar, BY_PARTITION_BB, TYPE_SOLVER_BB, true, &bestLowerBound); //must be true
+        }
       }
 
       if (R == IsOK)
@@ -586,7 +561,7 @@ double BranchAndBound(T_Instance &instance)
     //delete (parent) from list
     ListBB.erase(it_branch);
 
-    //	   Print_ListBB_allActive(ListBB); cin.get();
+    //  Print_ListBB_allActive(ListBB); cin.get();
     counter++;
     if (getCurrentTime_Double(start_BB) > MAXTIME_BB)
       RESUME = false;
@@ -702,11 +677,9 @@ inline bool Solve_SubProblem_BB(T_Instance &instance, std::vector<std::vector<in
 
   if (BY_PARTITION_BB == true)
   { // it is the old way (have to change it)
-
     // 	    if (TYPE_SOLVER_BB != TYPE_SDP_BB)
     //	  if (Partitions != NULL)
     //      R =  Set_TrivialVertices_inPartition_BB(instance,*Partitions,bestLowerBound); //If R not true ---> Prunne by Integer solution (not helping)
-
     if (Partitions != NULL)
       Set_FixVar_fromPartition_BB(instance, *Partitions, fixvar); //Set vector with all edges fixed from partition
 
@@ -718,7 +691,6 @@ inline bool Solve_SubProblem_BB(T_Instance &instance, std::vector<std::vector<in
   }
   else
   {
-
     if (TYPE_SOLVER_BB == TYPE_SDP_BB)
       R = SolveMosek_SDP_for_BB(instance, fixvar); //solve using SDP solver
     else
@@ -2662,10 +2634,10 @@ inline bool Strategy_selecting_ActiveNodeTree_BB(const T_Instance &instance, dou
     *val_Change = instance.ObSol;
     break;
   case (BFS): //Breath first
-    *val_Change = seqqq_BB;
+    *val_Change = (double)seqqq_BB;
     break;
   case (DFS): // depth rst search
-    *val_Change = -seqqq_BB;
+    *val_Change = -(double)seqqq_BB;
     break;
   default: //Defaut
     *val_Change = -instance.ObSol;
@@ -3478,6 +3450,7 @@ bool SolveMosek_LP_for_Branch(T_Instance &instance, MSKrescodee &r, MSKtask_t &t
         switch (solsta)
         {
         case MSK_SOL_STA_OPTIMAL:
+        case MSK_SOL_STA_PRIM_AND_DUAL_FEAS:
         {
 
           xx = (double *)calloc(instance.totalVars, sizeof(double));
@@ -3670,6 +3643,7 @@ bool SolveMosek_SDP_for_BB(T_Instance &instance, const std::vector<T_fixVar> &fi
       switch (solsta)
       {
       case MSK_SOL_STA_OPTIMAL:
+      case MSK_SOL_STA_PRIM_AND_DUAL_FEAS:
         //MSKint32t NUMVAR 	= 0;
         xx = (double *)MSK_calloctask(task, 0, sizeof(MSKrealt));
         barx = (double *)MSK_calloctask(task, instance.LENBARVAR, sizeof(MSKrealt));
@@ -4110,6 +4084,7 @@ double CuttingPlane_Optimization(T_Instance &instance, const bool &PRINT_ITERATI
         else
           instance.ObSol -= eco2;
 
+        DO_EIG_INEQ_FROM_SDP = false;
         if (DO_EIG_INEQ_FROM_SDP && SDP_SEP != 0)
         {
           setSolver(instance, r, task, env, -1); // solve  IPM  to optmality (SDP)
@@ -4164,6 +4139,7 @@ double CuttingPlane_Optimization(T_Instance &instance, const bool &PRINT_ITERATI
         PrvObj = instance.ObSol;
       }
 
+      //cout << "Saiu do IPM " ; cin.get();
       //write in the iteration file
       if ((OPTMAL_DONE) && (PRINT_ITERATIONS))
       {
@@ -4227,11 +4203,11 @@ double CuttingPlane_Optimization(T_Instance &instance, const bool &PRINT_ITERATI
       // CLEAN Unimportant inequalities
       if ((!RESUME && OPTMAL_DONE) || ((i != 0) && (CLEAN != 0) && (i % CLEAN == 0) && (OPTMAL_DONE) && (gapImp > epslon_s * 100)))
       {
-        COMPLET_EIG = false;
-        if (instance.ObSol >= Obj1 - epslon)
-          instance.CONST.clear();
-        else
-          Clean_uselessInequalities(instance);
+        // COMPLET_EIG = false;
+        // if (instance.ObSol >= Obj1 - epslon)
+        //   instance.CONST.clear();
+        // else
+        Clean_uselessInequalities(instance);
       }
 
       //clear Population of violated inequalities
@@ -4595,7 +4571,6 @@ void SubGraphTreat_by_ViolatedIneq(T_Instance &instance)
   MKC_ConstraintSelectionPopulate PopBestIneq_origem = PopBestIneq;
 
   //Select the most violated inequalities
-  //MKC_ConstraintLPtoSDPPopulate		PopVecProp;
 
   //printvector(ranked_v);
 
@@ -5236,7 +5211,7 @@ inline void Copy_by_rank(const T_Instance &instance, T_Instance &destination, co
         destination.indice_cij[i + j * (destination.DIM + 1)] = index;
         destination.indice_cij[j + i * (destination.DIM + 1)] = index;
 
-        destination.ant_indice_cij[index].idx_j = j; // start from 1
+        destination.ant_indice_cij[index].idx_i = j; // start from 1
         destination.ant_indice_cij[index].idx_j = i; // in SDP idx j should be the smaller onedf
 
         origen_indice[index] = aux_edge;
@@ -5461,7 +5436,8 @@ inline bool FindViolation(T_Instance &instance)
 void SolveMosekSDP(T_Instance &instance)
 {
 
-  //cout << "Entrou otimo  SDP ...";
+  // cout << "Entrou otimo  SDP ...";
+  // cin.get();
 
   double auxtime = getCurrentTime_Double(start);
   //cout << "Chegou" ; cin.get();
@@ -5528,13 +5504,14 @@ void SolveMosekSDP(T_Instance &instance)
   /////////
 
   if (r != MSK_RES_OK)
-    cout << "Erro aqui 1 .... before Set_CombinatorialConstraints_MOSEK_SDP ";
+    cout << "Erro aqui 1 .... before Set_CombinatorialConstraints_MOSEK_SDP -- SolveMosek \n";
 
   Set_CombinatorialConstraints_MOSEK_SDP(instance, r, task, LBsdp, UBsdp);
   if (r != MSK_RES_OK)
   {
-    cout << "Nb of instances = " << instance.CONST.size();
-    cout << "Erro aqui 1 .... after Set_CombinatorialConstraints_MOSEK_SDP ";
+    cout << "Nb of constraints = " << instance.CONST.size()
+         << endl
+         << "Erro aqui 2 serio \n.... after Set_CombinatorialConstraints_MOSEK_SDP ...  ";
   }
 
   //
@@ -5582,6 +5559,7 @@ void SolveMosekSDP(T_Instance &instance)
       switch (solsta)
       {
       case MSK_SOL_STA_OPTIMAL:
+      case MSK_SOL_STA_PRIM_AND_DUAL_FEAS:
         //MSKint32t NUMVAR 	= 0;
         xx = (double *)MSK_calloctask(task, 0, sizeof(MSKrealt));
         barx = (double *)MSK_calloctask(task, instance.LENBARVAR, sizeof(MSKrealt));
@@ -5770,6 +5748,7 @@ void SolveMosekSDP2(T_Instance &instance)
   r = MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_REL_GAP, gapTolRel / 100); // Tol to optimality
 
   MSK_putintparam(task, MSK_IPAR_NUM_THREADS, num_of_threads); //Nber of cpus
+
   double FOvalue;
 
   if (r == MSK_RES_OK)
@@ -5790,6 +5769,7 @@ void SolveMosekSDP2(T_Instance &instance)
       switch (solsta)
       {
       case MSK_SOL_STA_OPTIMAL:
+      case MSK_SOL_STA_PRIM_AND_DUAL_FEAS:
         //MSKint32t NUMVAR 	= 0;
         xx = (double *)MSK_calloctask(task, 0, sizeof(MSKrealt));
         barx = (double *)MSK_calloctask(task, instance.LENBARVAR, sizeof(MSKrealt));
@@ -6212,7 +6192,6 @@ inline void Set_ObFunction_Mosek_SDP(const T_Instance &instance, MSKrescodee &r,
   if (cstW != 1.0)
     if (r == MSK_RES_OK)
       r = MSK_putcfix(task, -cstW * sumTotalCost + instance.sum_cost); // in sdp we have to add the sum of all the cost in the objective function (bfore sumTotalCost = 0.0)
-
   //free memory
   delete[] c_i;
   delete[] c_j;
@@ -6336,7 +6315,8 @@ void SDP_violations_in_LPSOlution(T_Instance &instance, int &NbIneqMax, MKC_Cons
   }
   else if (ISCOMPLETE_GRAPH)
   {
-    FindNegatifEigenvaleu(instance, PopSDP);
+    // 	 	FindNegatifEigenvaleu(instance, PopSDP);
+    FindGapIneqNegatifEigenvalue(instance, PopSDP);
   }
   else
   {
@@ -6544,8 +6524,75 @@ void Eigenvaleu_ForSomeVertices(T_Instance &instance, MKC_ConstraintLPtoSDPPopul
 
 } //end of function
 
+//void Eigenvaleu_ForSomeVertices(T_Instance &instance,MKC_ConstraintLPtoSDPPopulate &PopVecProp, std::vector<int> Vec_Vertices, const double & frac)
+//{
+
+//  cout << "Begin Eigenvaleu_ForSomeVertices"; cin.get();
+//  //calcule eigenvalues and eigenvector is made by EIGEN (http://eigen.tuxfamily.org)
+//  int counterMaxNeg;
+//  int realSize = Vec_Vertices.size();
+//  MinVP = 1;
+//  MatrixXd mat_X(realSize,realSize);
+//  VectorXd vecXd (realSize);
+//   VectorXd egVecBig(instance.DIM);
+
+//  double eigVal = -1 ;
+//  int counterNeg = 0;
+
+//  SelfAdjointEigenSolver<MatrixXd> es; // just for symmetric matrix (comp. it is 10 times faster than general method)
+//  double cstTranf = 1.0/(K -1);
+
+//  //Tranformation x to X
+
+//	for (int i=0; i<realSize; i++)
+//	    for (int j=0; j<realSize; j++){
+//		      if (i != j)
+//				mat_X(i,j) = ValueXij(Vec_Vertices[i]+1,Vec_Vertices[j]+1,instance)*((double)K/(K-1) ) -  cstTranf; // before it was mat_X(i,j) = ValueXij(vertices_RnkByIdex[i]+1,vertices_RnkByIdex[j]+1,instance)
+//		      else // Diagonal values
+//				mat_X(i,j) = 1.0;
+//	    }
+
+//    //Compute the eigenvalue and eigenvectr
+//    es.compute(mat_X);
+
+//    counterMaxNeg = realSize*frac;
+
+//    /*// Iteration of all eigenvalues /*/
+//    for (int i=0; i<realSize && i <= counterMaxNeg ; i++){
+//     eigVal = es.eigenvalues()[i];
+
+//      if (eigVal + 0.001< 0.0  && PopVecProp.size() <= NBMAXINEQ){ // eigenvalue is negatif, so there is a violation of the Semidefiniteness
+//		counterNeg++;
+
+//		if (eigVal < MinVP )
+//		  MinVP = eigVal;
+
+//	// 	//cout << "eigVal = " <<eigVal<< endl;
+//	  	vecXd  = es.eigenvectors().col(i);
+
+//	//Putting 0 in all egVecBig
+//	      for (int j=0; j<instance.DIM; j++)
+//			egVecBig[j] = 0.0;
+
+//	      //find j in vertices and changing their values
+//	      for (int z=0; z < realSize; z++)
+//		  egVecBig[Vec_Vertices[z]] =  vecXd[z];
+
+//		PopVecProp.SetIneq(egVecBig, instance.DIM,  eigVal, true); // add new eigenvector in populations
+//      }else{
+//		return; //end of function // The eigenvalues  are ranked by non-decrese value
+//	}
+
+//    }//end for
+
+//  if ((SDP_SEP == 2) &&(counterNeg == 0 ))
+//       PopVecProp.clearAll();
+
+//}//end of function
+
 void Gershgorin_Circle(T_Instance &instance, MKC_ConstraintLPtoSDPPopulate &PopVecProp)
 {
+
   int SizeGersh = 0;
 
   switch (PreVP)
@@ -6639,6 +6686,8 @@ void Gershgorin_Circle(T_Instance &instance, MKC_ConstraintLPtoSDPPopulate &PopV
 
   } // end MAX_ITEGER_ITE neg
 
+  // cout << "Saiu Gershgorin_Circle "<<endl;
+
 } //end   Gershgorin_Circle function
 
 void FindNegatifEigenvaleu_antigoEing(T_Instance &instance, MKC_ConstraintLPtoSDPPopulate &PopVecProp)
@@ -6695,6 +6744,14 @@ void FindNegatifEigenvaleu_antigoEing(T_Instance &instance, MKC_ConstraintLPtoSD
       for (int j = 0; j < instance.DIM; j++)
         egVec[j] = real(vecXc[j]); //  real(es.eigenvectors().col(i)[j]); //taking the real part of the eigenvector
 
+      //mat_vio = v*v.transpose();
+      //cout << "violation: "<< v.transpose()*mat_X*v << std::endl;
+      //cout << "mat_vio: "<<  endl << mat_vio<< std::endl;
+
+      //cout << "IMprimindo valeur prop negatif: " <<eigVal << endl;
+      //printvector(egVec);
+      //cin.get();
+
       if (eigVal >= 0)
         PopVecProp.SetIneq(egVec, -eigVal, false); // add new eigenvector in population
       else
@@ -6724,11 +6781,17 @@ void FindNegatifEigenvaleu_antigoEing(T_Instance &instance, MKC_ConstraintLPtoSD
 
         if (vall > max)
           max = vall;
+
+        //if (conteur >= PrintEigPos.size())
+        //i = -1;
       }
     } //end forbidem
 
     PrintEigPos[PrintEigPos.size() - 1] = max;
+    //
   }
+  //cin.get();
+  //end of JUNK
 }
 
 //New way of calculate the eigenvalue for symmetric matrix
@@ -6796,7 +6859,122 @@ void FindNegatifEigenvaleu(T_Instance &instance, MKC_ConstraintLPtoSDPPopulate &
       if (eigVal < MinVP)
         MinVP = eigVal;
 
+      // 	//cout << "eigVal = " <<eigVal<< endl;
+      //  	vecXd  = es.eigenvectors().col(i);
+      // // 	cout << "Before = " << vecXd.transpose()*mat_X*vecXd;
+      // //
+      // //
+      // //
+      //  	for (int j=0; j< instance.DIM; j++)
+      //  	eigvect[j] = vecXd[j];
+      // //
+      // //
+      // // 	if (SDP_SEP == 99)
+      // // 	MakeSparseEig (instance, eigvect,eigVal, instance.DIM*0.1);
+      // //
+      // //
+      //  	for (int j=0; j< instance.DIM; j++)
+      //  	 vecXd[j] = eigvect[j];
+      //
+      // //     cout << vecXd.transpose()*mat_X*vecXd; cin.get();
+      //
+      // 	//Design_SDPIneq2(instance, eigvect);
+      // //	if (vecXd.transpose()*mat_X*vecXd < 0)
+      // 	PopVecProp.SetIneq(vecXd, instance.DIM,  eigVal, true); // add new eigenvector in population
+
       PopVecProp.SetIneq(es.eigenvectors().col(i), instance.DIM, eigVal, true); // add new eigenvector in populations
+    }
+    else
+    {
+      return; //end of function // The eigenvalues  are ranked by non-decrese value
+    }
+
+  } //end for
+
+  if ((SDP_SEP == 2) && (counterNeg == 0))
+    PopVecProp.clearAll();
+}
+
+void FindGapIneqNegatifEigenvalue(T_Instance &instance, MKC_ConstraintLPtoSDPPopulate &PopVecProp)
+{
+  //cout << "Begin Eig find"; cin.get();
+  //calcule eigenvalues and eigenvector is made by EIGEN (http://eigen.tuxfamily.org)
+
+  MinVP = 1;
+  MatrixXd mat_X(instance.DIM, instance.DIM);
+  VectorXd vecXd(instance.DIM);
+  vector<double> egVec(instance.DIM, 0.0);
+  vector<double> eigvect(instance.edge_nb);
+  double eigVal = -1;
+  int counterNeg = 0;
+  SelfAdjointEigenSolver<MatrixXd> es; // just for symmetric matrix (comp. it is 10 times faster than general method)
+  double cstTranf = 1.0 / (K - 1);
+
+  //Tranformation x to X
+  for (int i = 0; i < instance.DIM; i++)
+    for (int j = 0; j < instance.DIM; j++)
+    {
+      if (i != j)
+        mat_X(i, j) = ValueXij(i + 1, j + 1, instance) * ((double)K / (K - 1)) - cstTranf;
+      else // Diagonal values
+        mat_X(i, j) = 1.0;
+    }
+
+  //Compute the eigenvalue and eigenvectr
+  es.compute(mat_X);
+
+  //Find max number of neg
+  int counterMaxNeg = 0;
+
+  if (TOTAL_SDPCUT >= instance.DIM)
+    COMPLET_EIG = false;
+
+  if (!COMPLET_EIG)
+  {
+    for (int i = 0; i < instance.DIM; i++)
+    {
+      eigVal = es.eigenvalues()[i];
+      if (eigVal + 0.001 < 0.0)
+        counterMaxNeg++;
+      else
+        break;
+    } //end FOR i
+    counterMaxNeg /= QT_DIV_EIG;
+  }
+  else
+  {
+    counterMaxNeg = instance.DIM;
+  }
+
+  //Find gap value
+  double valueGap;
+  for (int i = 0; i < instance.DIM; i++)
+  {
+    if (i >= K - 1)
+    {
+      valueGap = es.eigenvalues()[instance.DIM - 1 - i];
+      break;
+    }
+  }
+
+  //	 cout << "valueGap = " << valueGap;
+
+  /*// Iteration of all eigenvalues /*/
+  for (int i = 0; i < instance.DIM && i <= counterMaxNeg; i++)
+  {
+    eigVal = es.eigenvalues()[i];
+
+    if (eigVal + 0.001 < 0.0 && PopVecProp.size() <= NBMAXINEQ)
+    { // eigenvalue is negatif, so there is a violation of the Semidefiniteness
+
+      counterNeg++;
+
+      if (eigVal < MinVP)
+        MinVP = eigVal;
+
+      //	 eigVal -= valueGap;
+
+      PopVecProp.SetIneq(es.eigenvectors().col(i), instance.DIM, -valueGap, true); // add new eigenvector in populations
     }
     else
     {
@@ -7032,7 +7210,6 @@ double CalculateViolation_SDP(T_Instance &instance, std::vector<double> &vecProp
 
 void Design_SDPIneq_SubGraph(T_Instance &instance, Eigen::VectorXcd &vecProp, const int begin, const int endd)
 {
-  // Disign in CPlex the inequality:
   //	sum(u,v_i) - sum(v_{i-1},v_i) - u_{1,2} <= cstW
   // vec_vertices {u | v_1, v_2, ... , V_n} where u is the hub of the wheel
   int aux_edge, counter, I, J;
@@ -7096,7 +7273,6 @@ void Design_SDPIneq_SubGraph(T_Instance &instance, Eigen::VectorXcd &vecProp, co
 
 void Design_SDPIneq_Triangle(T_Instance &instance, Eigen::VectorXcd &vecProp, const std::vector<int> &vertex)
 {
-  // Disign in CPlex the inequality:
   //	sum(u,v_i) - sum(v_{i-1},v_i) - u_{1,2} <= cstW
   // vec_vertices {u | v_1, v_2, ... , V_n} where u is the hub of the wheel
   int aux_edge, counter, I, J;
@@ -7615,7 +7791,7 @@ void Heuristic_to_ValidEigenvalues(T_Instance &instance, MKC_ConstraintLPtoSDPPo
 //suppose that graph is complete
 void Set_IneqFuncObj(T_Instance &instance, const double &rghtValue)
 {
-  // Disign in CPlex the inequality:
+
   //	sum(u,v_i) - sum(v_{i-1},v_i) - u_{1,2} <= cstW
   // vec_vertices {u | v_1, v_2, ... , V_n} where u is the hub of the wheel
   int aux_edge, counter, I, J;
@@ -7664,7 +7840,7 @@ void Set_IneqFuncObj(T_Instance &instance, const double &rghtValue)
 //suppose that graph is complete (Based in Nikiforov upperBOun)
 void Set_IneqNuberOfEdgesCut(T_Instance &instance, const double &rghtValue, const int &qtEdges)
 {
-  // Disign in CPlex the inequality:
+
   //	sum(u,v_i) - sum(v_{i-1},v_i) - u_{1,2} <= cstW
   // vec_vertices {u | v_1, v_2, ... , V_n} where u is the hub of the wheel
   int aux_edge, counter, I, J;
@@ -7709,9 +7885,86 @@ void Set_IneqNuberOfEdgesCut(T_Instance &instance, const double &rghtValue, cons
   instance.CONST.push_back(Const);
 }
 
+void Design_SDPIneq33(T_Instance &instance, const std::vector<double> &vecProp, double &val)
+{
+
+  //	sum(u,v_i) - sum(v_{i-1},v_i) - u_{1,2} <= cstW
+  // vec_vertices {u | v_1, v_2, ... , V_n} where u is the hub of the wheel
+  int aux_edge, counter, I, J;
+  double rightCst = 0.0, valvp;
+  double violation = 0.0, left_side = 0;
+  double epslonEig = 0.01;
+
+  TOTAL_SDPCUT++;
+
+  //creating a constraint
+  T_constraint Const;
+
+  Const.Origem = 9;      //eigenvalue ineq
+  Const.bkc = MSK_BK_LO; // Bound key (>=)
+  //Const.blc 	= -cst;// Numerical value of Lowwer bound
+  Const.buc = +MSK_INFINITY; // Numerical value of Upper bound
+
+  //resize by number of edge in a complete graph = n*(n-1)/2
+  Const.vars.resize(((instance.DIM) * (instance.DIM - 1)) / 2); // fix
+  Const.aval.resize(((instance.DIM) * (instance.DIM - 1)) / 2); // fix
+
+  counter = 0;
+  // making sum(u,v_i)
+  for (int i = 0; i < instance.DIM; i++)
+    if ((vecProp[i] <= -epslonEig) || (vecProp[i] >= epslonEig))
+      for (int j = i; j < instance.DIM && vecProp[i] != 0.0; j++)
+      {
+        if ((i != j) && ((vecProp[j] <= -epslonEig) || (vecProp[j] >= epslonEig)))
+        {
+          I = i + 1;
+          J = j + 1;
+          //putting in xpr
+          aux_edge = instance.indice_cij[I + J * (instance.DIM + 1)];
+
+          if (aux_edge != -1)
+          { // (-1) means that edge does not exist in graph
+            valvp = 2 * vecProp[i] * vecProp[j];
+
+            if (valvp != 0.0)
+            {
+              Const.vars[counter] = (int)aux_edge;
+              Const.aval[counter] = valvp * ((double)K / (K - 1)); //
+              left_side += valvp * ((double)K / (K - 1)) * instance.varS[aux_edge];
+              rightCst += valvp * (1.0 / (K - 1)); //it is minus
+              counter++;
+            }
+          } //end IF aux_edge = ok
+        }
+        else if ((i == j) && ((vecProp[j] <= -epslonEig) || (vecProp[j] >= epslonEig)))
+          rightCst -= vecProp[i] * vecProp[j] * (1.0); //we fixed x_{i,i} = 1
+
+      } //end j
+
+  rightCst += -val; //negatif attention
+
+  //  violation = rightCst -left_side;
+  //  cout << "The violation in design is "<< violation << endl;
+
+  if (counter > 0)
+  {
+    //resize by number of edge in a complete graph = n*(n-1)/2
+    Const.vars.resize(counter); // fix
+    Const.aval.resize(counter); // fix
+
+    Const.blc = rightCst; // Numerical value of Lowwer bound
+
+    //cout << "Printing Eigen valeu :" << endl;
+    //print_Inequality_Tconstraint(Const);
+    //print_Inequality_TconstraintIndex(Const, instance);
+    //cin.get();
+
+    instance.CONST.push_back(Const);
+  }
+}
+
 void Design_SDPIneq2(T_Instance &instance, const std::vector<double> &vecProp)
 {
-  // Disign in CPlex the inequality:
   //	sum(u,v_i) - sum(v_{i-1},v_i) - u_{1,2} <= cstW
   // vec_vertices {u | v_1, v_2, ... , V_n} where u is the hub of the wheel
   int aux_edge, counter, I, J;
@@ -7787,7 +8040,6 @@ void Design_SDPIneq2(T_Instance &instance, const std::vector<double> &vecProp)
 
 void Design_SDPIneq3(T_Instance &instance, const std::vector<double> &vecProp)
 {
-  // Disign in CPlex the inequality:
   //	sum(u,v_i) - sum(v_{i-1},v_i) - u_{1,2} <= cstW
   // vec_vertices {u | v_1, v_2, ... , V_n} where u is the hub of the wheel
   int aux_edge, counter, I, J;
@@ -7848,10 +8100,8 @@ void Design_SDPIneq3(T_Instance &instance, const std::vector<double> &vecProp)
   }
 }
 
-//Design and add in the CPLEX model
 void Design_SDPIneq(T_Instance &instance, const std::vector<double> &vecProp)
 {
-  // Disign in CPlex the inequality:
   //	sum(u,v_i) - sum(v_{i-1},v_i) - u_{1,2} <= cstW
   // vec_vertices {u | v_1, v_2, ... , V_n} where u is the hub of the wheel
   int aux_edge, counter, I, J;
@@ -7994,6 +8244,7 @@ inline void Selective_Separation(T_Instance &instance)
 {
   double cst;
   int Seq;
+  double vasl;
   std::vector<int> vec_aux;
   std::vector<double> vec_auxD;
 
@@ -8029,10 +8280,14 @@ inline void Selective_Separation(T_Instance &instance)
     case 5:
 
       vec_auxD = PopVecProp.GetVector(Seq);
+      //		vasl= PopVecProp.Get_eigVal(Seq);
+      //		cout << "vasl = " << vasl;
+      //		cin.get();
       //if (SDP_SEP == 6) Design_SDPIneq3(instance, vec_auxD); // the SDP matrix is all of 0,1
       //else
       //for(int j=0; j < 10; j++)
       Design_SDPIneq2(instance, vec_auxD);
+      //		Design_SDPIneq33(instance, vec_auxD,vasl );
       break;
     default:
       cout << "IN switch OF Selective_Separation: Wrong number of separation origem = " << PopBestIneq.get_Data(i).orSep << endl;
@@ -8052,7 +8307,11 @@ inline void WriteIteration_FILE_BB(std::ofstream &file_ITE, const int &Ite, cons
     file_ITE << BRANCHING_RULE_BB << " ";
     file_ITE << STRATEGY_SOL_BB << " ";
     file_ITE << TYPE_BRANCH << " ";
-    file_ITE << MAXTIME_ITE << " ";
+    if (Pos_Last_parameter_BB != 0)
+      file_ITE << Pos_Last_parameter_BB << " ";
+    else
+      file_ITE << MAXTIME_ITE << " ";
+
     file_ITE << endl;
 
     //Head of table
@@ -8419,6 +8678,13 @@ void Inserting_Parameters_BB(char *argv[])
     ss >> Last_parameter_BB;
   }
 
+  Pos_Last_parameter_BB = 0;
+  if (argv[11]) //max iteration time
+  {
+    istringstream ss(argv[11]);
+    ss >> Pos_Last_parameter_BB;
+  }
+
 } //end function
 
 void Inserting_Parameters(char *argv[])
@@ -8471,7 +8737,7 @@ void Inserting_Parameters(char *argv[])
   }
 
   //Type General CLIQUE if  (0)
-  if (argv[9]) //Se tem Bicycle Wheel ou nao->(0)
+  if (argv[9])
   {
     istringstream ss(argv[9]);
     ss >> TypeHeurGeClique;
@@ -8497,10 +8763,10 @@ void Inserting_Parameters(char *argv[])
   }
 }
 
-void set_FileNamesITE_BB(char *argv[], string &FileResults)
+void set_FileNamesITE_LowerBound(char *argv[], string &FileResults)
 {
 
-  FileResults += "ResultsBB/ITERATIONS_test/";
+  FileResults += "ResultsBB/ITERATIONS_LowerBound/";
   for (int i = 0; argv[1][i]; i++)
     FileResults += argv[1][i];
 
@@ -8520,6 +8786,39 @@ void set_FileNamesITE_BB(char *argv[], string &FileResults)
   ss4 << STRATEGY_SOL_BB;
   ss4 << TYPE_BRANCH;
   ss4 << MAXTIME_ITE;
+  if (Pos_Last_parameter_BB != 0)
+    ss4 << Pos_Last_parameter_BB;
+
+  FileResults += ss4.str();
+  FileResults += ".csv"; // kind of excel
+}
+
+void set_FileNamesITE_BB(char *argv[], string &FileResults)
+{
+
+  // FileResults += "ResultsBB/ITERATIONS_Selec/";
+  FileResults += "";
+  for (int i = 0; argv[1][i]; i++)
+    FileResults += argv[1][i];
+
+  stringstream sss, ss2, ss3, ss4;
+  sss << K;
+  FileResults += "K";
+  FileResults += sss.str();
+
+  FileResults += "_";
+
+  /*Name by type of parmeters*/
+  FileResults += "_";
+  ss4 << SDP_SEP;
+  ss4 << BY_PARTITION_BB;
+  ss4 << SELEC_STRATEGY_BB;
+  ss4 << BRANCHING_RULE_BB;
+  ss4 << STRATEGY_SOL_BB;
+  ss4 << TYPE_BRANCH;
+  ss4 << MAXTIME_ITE;
+  if (Pos_Last_parameter_BB != 0)
+    ss4 << Pos_Last_parameter_BB;
 
   FileResults += ss4.str();
   FileResults += ".csv"; // kind of excel
@@ -8697,10 +8996,8 @@ void Wheel_InequalitySelective_Heuristics(T_Instance &instance, int &NbIneqMax, 
   }
 }
 
-//Design and add in the CPLEX model
 void DesignWheelIneq_MOSEK(T_Instance &instance, const std::vector<int> &vec_vertices, const double &cstW, const int &typeWheel)
 {
-  // Disign in CPlex the inequality:
   //	sum(u,v_i) - sum(v_{i-1},v_i) - u_{1,2} <= cstW
   // vec_vertices {u | v_1, v_2, ... , V_n} where u is the hub of the wheel
   int I, J, counter, aux_edge;
@@ -8787,7 +9084,8 @@ void DesignWheelIneq_MOSEK(T_Instance &instance, const std::vector<int> &vec_ver
   instance.CONST.push_back(Const);
 }
 
-bool Wheel_Heuristic_MultipleSize(const T_Instance &instance, std::vector<int> &vec_vertices, const int &typeWheel, MKC_ConstraintWheelPopulate &PopWh)
+bool Wheel_Heuristic_MultipleSize(const T_Instance &instance, std::vector<int> &vec_vertices, const int &typeWheel,
+                                  MKC_ConstraintWheelPopulate &PopWh)
 {
   bool end = false;
   double sum, sum2, best, rh_cst;
@@ -8891,7 +9189,8 @@ bool Wheel_Heuristic_MultipleSize(const T_Instance &instance, std::vector<int> &
   return false; //not found
 }
 
-void GENETIC_Wheel(const T_Instance &instance, std::vector<int> &vec_vertices, const int &typeWheel, const int &SizeCycleInWheel, MKC_ConstraintWheelPopulate &PopWh)
+void GENETIC_Wheel(const T_Instance &instance, std::vector<int> &vec_vertices, const int &typeWheel,
+                   const int &SizeCycleInWheel, MKC_ConstraintWheelPopulate &PopWh)
 {
   int SizePop = 20;
   double sum, rh_cst;
@@ -9603,7 +9902,7 @@ void TriangleInequalitySelective(T_Instance &instance, int &NbIneqMax, const int
 //Design and add in the MOSEK model
 void DesignTriangleIneq_Mosek(T_Instance &instance, const MKC_ConstraintTriangle &IneqT, const double &cstT)
 {
-  // Disign in CPlex the inequality:
+
   //	sum{vec_vertices} <= 1.0; // for clique inequalty
 
   //cout << "entrou na inequacao " << endl;
@@ -10360,7 +10659,7 @@ inline void setSolver(T_Instance &instance, MSKrescodee &r, MSKtask_t &task, MSK
 inline void SolveMosek(T_Instance &instance, MSKrescodee &r, MSKtask_t &task, MSKenv_t &env, int Form_Type)
 {
 
-  //   cout << "CHegou SolveMosek" << endl ;
+  //  cout << "CHegou SolveMosek" << endl ; cin.get();
   double auxtime = getCurrentTime_Double(start);
 
   double *xx;
@@ -10446,15 +10745,12 @@ inline void SolveMosek(T_Instance &instance, MSKrescodee &r, MSKtask_t &task, MS
           r = MSK_putintparam(task, MSK_IPAR_INTPNT_BASIS, MSK_BI_NEVER); //Controls whether the interior-point optimizer also computes an optimal basis.
       }
 
-      // cout << "MSK_RES_OK = " << MSK_RES_OK;
-      //  cout << "before R = " << r<< endl;
+      //cout << "before R = " << r<< endl;
       /* Run optimizer */
       if (r == MSK_RES_OK)
-      {
         r = MSK_optimizetrm(task, &trmcode);
-      }
 
-      // cout << "R = " << r<< endl; cin.get();
+      //cout << "R = " << r<< endl; cin.get();
 
       /* Print a summary containing information
 	about the solution for debugging purposes*/
@@ -10470,13 +10766,14 @@ inline void SolveMosek(T_Instance &instance, MSKrescodee &r, MSKtask_t &task, MS
         if (solsta != MSK_SOL_STA_OPTIMAL)
         {
           //r = MSK_getsolsta (task,MSK_SOL_ITR,&solsta);
-          solsta = MSK_SOL_STA_OPTIMAL;
+          solsta = MSK_SOL_STA_PRIM_AND_DUAL_FEAS;
         }
 
         switch (solsta)
         {
 
         case MSK_SOL_STA_OPTIMAL:
+        case MSK_SOL_STA_PRIM_AND_DUAL_FEAS:
         {
 
           xx = (double *)calloc(instance.totalVars, sizeof(double));
@@ -10494,13 +10791,11 @@ inline void SolveMosek(T_Instance &instance, MSKrescodee &r, MSKtask_t &task, MS
             MSK_getxx(task, MSK_SOL_ITR, xx);
             MSK_getprimalobj(task, MSK_SOL_ITR, Obj);
           }
-
           //printf("Optimal primal solution\n");
           //for(i=0; i<NUMVAR; ++i)
           //printf("x[%d]   : % e\n",i,xx[i]);
-
           instance.ObSol = Obj[0];
-          //cout << "instance.ObSol = " << instance.ObSol; cin.get();
+          // 	    cout << "instance.ObSol = " << instance.ObSol; cin.get();
 
           if (Form_Type == 0)
             for (int i = 0; i < instance.edge_nb; i++)
@@ -10517,7 +10812,7 @@ inline void SolveMosek(T_Instance &instance, MSKrescodee &r, MSKtask_t &task, MS
           char symname[MSK_MAX_STR_LEN];
           char desc[MSK_MAX_STR_LEN];
           /* If the solutions status is unknown, print the termination code
-        indicating why the optimizer terminated prematurely. */
+	    indicating why the optimizer terminated prematurely. */
           MSK_getcodedesc(trmcode,
                           symname,
                           desc);
@@ -10532,7 +10827,9 @@ inline void SolveMosek(T_Instance &instance, MSKrescodee &r, MSKtask_t &task, MS
       }
       else
       {
+
         cout << "MOSEK error optimization ... Maybe it is OUT OF MEMORY .... (r != MSK_RES_OK), r = " << r << endl;
+
         if (r == 1051) // See: https://docs.mosek.com/7.0/capi/Response_codes.html
           cout << "It is DEFINITELY ---- OUT OF MEMORY ----- error !" << endl;
 
@@ -10685,11 +10982,12 @@ inline void SolveMosek2(T_Instance &instance, MSKrescodee &r, MSKtask_t &task, M
 
         //cout << "entrou aqui = " << solsta << endl;
         //  cin.get();
-        solsta = MSK_SOL_STA_OPTIMAL;
+        solsta = MSK_SOL_STA_PRIM_AND_DUAL_FEAS;
 
         switch (solsta)
         {
         case MSK_SOL_STA_OPTIMAL:
+        case MSK_SOL_STA_PRIM_AND_DUAL_FEAS:
         {
 
           xx = (double *)calloc(instance.totalVars, sizeof(double));
@@ -10703,11 +11001,31 @@ inline void SolveMosek2(T_Instance &instance, MSKrescodee &r, MSKtask_t &task, M
                            MSK_SOL_ITR,
                            Obj);
 
+          //  MSK_getxx(task,
+          //      MSK_SOL_BAS,
+          //    xx);
+
+          //MSK_getprimalobj(task,
+          //	    MSK_SOL_BAS,
+          //	    Obj);
+
+          //printf("Optimal primal solution\n");
+          //for(i=0; i<NUMVAR; ++i)
+          //printf("x[%d]   : % e\n",i,xx[i]);
+
           instance.ObSol = Obj[0];
 
           for (int i = 0; i < instance.edge_nb; i++)
             instance.varS[i] = xx[i];
 
+          //cout << Obj[0];
+          //printvector(instance.varS);
+          //int ss;
+          //cin >> ss;
+
+          //Clean memory
+          //delete[] xx;
+          //delete[] Obj;
           break;
         }
         case MSK_SOL_STA_DUAL_INFEAS_CER:
@@ -10904,11 +11222,68 @@ double Hybrid_GraspAndTabu(const T_Instance &instance)
   return BestPartitionsValue;
 }
 
+void DoAllHeuristicFiles(char *argv[], T_Instance &instance)
+{
+  /*Creating files to print results*/
+  std::ofstream filesHeuristic[4];
+  string fileName;
+  clock_t start2 = std::clock();
+  //  CuttingPlane_Optimization(instance, PRINT_ITERATIONS);
+  //  ICH_Heuristique(instance); cout << ", time = " << getCurrentTime_Double(start2)<< endl;
+  start2 = std::clock();
+  Pos_Last_parameter_BB = 1;
+  set_FileNamesITE_LowerBound(argv, fileName);
+  filesHeuristic[Pos_Last_parameter_BB - 1].open(fileName.c_str());
+  WriteIteration_FILE_BB(filesHeuristic[Pos_Last_parameter_BB - 1], -1, 0, 0.0, 0.0, 0.0, 0.0);
+  double valower = ICH_Heuristique_Ghaddar_main(instance);
+  // cout << "\nVal ICH NOVO =" << valower << ", time = " << getCurrentTime_Double(start2)<< endl;
+  WriteIteration_FILE_BB(filesHeuristic[Pos_Last_parameter_BB - 1], 1, 0, valower, valower, 0.0, getCurrentTime_Double(start2));
+
+  /*MOH*/
+  Pos_Last_parameter_BB = 2;
+  fileName.clear();
+  set_FileNamesITE_LowerBound(argv, fileName);
+  filesHeuristic[Pos_Last_parameter_BB - 1].open(fileName.c_str());
+  WriteIteration_FILE_BB(filesHeuristic[Pos_Last_parameter_BB - 1], -1, 0, 0.0, 0.0, 0.0, 0.0);
+  start2 = std::clock();
+  valower = MultipleSearch_Heuristic_FeasibleSoltion(instance); //cout << "Val MOH=" << valower <<", time = " << getCurrentTime_Double(start2)<< endl;
+  WriteIteration_FILE_BB(filesHeuristic[Pos_Last_parameter_BB - 1], 1, 0, valower, valower, 0.0, getCurrentTime_Double(start2));
+
+  /*VNS*/
+  Pos_Last_parameter_BB = 3;
+  fileName.clear();
+  set_FileNamesITE_LowerBound(argv, fileName);
+  filesHeuristic[Pos_Last_parameter_BB - 1].open(fileName.c_str());
+  WriteIteration_FILE_BB(filesHeuristic[Pos_Last_parameter_BB - 1], -1, 0, 0.0, 0.0, 0.0, 0.0);
+  start2 = std::clock();
+  valower = VNS_Heuristic_FeasibleSoltion(instance); //  cout << "Val VNS=" << VNS_Heuristic_FeasibleSoltion (instance)<<", time = " << getCurrentTime_Double(start2)<< endl;
+  WriteIteration_FILE_BB(filesHeuristic[Pos_Last_parameter_BB - 1], 1, 0, valower, valower, 0.0, getCurrentTime_Double(start2));
+
+  /*GRASP*/
+  Pos_Last_parameter_BB = 4;
+  fileName.clear();
+  set_FileNamesITE_LowerBound(argv, fileName);
+  filesHeuristic[Pos_Last_parameter_BB - 1].open(fileName.c_str());
+  WriteIteration_FILE_BB(filesHeuristic[Pos_Last_parameter_BB - 1], -1, 0, 0.0, 0.0, 0.0, 0.0);
+  start2 = std::clock();
+  valower = Grasp_Heuristic_FeasibleSoltion(instance); // cout << "Val GRASP=" << Grasp_Heuristic_FeasibleSoltion (instance)<<", time = " << getCurrentTime_Double(start2)<< endl;
+  WriteIteration_FILE_BB(filesHeuristic[Pos_Last_parameter_BB - 1], 1, 0, valower, valower, 0.0, getCurrentTime_Double(start2));
+
+  //  TabuOptimum_Heuristic_FeasibleSoltion (instance);
+  //  Hybrid_GraspAndTabu(instance);
+
+  filesHeuristic[0].close();
+  filesHeuristic[1].close();
+  filesHeuristic[2].close();
+  filesHeuristic[3].close();
+}
+
 double VNS_Heuristic_FeasibleSoltion(const T_Instance &instance)
 {
   clock_t start2 = std::clock(); // mesure time
   bool resp = true;
-  int NbIte = 10, p, p_max = 8, p_initial = 2;
+  int NbIte = 7, p, p_max = 8, p_initial = 2;
+  double maxTimeVNS = 2.0;
 
   //small instances we can do more
   if (instance.DIM <= 300)
@@ -10928,7 +11303,7 @@ double VNS_Heuristic_FeasibleSoltion(const T_Instance &instance)
   BestPartitions = Partitions;
   BestPartitionsValue = Get_valueOfPartition(instance, BestPartitions);
 
-  for (unsigned j = 0; j < NbIte; j++)
+  for (unsigned j = 0; j < NbIte && getCurrentTime_Double(start2) <= maxTimeVNS; j++)
   {
     p = p_initial;
     while (p < p_max)
@@ -11093,14 +11468,15 @@ double MultipleSearch_Heuristic_FeasibleSoltion(const T_Instance &instance)
 {
   clock_t start2 = std::clock(); // mesure time
   bool resp = true;
-  int NbIte_Tabu = 10, tabuSize = 10, MaxNbRound = 50;
+  int NbIte_Tabu = 10, tabuSize = 10, MaxNbRound = 5000;
+  double maxTimeMOH = 2.0;
   double BestPartitionsValue = 0.0,
          Newval;
   std::vector<std::vector<int>> Partitions;
   std::vector<std::vector<int>> BestPartitions;
   std::vector<int> tabuList(instance.DIM, 0);
 
-  for (int round = 0; round < MaxNbRound; ++round)
+  for (int round = 0; round < MaxNbRound && getCurrentTime_Double(start2) <= maxTimeMOH; ++round)
   {
     Partitions.clear();
     GenerateRandomSolution(instance, Partitions);
@@ -11261,13 +11637,14 @@ double Grasp_Heuristic_FeasibleSoltion(const T_Instance &instance)
 {
   clock_t start2 = std::clock(); // mesure time
   double BestPartitionsValue = 0.0;
+  double maxTimeGRASP = 2.0; // seconds
   //cout << "Begin of  Grasp_Heuristic_FeasibleSoltion " << endl;
 
-  int NbIte_Grasp = 100;
+  int NbIte_Grasp = 5000;
   std::vector<std::vector<int>> Partitions;
   std::vector<std::vector<int>> BestPartitions;
 
-  for (unsigned i = 0; i < NbIte_Grasp; i++)
+  for (unsigned i = 0; i < NbIte_Grasp && getCurrentTime_Double(start2) <= maxTimeGRASP; i++)
   {
     Partitions.clear();
 
@@ -11843,7 +12220,7 @@ double ICH_Heuristique_Ghaddar(const T_Instance &instance, std::vector<int> &Ori
     }
   }
 
-  //PrintPartitionICH(Partitions); cin.get();
+  // PrintPartitionICH(Partitions); cin.get();
 
   if ((Partitions.size() > K) && (Partitions.size() < instance.DIM))
   {
@@ -11880,13 +12257,15 @@ double ICH_Heuristique_Ghaddar(const T_Instance &instance, std::vector<int> &Ori
 
       //PrintPartitionICH(Partitions); //cin.get();
       //cout << "ICH heuristic Ghaddar value  olha doidera = " << Get_valueOfPartition (instanceCONST,Partitions )  +  instance.sum_cost; //cin.get();
-
       return Get_valueOfPartition(instanceCONST, Partitions) + instance.sum_cost;
     }
     else
-    {                             // it is Partitions.size() == instance.DIM and we need to increase the epslonICH
-      if (epslonICH * 0.75 < 1.0) // Error the method is not accurate at all !!
+    { // it is Partitions.size() == instance.DIM and we need to increase the epslonICH
+      if (epslonICH * 0.75 < 0.5)
+      { // Error the method is not accurate at all !!
+        cout << "Vai retornar zero because epslonICH*0.75 = " << epslonICH * 0.75;
         return 0.0;
+      }
       else
         return ICH_Heuristique_Ghaddar(instance, OriginVertices, instanceCONST, epslonICH * 0.75); // reduir the epslon  recuursive
     }
@@ -12387,6 +12766,93 @@ inline void printMatrix(const std::vector<T> &v, const int &dim)
       cout << "| " << endl;
   }
   cout << "| ;" << endl;
+}
+
+void Lire_Instance(const std::string nomFichier, T_Instance &instance)
+{
+  int auxInt = 0;
+
+  double weight;
+  int fst, scon;
+
+  ifstream fichier(nomFichier.c_str(), ios::in); // reading open
+
+  if (!fichier) //si le fichier n'est existe pas
+  {
+    cout << "It did not find the input file to optimize\n ";
+    exit(1);
+  }
+
+  fichier >> instance.DIM;
+  auxInt = instance.DIM;
+  instance.LENBARVAR = (auxInt * (auxInt + 1) / 2);
+  fichier >> instance.edge_nb;
+
+  //Allocate memory for cost
+  instance.indice_cij.resize((instance.DIM + 1) * (instance.DIM + 1), -1);
+  instance.ant_indice_cij.resize(((instance.DIM + 1) * (instance.DIM)) / 2); // variables i and j of indice_cij
+
+  instance.sum_cost = 0.0;
+  /*Read the cij values - should inicialize with 1 because [0] is edge x00 */
+  int index = 0;
+  int reductionNbEdge = 0;
+  for (int i = 0; i < instance.edge_nb; i++)
+  {
+    /*first j (menor numero),  after i */
+    fichier >> fst;
+    fichier >> scon;
+    fichier >> weight;
+
+    //indice
+    if (fst != scon && (weight < -epslon || weight > epslon))
+    { // do not accept loop or weight==0
+      if (instance.indice_cij[fst + scon * (instance.DIM + 1)] == -1)
+      {
+
+        //index of edge to find it easely
+        instance.indice_cij[fst + scon * (instance.DIM + 1)] = index;
+        instance.indice_cij[scon + fst * (instance.DIM + 1)] = index;
+
+        //For the SDP
+        if (fst < scon)
+        {
+          instance.cij.barc_j.push_back(fst);
+          instance.cij.barc_i.push_back(scon);
+          instance.ant_indice_cij[index].idx_j = fst;
+          instance.ant_indice_cij[index].idx_i = scon;
+        }
+        else
+        {
+          instance.cij.barc_j.push_back(scon);
+          instance.cij.barc_i.push_back(fst);
+          instance.ant_indice_cij[index].idx_i = fst;
+          instance.ant_indice_cij[index].idx_j = scon;
+        }
+        instance.cij.barc_v.push_back(weight);
+
+        index++;
+      }
+      else
+      { //@TODO:Execption if edge is repeated
+
+        int indc = instance.indice_cij[fst + scon * (instance.DIM + 1)];
+        instance.cij.barc_v[indc] += weight;
+        reductionNbEdge++; // Nb of edges (x variables must be reduced)
+      }
+    }
+    else
+    {
+      reductionNbEdge++; // we do not accept loop
+    }                    //if fst diff scon
+  }
+
+  instance.edge_nb -= reductionNbEdge;
+  instance.totalVars = instance.edge_nb;
+
+  //printMatrix( instance.indice_cij,instance.DIM+1 );
+
+  /*End of fichier*/
+  fichier.close();
 }
 
 inline void noCompleteGraph(T_Instance &instance)
@@ -13423,106 +13889,3 @@ inline void BuildCompleteGraph(T_Instance &instance)
 
   //cin.get();
 }
-
-void Lire_Instance(const std::string nomFichier, T_Instance &instance)
-{
-  int auxInt = 0;
-  double weight;
-  int fst, scon;
-
-  cout << nomFichier;
-  ifstream fichier(nomFichier.c_str(), ios::in); // reading open
-
-  if (!fichier) //si le fichier n'est existe pas
-  {
-    cout << "It did not find the input file to optimize\n ";
-    exit(1);
-  }
-
-  fichier >> instance.DIM;
-  auxInt = instance.DIM;
-  instance.LENBARVAR = (auxInt * (auxInt + 1) / 2);
-  fichier >> instance.edge_nb;
-
-  //Allocate memory for cost
-  instance.indice_cij.resize((instance.DIM + 1) * (instance.DIM + 1), -1);
-  instance.ant_indice_cij.resize(((instance.DIM + 1) * (instance.DIM)) / 2); // variables i and j of indice_cij
-
-  instance.sum_cost = 0.0;
-  /*Read the cij values - should inicialize with 1 because [0] is edge x00 */
-  int index = 0;
-  int reductionNbEdge = 0;
-  for (int i = 0; i < instance.edge_nb; i++)
-  {
-    /*first j (menor numero),  after i */
-    fichier >> fst;
-    fichier >> scon;
-    fichier >> weight;
-
-    //indice
-    if (fst != scon && (weight < -epslon || weight > epslon))
-    { // do not accept loop or weight==0
-      if (instance.indice_cij[fst + scon * (instance.DIM + 1)] == -1)
-      {
-
-        //index of edge to find it easely
-        instance.indice_cij[fst + scon * (instance.DIM + 1)] = index;
-        instance.indice_cij[scon + fst * (instance.DIM + 1)] = index;
-
-        //For the SDP
-        if (fst < scon)
-        {
-          instance.cij.barc_j.push_back(fst);
-          instance.cij.barc_i.push_back(scon);
-          instance.ant_indice_cij[index].idx_j = fst;
-          instance.ant_indice_cij[index].idx_i = scon;
-        }
-        else
-        {
-          instance.cij.barc_j.push_back(scon);
-          instance.cij.barc_i.push_back(fst);
-          instance.ant_indice_cij[index].idx_i = fst;
-          instance.ant_indice_cij[index].idx_j = scon;
-        }
-        instance.cij.barc_v.push_back(weight);
-
-        index++;
-      }
-      else
-      { //@TODO:Execption if edge is repeated
-
-        int indc = instance.indice_cij[fst + scon * (instance.DIM + 1)];
-        instance.cij.barc_v[indc] += weight;
-        reductionNbEdge++; // Nb of edges (x variables must be reduced)
-      }
-    }
-    else
-    {
-      reductionNbEdge++; // we do not accept loop
-    }                    //if fst diff scon
-  }
-
-  instance.edge_nb -= reductionNbEdge;
-  instance.totalVars = instance.edge_nb;
-
-  //printMatrix( instance.indice_cij,instance.DIM+1 );
-
-  /*End of fichier*/
-  fichier.close();
-}
-
-/* Old parts of CPLEX
-
-inline void PrintValsVarCplex(const T_Instance &instance, const IloNumArray &vals)
-{
-  int counter = 0;
-for (int j=1; j<=instance.DIM; j++){
-  for (int z=j+1; z<=instance.DIM; z++)
-    if (instance.indice_cij[j+z*(instance.DIM+1)] != -1){
-    cout << "x("<<j << "," << z<< ")= " << vals[instance.indice_cij[j+z*(instance.DIM+1)]]<< "; " ;
-    }
-   cout << endl;
-}
-}
-
-*/
