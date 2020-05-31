@@ -1,0 +1,7 @@
+max_number_iterations = 1000
+max_time_seconds = 10
+max_time_per_iteration_seconds = 10
+max_number_violated_inequalities_par_iteration = 1000
+number_iterations_without_clean_inequalities = 3
+verbose = false
+is_early_termination = true

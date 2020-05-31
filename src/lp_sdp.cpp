@@ -162,7 +162,8 @@ std::string FileResults = "",
     fileResult_ITE,     //name of FIle with iteation information; //name of FIle with iteation information
     fileResult_ITE_BB;
 std::ofstream file_ITE,
-    file_ITE_BB; //file to write iterations
+    file_ITE_BB,
+    file_solution; //file to write iterations
 
 int CLEAN = 2; // it was equals to 2
 
@@ -176,8 +177,8 @@ bool COMPLET_EIG = false;
 #define TYPE_SDP_BB 3
 
 //strategy of solution
-#define EAGER_BB 1             //best  rst search strategy
-#define LAZY_BB 2              //Worse first search strategy
+#define EAGER_BB 1
+#define LAZY_BB 2
 int STRATEGY_SOL_BB = LAZY_BB; //EAGER_BB; //LAZY_BB;
 
 //trategy for selecting next subproblem (How the List is ranked)
@@ -217,6 +218,9 @@ int TYPE_SOLVER_BB = 3;
 double Last_parameter_BB;
 int Pos_Last_parameter_BB;
 
+MKC_CPAParam *paramCPA;
+BranchBoundParam *paramBB;
+
 std::vector<std::vector<int>> bestPartitions_BB;
 
 bool JUST_TRIandCLI = false;
@@ -229,6 +233,12 @@ using namespace maxkcut;
 
 int main(int argc, char *argv[])
 {
+
+  paramCPA = new MKC_CPAParam("./resource/parameters/CuttingPlaneParameters.txt");
+  paramBB = new BranchBoundParam("./resource/parameters/BranchAndBoundParameters.txt");
+
+  cout << paramBB->to_string();
+  cin.get();
 
   MKCInstance *new_instance = MKCInstanceBuilder<std::nullptr_t>::create()
                                   ->set_graph()
@@ -259,16 +269,14 @@ int main(int argc, char *argv[])
   MKC_CuttingPlane *cpa = new MKC_CuttingPlane(model, cpaParam);
 
   MKC_ModelEdgeSDP *modelSDP = new MKC_ModelEdgeSDP(new_instance,
-                                                   SolverFactory::create_solver(TypeSolver::SDP_MOSEK, solverParm));
+                                                    SolverFactory::create_solver(TypeSolver::SDP_MOSEK, solverParm));
 
   MKC_CuttingPlane *cpaSDP = new MKC_CuttingPlane(modelSDP, cpaParam);
 
   cpa->execute();
-  cout << "\n ***** End CPA  LP ****** \n ";
   cin.get();
 
   cpaSDP->execute();
-  cout << "\n ***** End cpaSDP ****** \n ";
   cin.get();
 
   sdpEdgeConst.size = 0;
@@ -311,9 +319,15 @@ int main(int argc, char *argv[])
   }
 
   //file Iteration BB
-  set_FileNamesITE_BB(argv, fileResult_ITE_BB);
-  file_ITE_BB.open(fileResult_ITE_BB.c_str());
-  WriteIteration_FILE_BB(file_ITE_BB, -1, 0, 0.0, 0.0, 0.0, 0.0);
+  if (paramBB->get_verbose_type() == BB_Verbose_Type::log_iterations_in_file ||
+      paramBB->get_verbose_type() == BB_Verbose_Type::log_iterations_terminal_and_file)
+  {
+    set_FileNamesITE_BB(argv, fileResult_ITE_BB);
+    file_ITE_BB.open(fileResult_ITE_BB.c_str());
+    WriteIteration_FILE_BB(file_ITE_BB, -1, 0, 0.0, 0.0, 0.0, 0.0);
+  }
+
+  //final file solution
 
   // ***** end of files
   //  cout << "d =" <<  ((double)( instance.edge_nb ))/((instance.DIM*(instance.DIM-1))/2) << endl;
@@ -398,7 +412,7 @@ int main(int argc, char *argv[])
   {
     if (instance.DIM > 0)
     {
-      CuttingPlane_Optimization(instance, PRINT_ITERATIONS); //first cutting plane (more complete one... it has to be changed)
+      CuttingPlane_Optimization(instance, paramCPA->is_verbose()); //first cutting plane (more complete one... it has to be changed)
     }
     else
     {
@@ -428,11 +442,36 @@ double BranchAndBound(T_Instance &instance)
   bool NEW_TASK = false;
   bool R, IsOK = true, NotOK = false;
   int counter = 0;
-  int freqLB = 20, freqLB_BIG = 20000; //if (SDP_SEP == -2)freqLB = 150;
 
-  double MAXTIME_BB = 21600;
+  int freqLB_BIG = 20000; //if (SDP_SEP == -2)freqLB = 150;
+
   double lb, bestLowerBound, previousLB = 0;      // heuristic methodc
   double bestUpperBound, LocalUb, previousUB = 0; // highest in B&B list
+
+  double MAXTIME_BB = paramBB->get_max_time_seconds();
+  int freqLB = paramBB->get_number_iterations_to_compute_heuristic();
+  BY_PARTITION_BB = false;
+  if (paramBB->get_partition_strategy() == BB_Partition_Strategy::K_CHOTOMIC)
+  {
+    BY_PARTITION_BB = true;
+  }
+
+  SELEC_STRATEGY_BB = paramBB->get_selection_strategy();
+  BRANCHING_RULE_BB = paramBB->get_branch_rule_strategy();
+  STRATEGY_SOL_BB = paramBB->get_solution_strategy();
+  Pos_Last_parameter_BB = paramBB->get_number_iterations_execute_CPA();
+  TYPE_BRANCH = BnC;
+  if (paramBB->get_number_iterations_execute_CPA() == 0)
+  {
+    TYPE_BRANCH = BnB;
+  }
+
+  cout << "SELEC_STRATEGY_BB = " << SELEC_STRATEGY_BB;
+  cout << "BRANCHING_RULE_BB = " << BRANCHING_RULE_BB;
+  cout << "STRATEGY_SOL_BB = " << STRATEGY_SOL_BB;
+  cout << "Pos_Last_parameter_BB = " << Pos_Last_parameter_BB;
+
+  cin.get();
 
   Set_BranchingRule(instance, BY_PARTITION_BB);
 
@@ -496,8 +535,24 @@ double BranchAndBound(T_Instance &instance)
       //Print screen
       if (bestLowerBound > previousLB + epslon || bestUpperBound < previousUB - epslon || counter % freqLB_BIG == 0)
       {
-        PrintScreen_BB(counter,ListBB.size() ,bestLowerBound,bestUpperBound,100*(bestUpperBound-bestLowerBound)/bestLowerBound, getCurrentTime_Double(start_BB));
-        WriteIteration_FILE_BB(file_ITE_BB, counter, ListBB.size(), bestLowerBound, bestUpperBound, 100 * (bestUpperBound - bestLowerBound) / bestLowerBound, getCurrentTime_Double(start_BB));
+        if (paramBB->is_verbose_terminal())
+        {
+          PrintScreen_BB(counter,
+                         ListBB.size(),
+                         bestLowerBound,
+                         bestUpperBound,
+                         100 * (bestUpperBound - bestLowerBound) / bestLowerBound,
+                         getCurrentTime_Double(start_BB));
+        }
+        if (paramBB->is_iteration_in_file)
+        {
+          WriteIteration_FILE_BB(file_ITE_BB, counter,
+                                 ListBB.size(),
+                                 bestLowerBound, bestUpperBound,
+                                 100 * (bestUpperBound - bestLowerBound) / bestLowerBound,
+                                 getCurrentTime_Double(start_BB));
+        }
+
         previousUB = bestUpperBound;
         previousLB = bestLowerBound;
       }
@@ -522,7 +577,7 @@ double BranchAndBound(T_Instance &instance)
     if (R == IsOK && STRATEGY_SOL_BB == LAZY_BB)
     {
 
-      if (TYPE_BRANCH == BnB)
+      if (paramBB->get_number_iterations_execute_CPA() == 0)
       {
         R = Solve_SubProblem_BB(*it_branch->ptxInst, &Partitions, fixvar, BY_PARTITION_BB, TYPE_SOLVER_BB, NEW_TASK, &bestLowerBound);
       }
@@ -530,7 +585,7 @@ double BranchAndBound(T_Instance &instance)
       { //branch and cut  (BnC)
 
         // Pos_Last_parameter_BB Define frequency of cutting plane algo
-        if (Pos_Last_parameter_BB == 0 || (*it_branch).Level_tree % (Pos_Last_parameter_BB) == 0)
+        if ((*it_branch).Level_tree % (paramBB->get_number_iterations_execute_CPA()) == 0)
         {
           R = CuttingPlane_Simple_for_BB(*it_branch->ptxInst, &Partitions, fixvar, BY_PARTITION_BB, &bestLowerBound, 1, (*it_branch).ExtraCONST);
         }
@@ -545,7 +600,7 @@ double BranchAndBound(T_Instance &instance)
       {
         //	cout << (*it_branch).Level_tree << endl; cin.get();
 
-        if (BRANCHING_RULE_BB == R7 && (*it_branch).Level_tree > 0)
+        if (paramBB->get_branch_rule_strategy() == BB_Rule_Strategy::R7_PseudoCost && (*it_branch).Level_tree > 0)
           Set_NewValPseudoCost(LocalUb, (*it_branch).ptxInst->ObSol, (*it_branch).lastVarFix, (*it_branch).lastPartFix, &PseudoCcost);
 
         LocalUb = (*it_branch).ptxInst->ObSol; //actualization of LocalUB (used to see if we are going to continue )
@@ -568,19 +623,26 @@ double BranchAndBound(T_Instance &instance)
   } //end WHILE
 
 END_OF_BB:
-  if (ListBB.size() == 0)
-    WriteIteration_FILE_BB(file_ITE_BB, counter, 0, bestLowerBound, bestLowerBound, 0, getCurrentTime_Double(start_BB));
-  else
-    WriteIteration_FILE_BB(file_ITE_BB, counter, ListBB.size(), bestLowerBound, bestUpperBound, 100 * (bestUpperBound - bestLowerBound) / bestLowerBound, getCurrentTime_Double(start_BB));
+  if (paramBB->is_iteration_in_file)
+  {
+    double gap_solution = 0.0;
+    if (ListBB.size() != 0)
+    {
+      gap_solution = 100 * (bestUpperBound - bestLowerBound) / bestLowerBound;
+    }
 
-  //	cout << endl << endl << "********End of Branch and Bound*************" << endl << endl ;
-  //	cout << "Optimal Solution Value = " << bestLowerBound << endl << endl ;
-  //	cout << "Number of visited nodes = " << counter << endl ;
-  //	cout << "Total Time = " << getCurrentTime_Double(start_BB)<< endl << endl ;
-  //	cout << "*********************" << endl ;
+    WriteIteration_FILE_BB(file_ITE_BB,
+                           counter,
+                           ListBB.size(),
+                           bestLowerBound, bestUpperBound,
+                           gap_solution,
+                           getCurrentTime_Double(start_BB));
+  }
 
-  // free memory (mosek_BB)
-  MSK_deletetask(&task_BB);
+  SaveFinalSolution(file_ITE_BB, counter, 0, bestLowerBound, bestLowerBound, 0, getCurrentTime_Double(start_BB))
+
+      // free memory (mosek_BB)
+      MSK_deletetask(&task_BB);
   MSK_deleteenv(&env_BB);
 
   return bestLowerBound; //end o function
@@ -589,7 +651,7 @@ END_OF_BB:
 inline void Set_BranchingRule(const T_Instance &instance, const bool &BY_PARTITION_BB)
 {
 
-  if (BRANCHING_RULE_BB == R7)
+  if (paramBB->get_branch_rule_strategy() == BB_Rule_Strategy::R7_PseudoCost)
   { //PseudoCost Branching
     if (BY_PARTITION_BB)
     {
@@ -2625,18 +2687,18 @@ void Creat_TwoCandidates_BB(std::set<T_Branch> &ListBB, T_Instance &instance, co
 //Stategy how to rank
 inline bool Strategy_selecting_ActiveNodeTree_BB(const T_Instance &instance, double *val_Change)
 {
-  switch (SELEC_STRATEGY_BB)
+  switch (paramBB->get_selection_strategy())
   {
-  case (BeFS): //Best first
+  case (BB_Selection_Strategy::best_first): //Best first
     *val_Change = -instance.ObSol;
     break;
-  case (WFS): //Worse first
+  case (BB_Selection_Strategy::worse_first): //Worse first
     *val_Change = instance.ObSol;
     break;
-  case (BFS): //Breath first
+  case (BB_Selection_Strategy::breath_first): //Breath first
     *val_Change = (double)seqqq_BB;
     break;
-  case (DFS): // depth rst search
+  case (BB_Selection_Strategy::depth_first): // depth rst search
     *val_Change = -(double)seqqq_BB;
     break;
   default: //Defaut
@@ -2676,22 +2738,22 @@ inline long Branch_Rule_ChooseVariable(T_Instance &instance, std::vector<T_fixVa
   //int  = R1;
   if (Partitions != NULL)
   {
-    switch (BRANCHING_RULE_BB)
+    switch (paramBB->get_branch_rule_strategy())
     {
-    case (R1):                                                                  // Most decided first
+    case (BB_Rule_Strategy::R1_MostDecided):                                    // Most decided first
       return ChooseEdge_by_NearestToFixVal_BB(instance, 0.0, *Partitions);      // (Accepted vals [0.0 ... 1.0])select by edge violation (e.g., for closest to 0.0  set last parameter to 0.0)
-    case (R2):                                                                  // least decided first
+    case (BB_Rule_Strategy::R2_ArticleMG):                                      // least decided first
       *Vertex = ChooseVertex_by_ClosestFeasible_BB(instance, 0.5, *Partitions); //Closest to be feasible
       return -1;
-    case (R3):                                                             // least decided first
+    case (BB_Rule_Strategy::R3_LeastDecided):                              // least decided first
       return ChooseEdge_by_NearestToFixVal_BB(instance, 0.5, *Partitions); // (Accepted vals [0.0 ... 1.0])select by edge violation (e.g., for closest to 0.0  set last parameter to 0.0)
-    case (R5):                                                             //Edge weight
+    case (BB_Rule_Strategy::R5_EdgeWeight):                                //Edge weight
       *Vertex = ChooseVertex_by_Weight_Partition_BB(instance, *Partitions);
       return -1;
-    case (R6):
+    case (BB_Rule_Strategy::R6_StrongBrahching):
       *Vertex = ChooseVertexStrongBranching_by_Partition_BB(instance, *Partitions);
       return -1;
-    case (R7):
+    case (BB_Rule_Strategy::R7_PseudoCost):
       *Vertex = ChooseVertexPseudoCost_by_Partition_BB(instance, *Partitions, &PseudoCcost);
       return -1;
     default:
@@ -2700,19 +2762,19 @@ inline long Branch_Rule_ChooseVariable(T_Instance &instance, std::vector<T_fixVa
   }
   else
   {
-    switch (BRANCHING_RULE_BB)
+    switch (paramBB->get_branch_rule_strategy())
     {
-    case (R1): // Most decided first
+    case (BB_Rule_Strategy::R1_MostDecided): // Most decided first
       return ChooseEdge_by_NearestToFixVal_BB(instance, 0.0);
-    case (R2):
+    case (BB_Rule_Strategy::R2_ArticleMG):
       return ChooseEdge_by_ClosestFeasible_BB(instance, 0.5, fixvar); //Closest to be feasible
-    case (R3):                                                        // LEAST decided first
+    case (BB_Rule_Strategy::R3_LeastDecided):                         // LEAST decided first
       return ChooseEdge_by_NearestToFixVal_BB(instance, 0.5);
-    case (R5):
+    case (BB_Rule_Strategy::R5_EdgeWeight):
       return ChooseEdge_by_LargestSmallest_Cijweight_BB(instance, 1); // Select by edge weight (for smallest -1, for largest par= 1)
-    case (R6):
+    case (BB_Rule_Strategy::R6_StrongBrahching):
       return ChooseEdge_StrongBranching_BB(instance, fixvar);
-    case (R7):
+    case (BB_Rule_Strategy::R7_PseudoCost):
       return ChooseEdge_PseudoCost_BB(instance, fixvar, &PseudoCcost);
     default:
       return ChooseEdge_by_ClosestFeasible_BB(instance, 0.5, fixvar); //Closest to be feasible
@@ -3884,10 +3946,6 @@ bool CuttingPlane_Simple_for_BB(T_Instance &instance_orig, std::vector<std::vect
       if (i == 0)
         FirstObj = instance.ObSol;
 
-      // CLEAN Unimportant inequalities (just once !!!!!!)
-      //      if (i==0 && CLEAN != 0 )
-      //		Clean_uselessInequalities (instance);
-
       //stopping criterias Iteration improvement
       if (RESUME)
       {
@@ -3992,69 +4050,20 @@ double CuttingPlane_Optimization(T_Instance &instance, const bool &PRINT_ITERATI
   SetPretreatmen(instance);
 
   double PrvObj = 0.0;
-
   int intervalIPM = 5; // fixed after calcule
 
   if (SDP_SEP == -3)
     intervalIPM = 3;
 
-  if (CLEAN != 0)
-  {
-    if ((SDP_SEP == -2) || (SDP_SEP == -3))
-      CLEAN = 2;
-    else
-      CLEAN = 3;
-  }
+  //Parameters CPA
+  CLEAN = paramCPA->get_number_iterations_to_clean();
+  NBMAXINEQ = paramCPA->get_max_number_violated_inequalities_par_iteration();
 
   //First NbInex ...
   //if (NBMAXINEQ == 0) NBMAXINEQ = 2*instance.DIM ; //
   //else DYNAMIC_INEQ = false;
 
   /*Fixing Number of INequalities (IMPORTANT) parameter for improving performance*/
-  DYNAMIC_INEQ = false;
-
-  if (SDP_SEP == 0)
-  {
-    DYNAMIC_ACTIV_INEQ = false;
-    ActiveAllIneq();
-    NBMAXINEQ = 1000;
-  }
-  else
-  {
-    DYNAMIC_ACTIV_INEQ = true;
-    DesactivateAll();
-    if (SDP_SEP == -1 && !SDP_EdGE_TYPE)
-      ActiveJustTriWhell();
-
-    if (SDP_SEP == -1 || SDP_SEP == -3)
-      NBMAXINEQ = NBINEQSDP; //sdp
-    else
-      NBMAXINEQ = instance.DIM * 0.50; // 10% of DIMBARVAR (for LP_EIG)
-
-    if (!ISCOMPLETE_GRAPH && SDP_SEP == -2)
-    {
-      DYNAMIC_ACTIV_INEQ = false;
-      ActiveAllIneq();
-      NBMAXINEQ = NBINEQSDP;
-    }
-  }
-
-  if (JUST_TRIandCLI == true)
-  {
-    ActiveJustTriWhell();
-    DYNAMIC_ACTIV_INEQ = false;
-  }
-  else if (instance.DIM <= 50)
-  {
-    DYNAMIC_ACTIV_INEQ = false;
-    ActiveAllIneq();
-    NBMAXINEQ = instance.DIM * 2;
-  }
-  else if (instance.DIM <= 100)
-  {
-    if (SDP_SEP != 0)
-      NBMAXINEQ = instance.DIM;
-  }
 
   bool OPTMAL_DONE, LP_TO_OPTM;
   OPTMAL_DONE = LP_TO_OPTM = false;
@@ -4062,7 +4071,7 @@ double CuttingPlane_Optimization(T_Instance &instance, const bool &PRINT_ITERATI
   //AddAll_TriangleInequality( instance, 10000, 0, PopTriangle);
   //cout << "TOTAL_TRI = " << TOTAL_TRI;
   int countNot = 0;
-  for (int i = 0; i < nb_ITE && RESUME; i++)
+  for (int i = 0; i < paramCPA->get_max_number_iterations() && RESUME; i++)
   {
     //Optimization and Separation method
     try
@@ -4183,10 +4192,11 @@ double CuttingPlane_Optimization(T_Instance &instance, const bool &PRINT_ITERATI
         DynamicIneqActivation(instance, gapImp);
 
       //STOP CRITERIA (TIME and Gap improvement)
-      if ((getCurrentTime_Double(start) >= MAXTIME) || time_IPM_iteration >= MAXTIME_ITE || (gapImp < epslon_s * 100 && (instance.ObSol < Obj1 - epslon || countNot >= 10)))
+      if ((getCurrentTime_Double(start) >= paramCPA->get_max_time_seconds()) ||
+          (time_IPM_iteration >= paramCPA->get_max_time_per_iteration_seconds()) ||
+          (gapImp < epslon_s * 100 && (instance.ObSol < Obj1 - epslon || countNot >= 10)))
       {
         RESUME = false;
-        // 	MAXTIME_ITE = 0.0; (there is no sense in putting this here)
       }
 
       if (instance.ObSol >= Obj1 - epslon)
@@ -4195,18 +4205,11 @@ double CuttingPlane_Optimization(T_Instance &instance, const bool &PRINT_ITERATI
       //Selective separation or Printing final solution !!!
       if (RESUME)
         Selective_Separation(instance);
-      //       else 		 WriteFinalResult_File (fileResult,instance,start,i);
-
-      //if ((i == 0)&&(PreVP == 13))
-      //SubGraphTreat_by_ViolatedIneq(instance);
 
       // CLEAN Unimportant inequalities
-      if ((!RESUME && OPTMAL_DONE) || ((i != 0) && (CLEAN != 0) && (i % CLEAN == 0) && (OPTMAL_DONE) && (gapImp > epslon_s * 100)))
+      if ((!RESUME && OPTMAL_DONE) ||
+          ((i != 0) && (CLEAN != 0) && (i % CLEAN == 0) && (OPTMAL_DONE) && (gapImp > epslon_s * 100)))
       {
-        // COMPLET_EIG = false;
-        // if (instance.ObSol >= Obj1 - epslon)
-        //   instance.CONST.clear();
-        // else
         Clean_uselessInequalities(instance);
       }
 
@@ -8278,16 +8281,8 @@ inline void Selective_Separation(T_Instance &instance)
       DesignWheelIneq_MOSEK(instance, vec_aux, cst, 2); // type =2
       break;
     case 5:
-
       vec_auxD = PopVecProp.GetVector(Seq);
-      //		vasl= PopVecProp.Get_eigVal(Seq);
-      //		cout << "vasl = " << vasl;
-      //		cin.get();
-      //if (SDP_SEP == 6) Design_SDPIneq3(instance, vec_auxD); // the SDP matrix is all of 0,1
-      //else
-      //for(int j=0; j < 10; j++)
       Design_SDPIneq2(instance, vec_auxD);
-      //		Design_SDPIneq33(instance, vec_auxD,vasl );
       break;
     default:
       cout << "IN switch OF Selective_Separation: Wrong number of separation origem = " << PopBestIneq.get_Data(i).orSep << endl;
@@ -8638,7 +8633,7 @@ void Inserting_Parameters_BB(char *argv[])
     istringstream ss(argv[6]);
     ss >> BRANCHING_RULE_BB;
 
-    if (BRANCHING_RULE_BB > R7 && BRANCHING_RULE_BB < R1)
+    if (BRANCHING_RULE_BB > R7 || BRANCHING_RULE_BB < R1)
       BRANCHING_RULE_BB = R7; //
   }
 
@@ -8648,7 +8643,7 @@ void Inserting_Parameters_BB(char *argv[])
     istringstream ss(argv[7]);
     ss >> STRATEGY_SOL_BB;
 
-    if (STRATEGY_SOL_BB > LAZY_BB && STRATEGY_SOL_BB < EAGER_BB)
+    if (STRATEGY_SOL_BB > LAZY_BB || STRATEGY_SOL_BB < EAGER_BB)
       STRATEGY_SOL_BB = LAZY_BB; //standard
   }
 
@@ -8658,7 +8653,7 @@ void Inserting_Parameters_BB(char *argv[])
     istringstream ss(argv[8]);
     ss >> TYPE_BRANCH;
 
-    if (TYPE_BRANCH != BnC && TYPE_BRANCH != BnB)
+    if (TYPE_BRANCH != BnC || TYPE_BRANCH != BnB)
       TYPE_BRANCH = BnB; //standard
   }
 

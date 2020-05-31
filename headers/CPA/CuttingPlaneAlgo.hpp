@@ -7,7 +7,7 @@
 #include "../Models/ModelAbstract.hpp"
 #include "./Parameter/CPAParam.hpp"
 #include "../Solver/Parameter/TerminationParam.hpp"
-#include "../Solver/Utils/Logger.hpp"
+#include "../Utils/Logger.hpp"
 
 
 

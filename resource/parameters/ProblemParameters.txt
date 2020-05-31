@@ -1,0 +1,7 @@
+file_name = 1000
+partition_number = 3
+solver_type = LP_SDP_EIG
+formulation = edge_only
+has_triangle_inequalities = true
+has_clique_inequalities = true
+has_wheel_inequalities = true

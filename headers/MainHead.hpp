@@ -50,6 +50,10 @@
 #include "../../../myFiles/eigen/Eigen/Dense"
 #include "../../../myFiles/eigen/Eigen/Eigenvalues" 
 
+
+#include "./Parameters/MKC_CPAParam.hpp"
+#include "./Parameters/BranchBoundParam.hpp"
+
 //#include <ilcplex/ilocplex.h>
 
 

@@ -1,0 +1,11 @@
+# Parameter for Branch and boud (cut)
+
+selection_strategy = depth_first
+branch_rule_strategy = R5_EdgeWeight
+solution_strategy = EAGER_BB
+partition_strategy = DICHOTOMIC
+max_time_seconds = 1000
+number_iterations_to_execute_cutting_plane = 0
+number_iterations_to_compute_heuristic = 20
+verbose = log_iterations_in_terminal
+output_file_name = vilmar.csv
