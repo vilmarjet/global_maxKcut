@@ -1,25 +1,28 @@
-Instruction to execute branch and bound for max-k-cut: (bb_mkc_run)
+Instruction to execute branch and bound for max-k-cut
 
-1) MOSEK: Mosek is the solver chosen for solve SDP and LP formulations. 
+Application designed for Unix systems, only.
+
+The following are steps to build, personallyze and execute the application.
+1) MOSEK: Mosek is the solver chosen for solve SDP and LP formulations.  
     For installation: https://www.mosek.com/
 
 2) Set-up of "Makefile":
-    In file maxkcut/Makefile set
+    In file phd_maxKcut/Makefile set mosek directories,
     MOSEK_IPATHS and MOSEK_BINPATH set the head and bin folder of mosek, for example:
+    
     MOSEK_IPATHS=-I ../../mosek/9.1/tools/platform/linux64x86/h
     MOSEK_BINPATH=../../mosek/9.1/tools/platform/linux64x86/bin
 
 3) Set-up parameters files:
-    Go to folder resource/parameters, set the following files with your peferences:
-     * BranchAndBoundParameters.txt: parameters for branch and bound method 
-     * CuttingPlaneParameters.txt: parameters for cutting plane method used to find upper bound 
-     * HeuristicParameters.txt: set heuristic and other parameters to be used in branch and bound
+    Go to resource/parameters, set the following files with your peferences:
+     * BranchAndBoundParameters.txt: parameters for branch and bound method,
+     * CuttingPlaneParameters.txt: parameters for cutting plane method used to find upper bound,
+     * HeuristicParameters.txt: set heuristic and other parameters to be used in branch and bound,
      * ProblemParameters.txt: parameters of problem, for example: input_instance, partition_number, solver_type 
 
 3)Build application (bb_mkc_run)
-    In terminal, go to folder of maxkcut.
-    Then execute the following command:
-
+    In terminal, go to directory of phd_maxKcut, then execute the following command:
+    
     $ make build 
 
 4) Execute example and parameter
