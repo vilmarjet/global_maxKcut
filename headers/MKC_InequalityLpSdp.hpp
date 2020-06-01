@@ -4,25 +4,52 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "./MKC_Inequalities.hpp"
+#include "./CPA/ViolatedConstraints.hpp"
 #include "./MKCUtil.hpp"
 #include "./Utils/Exception.hpp"
 #include "./MKCGraph.hpp"
 #include "./Heuristics/Tabu.hpp"
 #include <cmath> // std::abs
-#include "./Solver/LP_SDPConstraint.hpp"
+#include "./Solver/Constraint/EigenValue/LP_SDPConstraint.hpp"
 
 namespace maxkcut
 {
-class MKC_InequalityLpSdp : public MKC_Inequalities
+class MKC_InequalityLpSdp : public ViolatedConstraints
 {
+
 public:
-    MKC_InequalityLpSdp() : MKC_Inequalities(0.0) {}
+    static MKC_InequalityLpSdp *create()
+    {
+        return new MKC_InequalityLpSdp(nullptr, nullptr);
+    }
+
+    static MKC_InequalityLpSdp *create(const VariablesEdge *variables_, const MKCInstance *instance_)
+    {
+        return new MKC_InequalityLpSdp(variables_, instance_);
+    }
+
+private:
+    const VariablesEdge *variables;
+    const MKCInstance *instance;
+    double rhs;
+
+    MKC_InequalityLpSdp(const VariablesEdge *variables_,
+                        const MKCInstance *instance_) : variables(variables_),
+                                                        instance(instance_),
+                                                        rhs(0.0)
+
+    {
+    }
+
+public:
     ~MKC_InequalityLpSdp() {}
 
-    void find_violated_constraints(const VariablesEdge *variables,
-                                   const MKCInstance *instance,
-                                   std::set<ViolatedConstraint *, CompViolatedConstraint> *violated_constraints)
+    std::string to_string() const
+    {
+        return typeid(this).name();
+    }
+
+    void find_violated_constraints()
     {
         LP_SDPConstraint lp_sdp_constraint;
         const MKCGraph *graph = instance->get_graph();
@@ -64,7 +91,7 @@ public:
             lp_sdp_constraint.fill_ViolatedConstraint_Eigen(coeff_lp_to_sdp,
                                                             const_lp_to_sdp,
                                                             sym_matr_variables,
-                                                            violated_constraints);
+                                                            &violated_constraints);
         }
     }
 };

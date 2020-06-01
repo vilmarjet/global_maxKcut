@@ -4,11 +4,10 @@
 #include "./Utils/Exception.hpp"
 #include <string>
 #include <algorithm>
-#include "./Solver/DimensionVariable.hpp"
 
 namespace maxkcut
 {
-class Edge : public DimensionVariable
+class Edge
 {
 private:
     int i, j;
@@ -83,12 +82,23 @@ public:
         return e;
     }
 
-    inline std::string to_string() const
+    inline std::string to_string_complete() const
     {
         std::string s;
         s = "(" + std::to_string(this->i);
         s += "," + std::to_string(this->j);
         s += ") = " + std::to_string(this->weight);
+
+        return s;
+    }
+
+
+    inline std::string to_string() const
+    {
+        std::string s;
+        s = "(" + std::to_string(this->i);
+        s += "," + std::to_string(this->j);
+        s += ")";
 
         return s;
     }

@@ -1,0 +1,41 @@
+# Parameter for Branch and boud (cut)
+
+selection_strategy = depth_first
+branch_rule_strategy = R5_EdgeWeight
+partition_strategy = K_CHOTOMIC
+max_time_seconds = 1000
+number_iterations_to_execute_cutting_plane = 1 //if 0, then it does not execute cutting plane inside branch and bound method (Best results is 1 -> all branches)
+number_iterations_to_compute_heuristic = 20    //small number can make the model slow
+verbose = skip
+output_file_name = output_bb.csv                // file will be saved in ./target/results
+
+# ######## verbose
+# 
+#    log_iterations_in_file,           // log bb iteration in file (automaticaly created in Target)
+#    log_iterations_in_terminal,       // log bb iterations in terminal only
+#    log_iterations_terminal_and_file, // log iteration in terminal and file
+#    skip or no_log_of_iterations,     // dont log iterations      
+# #######
+
+
+# ####### selection_strategy
+#    best_first,   //best  first search strategy 
+#    worse_first,  //Worse first search strategy
+#    breath_first, //Breath first selection (all same level first)
+#    depth_first,  // depth rst search (Goes deep in search tree) (Empirically, obtain best results)
+# ###########
+
+
+# ####### selection_strategy
+#    R1_MostDecided,     // Most decided first
+#    R2_ArticleMG,       //Best in MG
+#    R3_LeastDecided,    //Least decided first
+#    R5_EdgeWeight,      // Edge with biggest weight (Empirically, the best)
+#    R6_StrongBrahching, // Strong Branching
+#    R7_PseudoCost,      // PseudoCost
+# ###########
+
+# ######### partition_strategy:
+#    DICHOTOMIC, // Each branch generates 2 branches
+#    K_CHOTOMIC  // Each branch generates k branches
+# ########

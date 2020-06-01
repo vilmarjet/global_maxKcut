@@ -1,8 +1,8 @@
 #ifndef VARIABLESEdge_CONTAINER_HPP
 #define VARIABLESEdge_CONTAINER_HPP
 
-#include "./Solver/Solver.hpp"
-#include "./Solver/Variables1D.hpp"
+#include "./Solver/Abstract/Solver.hpp"
+#include "./Solver/Variable/Variables1D.hpp"
 #include "./Utils/Exception.hpp"
 #include <vector>
 #include <map>
@@ -33,23 +33,20 @@ protected:
 public:
     ~VariablesEdge() {}
 
-    VariablesEdge * populate()
+    VariablesEdge *populate()
     {
         double lower_bound = 0.0;
         double upper_bound = 1.0;
         double initial_solution = 0.0;
         VariableType type = VariableType::CONTINOUS;
-        for (int i = 0; i < edges->get_number_edges(); ++i)
+        for (auto edge : edges->get_edges())
         {
-            const Edge *edge = edges->get_edge_by_index(i);
-
-            const Variable *variable = solver->add_variable(new Variable(lower_bound,
-                                                                         upper_bound,
-                                                                         initial_solution,
-                                                                         edge->get_weight(),
-                                                                         type));
-            int idx = solver->get_variables()->get_index(variable);
-            add_variable(idx, edge, variable);
+            Variable *variable = solver->add_linear_variable(Variable::create(lower_bound,
+                                                                              upper_bound,
+                                                                              initial_solution,
+                                                                              -1.0 * edge->get_weight(),
+                                                                              type));
+            this->add_variable(edge, variable);
         }
 
         return this;

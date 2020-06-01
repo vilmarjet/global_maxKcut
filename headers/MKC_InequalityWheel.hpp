@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "./MKC_Inequalities.hpp"
+#include "./CPA/ViolatedConstraints.hpp"
 #include "./MKCUtil.hpp"
 #include "./Utils/Exception.hpp"
 #include "./MKCGraph.hpp"
@@ -17,13 +17,51 @@ namespace maxkcut
 
 // Inequality of type
 // sum(u,v_i) - sum(v_{i-1},v_i) - u_{1,2} <= rhs
-class MKC_InequalityWheel : public MKC_Inequalities
+class MKC_InequalityWheel : public ViolatedConstraints
 {
+
+public:
+    static MKC_InequalityWheel *create()
+    {
+        return new MKC_InequalityWheel(nullptr, nullptr, 3, 1);
+    }
+
+    /**
+     * @param size_c is the size of cycle in the wheel constraint
+     * @param size_h is size of hub in the center of the cycle
+     * */
+    static MKC_InequalityWheel *create(const VariablesEdge *variables_,
+                                       const MKCInstance *instance_,
+                                       const int &size_c,
+                                       const int &size_h)
+    {
+        return new MKC_InequalityWheel(variables_, instance_, size_c, size_h);
+    }
+
+    static MKC_InequalityWheel *create(const VariablesEdge *variables_, const MKCInstance *instance_)
+    {
+        return new MKC_InequalityWheel(variables_, instance_, 3, 1);
+    }
+
 private:
     const int size_cycle;
     const int size_hub;
     Tabu<int> tabu;
     Grasp<int> grasp;
+    double rhs;
+    const VariablesEdge *variables;
+    const MKCInstance *instance;
+
+    MKC_InequalityWheel(const VariablesEdge *variables_,
+                        const MKCInstance *instance_,
+                        const int &size_c,
+                        const int &size_h) : variables(variables_),
+                                             instance(instance_),
+                                             size_cycle(size_c),
+                                             size_hub(size_h)
+    {
+        this->set_rhs();
+    }
 
 protected:
     void set_rhs()
@@ -46,22 +84,18 @@ protected:
     }
 
 public:
-    MKC_InequalityWheel(const int &size_c, const int &size_h) : MKC_Inequalities(0.0),
-                                                                size_cycle(size_c),
-                                                                size_hub(size_h)
+    std::string to_string() const
     {
-        this->set_rhs();
+        return typeid(this).name();
     }
 
-    void find_violated_constraints(const VariablesEdge *variables,
-                                   const MKCInstance *instance,
-                                   std::set<ViolatedConstraint *, CompViolatedConstraint> *violated_constraints)
+    void find_violated_constraints()
     {
         try
         {
             const MKCGraph *graph = instance->get_graph();
 
-            GRASP_heurisistic(variables, graph->get_edges(), violated_constraints);
+            GRASP_heurisistic(graph->get_edges());
         }
         catch (Exception &e)
         {
@@ -81,9 +115,7 @@ public:
         }
     }
 
-    void GRASP_heurisistic(const VariablesEdge *variables,
-                           const Edges *edges,
-                           std::set<ViolatedConstraint *, CompViolatedConstraint> *violated_constraints)
+    void GRASP_heurisistic(const Edges *edges)
     {
 
         tabu.clean(-1);
@@ -102,28 +134,28 @@ public:
 
             //set first vertex in cycle
             vertices_in_cycle[0] = i;
-            if (this->Construct_grasp_random_wheel(variables, edges, &vertices_in_cycle, &vertices_in_hub))
+            if (this->Construct_grasp_random_wheel(edges, &vertices_in_cycle, &vertices_in_hub))
             {
                 double val;
-                if (this->evaluate_wheel(variables, edges, vertices_in_cycle, vertices_in_hub, &val))
+                if (this->evaluate_wheel(edges, vertices_in_cycle, vertices_in_hub, &val))
                 {
-                    this->local_search_wheel(variables, edges, &vertices_in_cycle, &vertices_in_hub, &val);
+                    this->local_search_wheel(edges, &vertices_in_cycle, &vertices_in_hub, &val);
                     if ((val - this->rhs) > maxkcut::EPSILON)
                     {
 
-                        if (this->set_variables_of_wheel(variables,
-                                                         edges,
+                        if (this->set_variables_of_wheel(edges,
                                                          vertices_in_cycle, vertices_in_hub,
                                                          &variables_in_wheel))
                         {
                             this->add_vertex_in_tabu_list(edges, vertices_in_cycle);
 
-                            violated_constraints->insert(new ViolatedConstraint(variables_in_wheel,
-                                                                                coefficients,
-                                                                                0.0,
-                                                                                this->rhs,
-                                                                                ConstraintType::INFERIOR_EQUAL,
-                                                                                val - this->rhs));
+                            add_violated_constraint(LinearViolatedConstraint::create(0.0,
+                                                                                     this->rhs,
+                                                                                     ConstraintBoundKey::INFERIOR_EQUAL,
+                                                                                     val - this->rhs,
+                                                                                     variables_in_wheel.size(),
+                                                                                     &variables_in_wheel[0],
+                                                                                     &coefficients[0]));
                         }
                     }
                 }
@@ -158,8 +190,7 @@ public:
         tabu.add_value(vertex_min_sum);
     }
 
-    void local_search_wheel(const VariablesEdge *variables,
-                            const Edges *edges,
+    void local_search_wheel(const Edges *edges,
                             std::vector<int> *vertices_in_cycle,
                             std::vector<int> *vertices_in_hub,
                             double *previous_val)
@@ -179,7 +210,7 @@ public:
                 {
                     int v_in_cycle = (*vertices_in_cycle)[v];
                     (*vertices_in_cycle)[v] = i;
-                    if (this->evaluate_wheel(variables, edges, *vertices_in_cycle, *vertices_in_hub, &new_val) &&
+                    if (this->evaluate_wheel(edges, *vertices_in_cycle, *vertices_in_hub, &new_val) &&
                         new_val > (*previous_val))
                     {
                         (*previous_val) = new_val;
@@ -197,7 +228,7 @@ public:
                     int u_in_hub = (*vertices_in_hub)[u];
                     (*vertices_in_hub)[u] = i;
 
-                    if (this->evaluate_wheel(variables, edges, *vertices_in_cycle, *vertices_in_hub, &new_val) &&
+                    if (this->evaluate_wheel(edges, *vertices_in_cycle, *vertices_in_hub, &new_val) &&
                         new_val > (*previous_val))
                     {
                         (*previous_val) = new_val;
@@ -212,8 +243,7 @@ public:
         }
     }
 
-    bool evaluate_wheel(const VariablesEdge *variables,
-                        const Edges *edges,
+    bool evaluate_wheel(const Edges *edges,
                         const std::vector<int> &vertices_in_cycle,
                         const std::vector<int> &vertices_in_hub,
                         double *sum)
@@ -242,7 +272,7 @@ public:
             int previous_vertex = v != 0 ? v - 1 : vertices_in_cycle.size() - 1;
 
             const Edge *edge = edges->get_edge_by_vertices(vertices_in_cycle[v],
-                                                                vertices_in_cycle[previous_vertex]);
+                                                           vertices_in_cycle[previous_vertex]);
             if (edge == nullptr)
             {
                 return false;
@@ -269,8 +299,7 @@ public:
         return true;
     }
 
-    bool Construct_grasp_random_wheel(const VariablesEdge *variables,
-                                      const Edges *edges,
+    bool Construct_grasp_random_wheel(const Edges *edges,
                                       std::vector<int> *vertices_in_cycle,
                                       std::vector<int> *vertices_in_hub)
     {
@@ -327,7 +356,7 @@ public:
             for (int v = 1; v <= dimension; ++v)
             {
                 if (!tabu.has_element(v) &&
-                    this->is_vertex_valid_to_hub(variables, edges, vertices_in_cycle, vertices_in_hub, v, &val))
+                    this->is_vertex_valid_to_hub(edges, vertices_in_cycle, vertices_in_hub, v, &val))
                 {
                     grasp.add_candidate_to_rcl(v, -val);
                 }
@@ -346,8 +375,7 @@ public:
         return true;
     }
 
-    bool is_vertex_valid_to_hub(const VariablesEdge *variables,
-                                const Edges *edges,
+    bool is_vertex_valid_to_hub(const Edges *edges,
                                 std::vector<int> *vertices_in_cycle,
                                 std::vector<int> *vertices_in_hub,
                                 const int &vertex,
@@ -417,8 +445,7 @@ public:
     *    2) edges of hub and cycle 
     *    3) edges in hub    
     * */
-    bool set_variables_of_wheel(const VariablesEdge *variables,
-                                const Edges *edges,
+    bool set_variables_of_wheel(const Edges *edges,
                                 const std::vector<int> &vertices_in_cycle,
                                 const std::vector<int> &vertices_in_hub,
                                 std::vector<const Variable *> *variables_in_wheel)
@@ -430,7 +457,7 @@ public:
             int previous_vertex = v != 0 ? v - 1 : vertices_in_cycle.size() - 1;
 
             const Edge *edge = edges->get_edge_by_vertices(vertices_in_cycle[v],
-                                                                vertices_in_cycle[previous_vertex]);
+                                                           vertices_in_cycle[previous_vertex]);
             if (edge == nullptr)
             {
                 return false;

@@ -2,7 +2,6 @@
 #define MKC_INSTANCE_HPP
 
 #include "MKCGraph.hpp"
-#include "./Solver/Solver.hpp"
 
 namespace maxkcut
 {
@@ -24,7 +23,7 @@ public:
         return &this->graph;
     }
 
-    int get_K() const
+    const int &get_K() const
     {
         return this->K_partitions;
     }

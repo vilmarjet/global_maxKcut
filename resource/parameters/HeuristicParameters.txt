@@ -1,0 +1,9 @@
+heuristic_type = variable_neighborhood_search
+max_time_seconds = 2.0                          // Values greater than 2 can make the branch and bound method very slow and are not more efficient
+
+# ### Heuristic_type:
+#    vns = 1,   //variable_neighborhood_search (Empirically, the best heuristic to max-k-cut)
+#    grasp = 2,  //Greedy Randomized Adaptive Search Procedure
+#    moh = 3, //MultipleSearch_Heuristic
+#    ich = 4,  // Iterative Clustering Heuristic.
+# #####

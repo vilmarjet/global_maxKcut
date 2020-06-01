@@ -39,19 +39,24 @@
 
 #include "VariablesEdge.hpp"
 
-#include "MKC_Inequalities.hpp"
-#include "MKC_InequalityTriangle.hpp"
-#include "MKC_InequalityClique.hpp"
-#include "MKC_InequalityWheel.hpp"
-#include "MKC_InequalityLpSdp.hpp"
+#include "./CPA/CuttingPlaneAlgo.hpp"
 
-#include "MKC_CPA.hpp"
+#include "./Solver/Abstract/Solver.hpp"
+#include "./Solver/Mosek/SolverMosekLp.hpp"
+#include "./Solver/Factory/SolverFactory.hpp"
 
-#include "./Solver/Solver.hpp"
-#include "./Solver/SolverMosekLp.hpp"
+#include "MKC_CuttingPlane.hpp"
 
 #include "../../../myFiles/eigen/Eigen/Dense"
 #include "../../../myFiles/eigen/Eigen/Eigenvalues" 
+
+
+#include "./Parameters/MKC_CPAParam.hpp"
+#include "./Parameters/BranchBoundParam.hpp"
+#include "./Parameters/MKC_ProblemParam.hpp"
+#include "./Parameters/MKC_HeuristicParam.hpp"
+
+#include "./Utils/UtilsFile.hpp"
 
 //#include <ilcplex/ilocplex.h>
 
@@ -183,7 +188,7 @@ typedef struct T_Branch
   double	lowerboud; // father lb
   double	upperbound;// father ub 
   double      	seq;  //to rank in the select strategy 
-  double      	Level_tree;
+  int      	Level_tree;
   long 		lastVarFix;
   long 		lastPartFix;  
   
@@ -399,6 +404,10 @@ inline bool Set_Clque_in_MaximalClique (const int &vertex, std::vector <int>neig
 inline void Add_edgeInstance (T_Instance& instance, const int & J, const int & I);
 
 
+//Heuristic
+void DoAllHeuristicFiles(char *argv[], T_Instance &instance);
+double execute_heuristic_to_feasible_solution(const T_Instance &instance);
+
 
 //MOSEK
 // inline void setObjFunction_andVarBounds__LPmosek(const T_Instance &instance, MSKrescodee  &r, MSKtask_t    &task, MSKenv_t &env);
@@ -510,6 +519,8 @@ void set_pre_inequalities_VP2 (T_Instance &instance);
 void set_pre_inequalities_VP3(T_Instance &instance);
 void Eigenvaleu_ForSomeVertices(T_Instance &instance,MKC_ConstraintLPtoSDPPopulate &PopVecProp, const  std::vector<int> &Vec_Vertices, const double &counterMaxNeg );
 void FindNegatifEigenvaleu_Chordal(T_Instance &instance,MKC_ConstraintLPtoSDPPopulate &PopVecProp);
+
+void FindGapIneqNegatifEigenvalue(T_Instance &instance, MKC_ConstraintLPtoSDPPopulate &PopVecProp);
 
 
 
@@ -672,7 +683,8 @@ inline bool Solve_SubProblem_BB (T_Instance &instance,   std::vector< std::vecto
   const bool  &BY_PARTITION_BB,  const int &TYPE_SOLVER_BB,  const bool &NEW_TASK, double *bestLowerBound,const  bool  &sdp_edge_type=false);
 inline void WriteIteration_FILE_BB(std::ofstream &file_ITE, const int &Ite, const int &Size_list, const double &Lb, 
 	const double &Ub, const double &gap, const double &time);
-void set_FileNamesITE_BB (char *argv[],std::string &FileResults);
+void SaveFinalSolution(const int &Ite, const double &Lb, const double &Ub, const double &gap, const double &time);
+void set_FileNamesITE_BB (std::string &FileResults);
 inline bool Branching_BB  (std::set <T_Branch> &ListBB, T_Instance &instance,   std::vector< std::vector<int> > &Partitions,   std::vector <T_fixVar> &fixvar,
   const bool  &BY_PARTITION_BB,  const int &TYPE_SOLVER_BB, double *bestLowerBound);
 inline bool Strategy_selecting_ActiveNodeTree_BB(const T_Instance &instance, double *val_Change);

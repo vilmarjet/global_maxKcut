@@ -1,42 +1,49 @@
 #ifndef MKC_EDGE_MODEL_SDP_HPP
 #define MKC_EDGE_MODEL_SDP_HPP
 
-#include "./Solver/Solver.hpp"
+#include "./Solver/Abstract/Solver.hpp"
 #include "./MKCInstance.hpp"
 #include "./MKCGraph.hpp"
-#include "./Solver/Variable.hpp"
-#include "./CPA/ViolatedConstraint.hpp"
-#include "./MKC_Inequalities.hpp"
+#include "MKC_ProcessorSDPViolatedConstraints.hpp"
 #include <algorithm> // use of min and max
 #include <set>
 #include <vector>
 #include "VariablesEdgeSDP.hpp"
+#include "MKC_InequalitySDPDiagonal.hpp"
+
+#include "./CPA/ViolatedConstraints.hpp"
+#include "MKC_InequalityTriangle.hpp"
+#include "MKC_InequalityClique.hpp"
+#include "MKC_InequalityWheel.hpp"
+#include "MKC_InequalityLpSdp.hpp"
+#include "MKC_InequalitySDPBound.hpp"
 
 namespace maxkcut
 {
 
-class MKC_ModelEdgeSDP
+class MKC_ModelEdgeSDP : public ModelAbstract
 {
 private:
-    Solver *solver;
     MKCInstance *instance;
     VariablesEdgeSDP *variablesEdgeSDP;
-    std::vector<MKC_Inequalities *> inequalities_type;
-    std::set<ViolatedConstraint *, CompViolatedConstraint> violated_constraints;
+    std::vector<ViolatedConstraints *> inequalities_type;
+    MKC_InequalitySDPBound* boundIneq;
 
 public:
     MKC_ModelEdgeSDP(MKCInstance *instance_, Solver *solver_) : instance(instance_),
-                                                                solver(solver_)
+                                                                ModelAbstract(solver_)
     {
         this->initilize();
-        inequalities_type.clear();
     }
 
-    void solve()
+    MKC_ModelEdgeSDP *solve()
     {
-        diagonal_constraint();
         this->solver->solve();
+        boundIneq->find_violated_bound_constraints_sdp();
+        transforme_SDP_solution();
         std::cout << solver->to_string();
+
+        return this;
     }
 
     void reset_solver()
@@ -47,65 +54,76 @@ public:
     void initilize()
     {
         variablesEdgeSDP = VariablesEdgeSDP::create(solver, instance);
+        MKC_InequalitySDPDiagonal::create(solver)->populate();
+        boundIneq = MKC_InequalitySDPBound::create(variablesEdgeSDP, instance);
+
+        initialize_constraints();
+
         this->set_objective_function();
-        solver->initialize();
     }
     void set_objective_function()
     {
-        double cst = instance->get_graph()->get_edges()->sum_cost_all_edges();
+        double cst = instance->get_graph()->get_edges()->sum_weight_all_edges();
         int K = instance->get_K();
-        cst *= (-1.0) * ((K - 1.0) / K);
+        cst *= ((K - 1.0) / K);
         solver->set_const_objective_function(cst);
     }
 
-    void add_type_inequality(MKC_Inequalities *ineq_type)
+    void add_type_inequality(ViolatedConstraints *ineq_type)
     {
         this->inequalities_type.push_back(ineq_type);
     }
 
-    void find_violated_constraints(const int &nb_max_ineq)
+    void initialize_constraints()
     {
-        violated_constraints.clear();
-        int counter_ineq = 0;
-
-        for (std::size_t idx_ineq = 0; idx_ineq < inequalities_type.size(); ++idx_ineq)
-        {
-            //@todo: create class for violated constraints and send as parameter or return in get violated inequalities
-            inequalities_type[idx_ineq]->find_violated_constraints(this->variablesEdgeSDP,
-                                                                   this->instance,
-                                                                   &violated_constraints);
-        }
-
-        for (std::set<ViolatedConstraint *, CompViolatedConstraint>::iterator it = violated_constraints.begin();
-             it != violated_constraints.end() && counter_ineq < nb_max_ineq;
-             ++it, ++counter_ineq)
-        {
-            int idx_sdp_variable = 0;
-            //solver->add_constraint_single_SDP_variable(idx_sdp_variable, (*it)->get_constraint());
-        }
-
-        std::cout << "Nb constraints after= " << solver->get_nb_constraints();
+        add_type_inequality(MKC_InequalityTriangle::create(variablesEdgeSDP, instance));
+        add_type_inequality(MKC_InequalityClique::create(variablesEdgeSDP, instance, instance->get_K() + 1));
+        add_type_inequality(MKC_InequalityClique::create(variablesEdgeSDP, instance, instance->get_K() + 2));
+        add_type_inequality(MKC_InequalityWheel::create(variablesEdgeSDP, instance));
+        add_type_inequality(MKC_InequalityWheel::create(variablesEdgeSDP, instance, 3, 2));
+        add_type_inequality(MKC_InequalityLpSdp::create(variablesEdgeSDP, instance));
     }
 
-    void diagonal_constraint()
+    int find_violated_constraints(const int &nb_max_ineq)
     {
-        const SDPVariables *sdp_vars = solver->get_sdp_variables();
-        const SDPVariable<Variable> *sdp_var = sdp_vars->get_variable(0); //
+        ProcessorSDPViolatedConstraints *sdpViolatedConstraints =
+            ProcessorSDPViolatedConstraints::create(nb_max_ineq,
+                                                    solver,
+                                                    this->instance,
+                                                    this->variablesEdgeSDP)
+                ->find_violation(&inequalities_type[0], inequalities_type.size())
+                ->find_violation(boundIneq)
+                ->populate();
 
-        int dim = sdp_var->get_dimension();
-        double lowerBound = 1.0;
-        double upperBound = 1.0;
-        ConstraintType type = ConstraintType::EQUAL;
-        double coeff = 1.0;
 
-        for (int i = 0; i < dim; ++i)
+         int nb_violations = sdpViolatedConstraints->get_number_violated_constraints();
+
+        delete sdpViolatedConstraints;
+
+        std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size() + solver->get_sdp_constraints()->size();
+
+        return nb_violations;
+    }
+
+    void transforme_SDP_solution()
+    {
+        double LBsdp = -1.0 / (instance->get_K() - 1.0);
+        double UBsdp = 1.0;
+        double divCst = (UBsdp - LBsdp);
+
+        for (auto var : variablesEdgeSDP->get_variable_sdp()->get_variables())
         {
-            const Variable *variable = sdp_var->get_variable(i, i);
-            ConstraintSDP* constraint = solver->add_constraint_SDP(lowerBound, upperBound, type);
-            constraint->add_coefficient(sdp_var, variable, coeff);
-        }
+            double sdp_value = var->get_solution();
 
-       solver->execute_constraints();
+            //For sdp the lower and upper bound should be set as constraints
+            //Thus, we need to check if their values are respected.
+            if (sdp_value < LBsdp)
+            {
+                sdp_value = LBsdp;
+            }
+
+            var->update_solution((sdp_value - LBsdp) / divCst);
+        }
     }
 
     ~MKC_ModelEdgeSDP()

@@ -1,7 +1,15 @@
-#ifndef CUTTING_PLANE_ALGORITHM_HPP
-#define CUTTING_PLANE_ALGORITHM_HPP
+#ifndef CUTTING_PLANE_ALGORITHM_HPP2
+#define CUTTING_PLANE_ALGORITHM_HPP2
 
-#include "./../Solver/Solver.hpp"
+#define LOG_LEVEL 3 //info
+
+#include "./../Solver/Abstract/Solver.hpp"
+#include "../Models/ModelAbstract.hpp"
+#include "./Parameter/CPAParam.hpp"
+#include "../Solver/Parameter/TerminationParam.hpp"
+#include "../Utils/Logger.hpp"
+
+
 
 /**
  * Steps :
@@ -11,27 +19,52 @@
  */
 class CuttingPlaneAlgorithm
 {
-private:
-    Solver *solver;
-    // Params parameters;
+protected:
+    ModelAbstract *model;
+    CPAParam *param;
 
 public:
-    CuttingPlaneAlgorithm(Solver *solver_) : solver(solver_)
+    CuttingPlaneAlgorithm(ModelAbstract *model_, CPAParam *param_) : model(model_),
+                                                                     param(param_)
+
     {
+    }
+
+    virtual void solve_model() = 0;
+    virtual void find_violate_constraints() = 0;
+
+    virtual void execute()
+    {
+        Log::INFO("*** Start CPA ***");
+
+        for (int i = 0; !is_stopping_criteria(i); ++i)
+        {
+            solve_model();
+            find_violate_constraints();
+        }
+
+        Log::INFO("*** END CPA ***");
+    }
+
+    virtual bool is_stopping_criteria(const int &iteration)
+    {
+        if (iteration == 0)
+        {
+            return false;
+        }
+
+        if (iteration >= param->get_number_max_iterations())
+        {
+            return true;
+        }
+
+        return false;
     }
 
     ~CuttingPlaneAlgorithm()
     {
+        delete param;
     }
-
-    virtual void find_violated_inequality() = 0;
-
-    void solve()
-    {
-        // this->solver->solve();
-        std::cout<<"Chegou Solver brother";
-    }
-
 };
 
 #endif

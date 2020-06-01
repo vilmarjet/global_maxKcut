@@ -45,7 +45,7 @@ public:
         std::cout << "Print vector, of size = " << size << " : {";
         for (int j = 0; j < size; j++)
         {
-            std::cout << v[j]->to_string();
+            std::cout << v[j];
             if (j < size - 1)
                 std::cout << ", ";
         }

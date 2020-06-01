@@ -1,42 +1,45 @@
 #ifndef MKC_EDGE_MODEL_LP_HPP
 #define MKC_EDGE_MODEL_LP_HPP
 
-#include "./Solver/Solver.hpp"
+#include "./Solver/Abstract/Solver.hpp"
 #include "./MKCInstance.hpp"
 #include "./MKCGraph.hpp"
-#include "./Solver/Variable.hpp"
-#include "./CPA/ViolatedConstraint.hpp"
-#include "./MKC_Inequalities.hpp"
+#include "MKC_ProcessorLinearViolatedConstraints.hpp"
 #include <algorithm> // use of min and max
 #include <set>
 #include <vector>
 #include "VariablesEdge.hpp"
 
+#include "./CPA/ViolatedConstraints.hpp"
+#include "MKC_InequalityTriangle.hpp"
+#include "MKC_InequalityClique.hpp"
+#include "MKC_InequalityWheel.hpp"
+#include "MKC_InequalityLpSdp.hpp"
+#include "./Models/ModelAbstract.hpp"
+
 namespace maxkcut
 {
 
-class MKC_ModelEdgeLP
+class MKC_ModelEdgeLP : public ModelAbstract
 {
 private:
-    Solver *solver;
     MKCInstance *instance;
     VariablesEdge *variablesEdge;
-    std::vector<MKC_Inequalities *> inequalities_type;
-    std::set<ViolatedConstraint *, CompViolatedConstraint> violated_constraints;
+    std::vector<ViolatedConstraints *> inequalities_type;
 
 public:
     MKC_ModelEdgeLP(MKCInstance *instance_, Solver *solver_) : instance(instance_),
-                                                               solver(solver_)
+                                                               ModelAbstract(solver_)
     {
-        this->initilize();
         inequalities_type.clear();
-        
+        this->initilize();
     }
 
-    void solve()
+    MKC_ModelEdgeLP *solve()
     {
         this->solver->solve();
-        std::cout <<solver->to_string();
+        std::cout << solver->to_string();
+        return this;
     }
 
     void reset_solver()
@@ -47,40 +50,48 @@ public:
     void initilize()
     {
         variablesEdge = VariablesEdge::create(solver, instance);
+
+        initialize_constraints();
+
         this->set_objective_function();
     }
+
+    void initialize_constraints()
+    {
+
+        add_type_inequality(MKC_InequalityTriangle::create(variablesEdge, instance));
+        add_type_inequality(MKC_InequalityClique::create(variablesEdge, instance, instance->get_K() + 1));
+        add_type_inequality(MKC_InequalityClique::create(variablesEdge, instance, instance->get_K() + 2));
+        add_type_inequality(MKC_InequalityWheel::create(variablesEdge, instance));
+        add_type_inequality(MKC_InequalityWheel::create(variablesEdge, instance, 3, 2));
+        add_type_inequality(MKC_InequalityLpSdp::create(variablesEdge, instance));
+    }
+
     void set_objective_function()
     {
-        double cst = instance->get_graph()->get_edges()->sum_cost_all_edges();
+        double cst = instance->get_graph()->get_edges()->sum_weight_all_edges();
         solver->set_const_objective_function(cst);
     }
 
-    void add_type_inequality(MKC_Inequalities *ineq_type)
+    void add_type_inequality(ViolatedConstraints *ineq_type)
     {
         this->inequalities_type.push_back(ineq_type);
     }
 
-    void find_violated_constraints(const int &nb_max_ineq)
+    int find_violated_constraints(const int &nb_max_ineq)
     {
-        violated_constraints.clear();
-        int counter_ineq = 0;
+        //violated_constraints.clear();
+        ProcessorLinearViolatedConstraints *linearViolatedConstraints =
+            ProcessorLinearViolatedConstraints::create(nb_max_ineq, solver)
+                ->find_violation(&inequalities_type[0], inequalities_type.size())
+                ->populate();
 
-        for (std::size_t idx_ineq = 0; idx_ineq < inequalities_type.size(); ++idx_ineq)
-        {
-            //@todo: create class for violated constraints and send as parameter or return in get violated inequalities
-            inequalities_type[idx_ineq]->find_violated_constraints(this->variablesEdge,
-                                                                   this->instance,
-                                                                   &violated_constraints);
-        }
+        int nb_violations = linearViolatedConstraints->get_number_violated_constraints();
 
-        for (std::set<ViolatedConstraint *, CompViolatedConstraint>::iterator it = violated_constraints.begin();
-             it != violated_constraints.end() && counter_ineq < nb_max_ineq;
-             ++it, ++counter_ineq)
-        {
-            solver->add_constraint((*it)->get_constraint());
-        }
+        delete linearViolatedConstraints;
 
-        std::cout << "Nb constraints after= " << solver->get_nb_constraints();
+        std::cout << "Nb constraints after= " << solver->get_linear_constraints()->size();
+        return nb_violations;
     }
 
     ~MKC_ModelEdgeLP()

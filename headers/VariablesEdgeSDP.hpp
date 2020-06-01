@@ -1,8 +1,8 @@
 #ifndef VARIABLESEdgeSDP_CONTAINER_HPP
 #define VARIABLESEdgeSDP_CONTAINER_HPP
 
-#include "./Solver/Solver.hpp"
-#include "./Solver/Variables1D.hpp"
+#include "./Solver/Abstract/Solver.hpp"
+#include "./Solver/Variable/Variable.hpp"
 #include "./Utils/Exception.hpp"
 #include <vector>
 #include <map>
@@ -23,15 +23,14 @@ public:
     }
 
 private:
-    int dimension;
-    int K;
+    const int dimension;
+    const int K;
     SDPVariable<Variable> *var_sdp;
 
-    VariablesEdgeSDP(Solver *_solver, const MKCInstance *instance) : VariablesEdge(_solver, instance)
-    {
-        this->dimension = instance->get_graph()->get_dimension();
-        this->K = instance->get_K();
-    }
+    VariablesEdgeSDP(Solver *_solver, const MKCInstance *instance) : VariablesEdge(_solver, instance),
+                                                                     K(instance->get_K()),
+                                                                     dimension(instance->get_graph()
+                                                                                   ->get_dimension()) {}
 
 public:
     ~VariablesEdgeSDP() {}
@@ -39,34 +38,34 @@ public:
     VariablesEdgeSDP *populate()
     {
         double const_sdp_var = (-1.0) * ((this->K - 1.0) / this->K);
-        var_sdp = solver->add_sdp_variable(new SDPVariable<Variable>(dimension, const_sdp_var));
+        std::string label = "X_0";
+        var_sdp = solver->add_sdp_variable(new SDPVariable<Variable>(dimension, const_sdp_var, label));
 
         //todo: Impemente populate
         double lower_bound = -1.0 / (K - 1.0);
         double upper_bound = 1.0;
         double initial_solution = 0.0;
         VariableType type = VariableType::SDP;
-        for (int i = 0; i < edges->get_number_edges(); ++i)
+        for (auto edge : edges->get_edges())
         {
-            const Edge *edge = edges->get_edge_by_index(i);
-            int vi = edge->get_vertex_i() - 1 ;
+            int vi = edge->get_vertex_i() - 1;
             int vj = edge->get_vertex_j() - 1;
-            double cost_var =edge->get_weight() / 2.0; 
-
-            const Variable *variable = var_sdp->add_variable(vi, vj,
-                                                             new Variable(lower_bound,
-                                                                          upper_bound,
-                                                                          initial_solution,
-                                                                          cost_var,
-                                                                          type));
-            int idx = var_sdp->get_index(variable);
-            add_variable(idx, edge, variable);
+            double cost_var = edge->get_weight() / 2.0;
+            std::string label = "x_(" + std::to_string(vi) + "," + std::to_string(vj) + ")"; 
+            Variable *variable = var_sdp->add_variable(vi, vj,
+                                                       Variable::create(lower_bound,
+                                                                        upper_bound,
+                                                                        initial_solution,
+                                                                        cost_var,
+                                                                        type,
+                                                                        label));
+            add_variable(edge, variable);
         }
 
         return this;
     }
 
-    const SDPVariable<Variable>* get_variable_sdp()
+    SDPVariable<Variable> *get_variable_sdp() const
     {
         return var_sdp;
     }

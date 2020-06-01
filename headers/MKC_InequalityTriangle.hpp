@@ -3,24 +3,44 @@
 
 #include <set>
 #include <vector>
-#include "./MKC_Inequalities.hpp"
+#include "./CPA/ViolatedConstraints.hpp"
 #include "./MKCUtil.hpp"
-#include "./Solver/Solver.hpp"
+#include "./Solver/Abstract/Solver.hpp"
+#include "MKCInstance.hpp"
 
 namespace maxkcut
 {
 // TRIANGLE CONTRAINT -> X_ij + X_hj - X_hi <= 1
-class MKC_InequalityTriangle : public MKC_Inequalities
+class MKC_InequalityTriangle : public ViolatedConstraints
 {
 
 public:
-  MKC_InequalityTriangle(/* args */) : MKC_Inequalities(1.0)
+  static MKC_InequalityTriangle *create()
+  {
+    return new MKC_InequalityTriangle(nullptr, nullptr);
+  }
+
+  static MKC_InequalityTriangle *create(const VariablesEdge *variables_, const MKCInstance *instance_)
+  {
+    return new MKC_InequalityTriangle(variables_, instance_);
+  }
+
+private:
+  const VariablesEdge *variables;
+  const MKCInstance *instance;
+  const double rhs;
+
+  MKC_InequalityTriangle(const VariablesEdge *variables_,
+                         const MKCInstance *instance_) : variables(variables_),
+                                                         instance(instance_),
+                                                         rhs(1.0)
+
   {
   }
 
-  void find_violated_constraints(const VariablesEdge* variables,
-                                 const MKCInstance *instance,
-                                 std::set<ViolatedConstraint *, CompViolatedConstraint>  *violated_constraints)
+public:
+
+  void find_violated_constraints()
   {
     try
     {
@@ -58,19 +78,19 @@ public:
 
             double value_vh_vj = variables->get_variable(edge2)->get_solution();
             double value_vi_vh = variables->get_variable(edge3)->get_solution();
-            
+
             //first contraint -> -X_ij + X_hj + X_hi <= 1/
             sum = -value_vi_vj + value_vh_vj + value_vi_vh;
             if (sum > this->rhs + maxkcut::EPSILON)
             {
               double coef[] = {-1.0, 1.0, 1.0};
-              violated_constraints->insert(new ViolatedConstraint(var_edges,
-                                                                  coef,
-                                                                  3,
-                                                                  -1.0,
-                                                                  1.0,
-                                                                  ConstraintType::INFERIOR_EQUAL,
-                                                                  sum - this->rhs));
+              add_violated_constraint(LinearViolatedConstraint::create(-1.0,
+                                                                       this->rhs,
+                                                                       ConstraintBoundKey::INFERIOR_EQUAL,
+                                                                       sum - this->rhs,
+                                                                       3,
+                                                                       var_edges,
+                                                                       coef));
             }
 
             //second contraint -> X_ij - X_hj + X_hi <= 1/
@@ -78,13 +98,14 @@ public:
             if (sum > this->rhs + maxkcut::EPSILON)
             {
               double coef[] = {1.0, -1.0, 1.0};
-              violated_constraints->insert(new ViolatedConstraint(var_edges,
-                                                                  coef,
-                                                                  3,
-                                                                  -1.0,
-                                                                  1.0,
-                                                                  ConstraintType::INFERIOR_EQUAL,
-                                                                  sum - this->rhs));
+              add_violated_constraint(
+                  LinearViolatedConstraint::create(-1.0,
+                                                   this->rhs,
+                                                   ConstraintBoundKey::INFERIOR_EQUAL,
+                                                   sum - this->rhs,
+                                                   3,
+                                                   var_edges,
+                                                   coef));
             }
 
             //Thrid contraint -> X_ij + X_hj - X_hi <= 1/
@@ -92,13 +113,14 @@ public:
             if (sum > this->rhs + maxkcut::EPSILON)
             {
               double coef[] = {1.0, 1.0, -1.0};
-              violated_constraints->insert(new ViolatedConstraint(var_edges,
-                                                                  coef,
-                                                                  3,
-                                                                  -1.0,
-                                                                  1.0,
-                                                                  ConstraintType::INFERIOR_EQUAL,
-                                                                  sum - this->rhs));
+              add_violated_constraint(
+                  LinearViolatedConstraint::create(-1.0,
+                                                   this->rhs,
+                                                   ConstraintBoundKey::INFERIOR_EQUAL,
+                                                   sum - this->rhs,
+                                                   3,
+                                                   var_edges,
+                                                   coef));
             }
           }
         }
@@ -119,6 +141,11 @@ public:
       Exception ept = Exception(msg, ExceptionType::STOP_EXECUTION);
       ept.execute();
     }
+  }
+
+  std::string to_string() const
+  {
+    return typeid(this).name();
   }
 
   ~MKC_InequalityTriangle() {}
