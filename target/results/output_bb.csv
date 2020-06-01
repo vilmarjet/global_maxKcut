@@ -1,6 +1,0 @@
-instance ,  partitions,  Solution (LB) ,  gap_Ub_LB ,  time ,  nb_BB_iterations ,  Solver 
-
-./resource/instance7.txt, 3, 106, 0, 0.3865, 0, LP_SDP 
-./resource/instance7.txt, 3, 106, 0, 0.3837, 0, LP_SDP 
-./resource/instance5.txt, 3, 98, 0, 0.1983, 0, LP_SDP 
-./resource/instance20.txt, 5, 1280, 0, 1.412, 0, LP_SDP 
