@@ -22,7 +22,7 @@ OBJ_LIST    = $(BUILD_DIR)/$(notdir $(SRC_LIST:.cpp=.o))
 bb_mkc_run: $(SRC_LIST)
 	$(CC) -g $(MOSEK_IPATHS) $(MOSEK_LPATHS) -o bb_mkc_run $(SRC_LIST) -lmosek64 $(LIBS)
 
-build: 
+install: 
 	  rm -f bb_mkc_run
 	  make bb_mkc_run
 
