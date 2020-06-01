@@ -19,34 +19,34 @@ SRC_LIST = $(wildcard $(SRC_DIR)/*cpp) $(wildcard $(SRC_DIR)/*/*.cpp)
 OBJ_LIST    = $(BUILD_DIR)/$(notdir $(SRC_LIST:.cpp=.o))
 
 
-lp_sdp8: $(SRC_LIST)
-	$(CC) -g $(MOSEK_IPATHS) $(MOSEK_LPATHS) -o lp_sdp8 $(SRC_LIST) -lmosek64 $(LIBS)
+bb_mkc_run: $(SRC_LIST)
+	$(CC) -g $(MOSEK_IPATHS) $(MOSEK_LPATHS) -o bb_mkc_run $(SRC_LIST) -lmosek64 $(LIBS)
 
-lo1: lo1.c
-	$(CC) -g $(MOSEK_IPATHS) $(MOSEK_LPATHS) -o lo1 lo1.c -lmosek64 $(LIBS)
+build: 
+	  rm -f bb_mkc_run
+	  make bb_mkc_run
 
-easy: 
-	  rm -f lp_sdp8
-	  make lp_sdp8
-	  ./lp_sdp8 ./resource/instance7.txt 3 -3 1 4 1 0 2 10
+run_instance7:
+	  ./bb_mkc_run ./resource/instance7.txt 3
 
-easyTriangle: 
-	  ./lp_sdp8 ./resource/instance5.txt 3 1 1 0 0 0 0 10
+run_instance7_with_partitions:
+	  ./bb_mkc_run ./resource/instance7.txt 3 
 
-easy20: 
-	  ./lp_sdp8 ./resource/instance20.txt 3 -3 1 0 0 0 0 10
+run_instance5_partitions_in_ProblemParameters:
+	  ./bb_mkc_run ./resource/instance5.txt
 
-easy7: 
-	  ./lp_sdp8 ./resource/instance7.txt 3 -3 1 4 1 0 2 10
+run_instance20_with_partition:
+	  ./bb_mkc_run ./resource/instance20.txt 5
 
-easybqp50: 
-	  ./lp_sdp8 ./resource/bqp50_6.txt 3 -3 1 1 5 2 1 3
+run_instance20_partition_in_parameters:
+	  ./bb_mkc_run ./resource/instance20.txt
 
-
+run: 
+	  ./bb_mkc_run 
 
 .PHONY: clean test all
 
-all: lp_sdp8
+all: bb_mkc_run run
 
 clean:
 	rm -f *.o

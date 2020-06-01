@@ -53,6 +53,10 @@
 
 #include "./Parameters/MKC_CPAParam.hpp"
 #include "./Parameters/BranchBoundParam.hpp"
+#include "./Parameters/MKC_ProblemParam.hpp"
+#include "./Parameters/MKC_HeuristicParam.hpp"
+
+#include "./Utils/UtilsFile.hpp"
 
 //#include <ilcplex/ilocplex.h>
 
@@ -402,7 +406,7 @@ inline void Add_edgeInstance (T_Instance& instance, const int & J, const int & I
 
 //Heuristic
 void DoAllHeuristicFiles(char *argv[], T_Instance &instance);
-
+double execute_heuristic_to_feasible_solution(const T_Instance &instance);
 
 
 //MOSEK
@@ -679,7 +683,8 @@ inline bool Solve_SubProblem_BB (T_Instance &instance,   std::vector< std::vecto
   const bool  &BY_PARTITION_BB,  const int &TYPE_SOLVER_BB,  const bool &NEW_TASK, double *bestLowerBound,const  bool  &sdp_edge_type=false);
 inline void WriteIteration_FILE_BB(std::ofstream &file_ITE, const int &Ite, const int &Size_list, const double &Lb, 
 	const double &Ub, const double &gap, const double &time);
-void set_FileNamesITE_BB (char *argv[],std::string &FileResults);
+void SaveFinalSolution(const int &Ite, const double &Lb, const double &Ub, const double &gap, const double &time);
+void set_FileNamesITE_BB (std::string &FileResults);
 inline bool Branching_BB  (std::set <T_Branch> &ListBB, T_Instance &instance,   std::vector< std::vector<int> > &Partitions,   std::vector <T_fixVar> &fixvar,
   const bool  &BY_PARTITION_BB,  const int &TYPE_SOLVER_BB, double *bestLowerBound);
 inline bool Strategy_selecting_ActiveNodeTree_BB(const T_Instance &instance, double *val_Change);

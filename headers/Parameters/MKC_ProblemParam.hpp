@@ -23,9 +23,9 @@ enum Parameters_max_k_cut_problem
 
 enum Problem_Solver_type //Select next branch
 {
-    SDP = 1,        // SDP
-    LP = 2,         // LP
-    LP_SDP_EIG = 4, // LP with SDP based constraints
+    SDP_SOLVER_TYPE = 1,        // SDP
+    LP_SOLVER_TYPE = 2,         // LP
+    LP_SDP_EIG_SOLVER_TYPE = 4, // LP with SDP based constraints
 };
 
 enum Problem_Formulation_type //Select next branch
@@ -39,17 +39,19 @@ class MKC_ProblemParam
 {
 private:
     std::string input_graph_file_path = "instance7.txt";
+    const std::string file_path_parameters;
     int partition_number = 3;
-    Problem_Solver_type solver_type = Problem_Solver_type::LP_SDP_EIG;
+    Problem_Solver_type solver_type = Problem_Solver_type::LP_SDP_EIG_SOLVER_TYPE;
     Problem_Formulation_type formulation = Problem_Formulation_type::edge_only;
-    bool has_triangle_inequalities = true;
-    bool has_clique_inequalities = true;
-    bool has_wheel_inequalities = true;
+    bool consider_triangle_inequalities = true;
+    bool consider_clique_inequalities = true;
+    bool consider_wheel_inequalities = true;
+
 
 public:
-    MKC_ProblemParam(const std::string file_name) : file_path(file_name)
+    MKC_ProblemParam(const std::string path) : file_path_parameters(path)
     {
-        set_parameters_from_file(file_name);
+        set_parameters_from_file(path);
     }
 
     MKC_ProblemParam *set_input_file_path(const std::string &path)
@@ -88,29 +90,36 @@ public:
 
     const bool &has_triangle_inequalities() const
     {
-        return has_triangle_inequalities;
+        return consider_triangle_inequalities;
     }
 
     const bool &has_clique_inequalities() const
     {
-        return has_clique_inequalities;
+        return consider_clique_inequalities;
     }
 
     const bool &has_wheel_inequalities() const
     {
-        return has_wheel_inequalities;
+        return consider_wheel_inequalities;
+    }
+
+    std::string get_solver_str() const 
+    {
+        switch (get_solver_type())
+        {
+        case Problem_Solver_type::SDP_SOLVER_TYPE :
+            return "SDP";
+        case Problem_Solver_type::LP_SOLVER_TYPE :
+            return "LP";
+        case Problem_Solver_type::LP_SDP_EIG_SOLVER_TYPE :
+            return "LP_SDP";
+        default:
+            return "NONE";
+        }
     }
 
     MKC_ProblemParam *set_parameters_from_file(const std::string file_name)
     {
-        std::ifstream fichier(file_name.c_str(), std::ios::in); // reading open
-
-        if (!fichier) //si le fichier n'est existe pas
-        {
-            Log::INFO("Parameter file of BranchBound not found, using default parameters \n " + file_name);
-            return;
-        }
-
         std::ifstream file(file_name.c_str());
         if (file.is_open())
         {
@@ -139,13 +148,13 @@ public:
                         this->formulation = get_parameter_Formulation_type(splited[2]);
                         break;
                     case Parameters_max_k_cut_problem::has_triangle_inequalities:
-                        this->has_triangle_inequalities = splited[2] == "true" ? true : false;
+                        this->consider_triangle_inequalities = splited[2] == "true" ? true : false;
                         break;
                     case Parameters_max_k_cut_problem::has_clique_inequalities:
-                        this->has_clique_inequalities = splited[2] == "true" ? true : false;
+                        this->consider_clique_inequalities = splited[2] == "true" ? true : false;
                         break;
                     case Parameters_max_k_cut_problem::has_wheel_inequalities:
-                        this->has_wheel_inequalities = splited[2] == "true" ? true : false;
+                        this->consider_wheel_inequalities = splited[2] == "true" ? true : false;
                         break;
 
                     default:
@@ -154,6 +163,11 @@ public:
                 }
             }
             file.close();
+        }
+        else
+        {
+            Log::INFO("Parameter file of BranchBound not found, using default parameters \n " + file_name);
+            return this;
         }
 
         validation();
@@ -165,18 +179,18 @@ public:
     {
         switch (this->solver_type)
         {
-        case Problem_Solver_type::SDP:
+        case Problem_Solver_type::SDP_SOLVER_TYPE:
             if (this->formulation != Problem_Formulation_type::edge_only)
             {
-                LOG::WARN("For SDP, only edge_only formulation is implemented, so fomulation change do edge_only");
-                this->formulation != Problem_Formulation_type::edge_only;
+                Log::WARN("For SDP, only edge_only formulation is implemented, so fomulation change do edge_only");
+                this->formulation = Problem_Formulation_type::edge_only;
             }
             break;
-        case Problem_Solver_type::LP_SDP_EIG:
+        case Problem_Solver_type::LP_SDP_EIG_SOLVER_TYPE:
             if (this->formulation == Problem_Formulation_type::extended_representative)
             {
-                LOG::WARN("For extended_representative formulation, only LP solver is implemented, so solver = LP");
-                this->formulation != Problem_Solver_type::LP;
+                Log::WARN("For extended_representative formulation, only LP solver is implemented, so solver = LP");
+                this->solver_type = Problem_Solver_type::LP_SOLVER_TYPE;
             }
             break;
         default:
@@ -184,15 +198,15 @@ public:
         }
 
         if (this->formulation == Problem_Formulation_type::edge_only &&
-            !has_clique_inequalities)
+            !consider_clique_inequalities)
         {
-            LOG::WARN("Clique must be activated in edge only formulation");
-            this->has_clique_inequalities = true;
+            Log::WARN("Clique must be activated in edge only formulation");
+            this->consider_clique_inequalities = true;
         }
 
         if (partition_number < 2)
         {
-            LOG::ERROR("Number of partitions should be greater than 1");
+            Log::ERROR("Number of partitions should be greater than 1");
         }
     }
 
@@ -229,15 +243,15 @@ private:
     Problem_Solver_type get_parameter_Solver_type(std::string input)
     {
         if (input == "SDP")
-            return Problem_Solver_type::SDP;
+            return Problem_Solver_type::SDP_SOLVER_TYPE;
         if (input == "LP")
-            return Problem_Solver_type::LP;
+            return Problem_Solver_type::LP_SOLVER_TYPE;
         if (input == "LP_SDP_EIG")
-            return Problem_Solver_type::LP_SDP_EIG;
+            return Problem_Solver_type::LP_SDP_EIG_SOLVER_TYPE;
 
         Log::WARN("Solver type " + input + " not considered, default = LP_SDP_EIG");
 
-        return Problem_Solver_type::LP_SDP_EIG;
+        return Problem_Solver_type::LP_SDP_EIG_SOLVER_TYPE;
     }
 
     Problem_Formulation_type get_parameter_Formulation_type(std::string input)

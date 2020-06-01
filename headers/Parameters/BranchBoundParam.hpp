@@ -53,7 +53,7 @@ enum BB_Rule_Strategy //Select next branch
 enum BB_Solution_Strategy //Select next branch
 {
     EAGER_BB = 1, //best  rst search strategy
-    LAZY_BB = 2,  // Compute before
+    LAZY_FOR_BB = 2,  // Compute before
 };
 
 enum BB_Partition_Strategy //Select next branch
@@ -68,13 +68,14 @@ private:
     BB_Selection_Strategy selection_strategy = BB_Selection_Strategy::best_first;
     BB_Partition_Strategy partition_strategy = BB_Partition_Strategy::DICHOTOMIC;
     BB_Rule_Strategy branch_rule_strategy = BB_Rule_Strategy::R5_EdgeWeight;
-    BB_Solution_Strategy solution_strategy = BB_Solution_Strategy::LAZY_BB;
+    BB_Solution_Strategy solution_strategy = BB_Solution_Strategy::LAZY_FOR_BB;
     int number_iterations_to_execute_cutting_plane = 1;
     const std::string file_path;
     double max_time_seconds = 10;
     int number_iterations_to_compute_heuristic = 20;
-    BB_Verbose_Type verbose = false;
-    std::string get_output_solution_file_bb = "";
+    BB_Verbose_Type verbose = BB_Verbose_Type::skip;
+    std::string output_solution_file_bb = "";
+    double initial_feasible_solution = 0.0;
 
 public:
     BranchBoundParam(const std::string file_name) : file_path(file_name)
@@ -124,7 +125,7 @@ public:
 
     const auto &get_output_file_name_bb() const
     {
-        return this->get_output_solution_file_bb;
+        return this->output_solution_file_bb;
     }
 
     bool is_verbose_terminal() const
@@ -133,7 +134,7 @@ public:
                get_verbose_type() == BB_Verbose_Type::log_iterations_terminal_and_file;
     }
 
-    bool is_iteration_in_file() const
+    bool is_save_iterations_in_file() const
     {
         return get_verbose_type() == BB_Verbose_Type::log_iterations_in_file ||
                get_verbose_type() == BB_Verbose_Type::log_iterations_terminal_and_file;
@@ -212,6 +213,7 @@ public:
         str += "number_iterations_to_execute_cutting_plane = " + std::to_string(number_iterations_to_execute_cutting_plane) + "\n";
         str += "selection_strategy = " + std::to_string(selection_strategy) + "\n";
         str += "solution_strategy = " + std::to_string(solution_strategy) + "\n";
+        str += "verbose" + std::to_string(this->verbose) + "\n";
 
         return str;
     }
@@ -227,8 +229,8 @@ private:
             return Parameters_type_BB::partition_strategy;
         if (input == "branch_rule_strategy")
             return Parameters_type_BB::branch_rule_strategy;
-        if (input == "solution_strategy")
-            return Parameters_type_BB::solution_strategy;
+        // if (input == "solution_strategy") // erro for eig
+        //     return Parameters_type_BB::solution_strategy;
         if (input == "number_iterations_to_execute_cutting_plane")
             return Parameters_type_BB::number_iterations_to_execute_cutting_plane;
         if (input == "max_time_seconds")
@@ -298,11 +300,11 @@ private:
         if (input == "EAGER_BB")
             return BB_Solution_Strategy::EAGER_BB;
         if (input == "LAZY_BB")
-            return BB_Solution_Strategy::LAZY_BB;
+            return BB_Solution_Strategy::LAZY_FOR_BB;
 
-        Log::WARN("Solution selection type of branch and bound (" + input + ") not considered, set default = LAZY_BB");
+        Log::WARN("Solution selection type of branch and bound (" + input + ") not considered, set default = LAZY_FOR_BB");
 
-        return BB_Solution_Strategy::LAZY_BB;
+        return BB_Solution_Strategy::LAZY_FOR_BB;
     }
 
     BB_Verbose_Type get_verbose_type(std::string input)

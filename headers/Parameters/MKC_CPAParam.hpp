@@ -69,6 +69,11 @@ public:
         return this->verbose;
     }
 
+    const bool & is_early_termination_ipm() const 
+    {
+        return this->is_early_termination;
+    }
+
     void set_parameters_from_file(const std::string file_name)
     {
         std::ifstream fichier(file_name.c_str(), std::ios::in); // reading open
@@ -155,7 +160,7 @@ private:
             return Parameters_CPA::number_iterations_without_clean_inequalities;
         if (input == "verbose")
             return Parameters_CPA::verbose_cpa;
-        if (input == "is_early_termination")
+        if (input == "is_early_termination_interior_point_method")
             return Parameters_CPA::is_early_termination;
         
 

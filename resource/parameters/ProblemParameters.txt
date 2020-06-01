@@ -1,7 +1,20 @@
-file_name = 1000
+file_name = ./resource/instance20.txt       //Input file of max-k-cut test
 partition_number = 3
 solver_type = LP_SDP_EIG
 formulation = edge_only
 has_triangle_inequalities = true
 has_clique_inequalities = true
 has_wheel_inequalities = true
+
+# ######### solver_type:
+#    SDP,        // Semidefinite programming
+#    LP,         // Linear programming
+#    LP_SDP_EIG, // Linear programming  with SDP based constraints
+# ########
+
+
+# #####  formulation:
+#    edge_only,               // Edge formulatin proposed by Chopra (BEST RESULTS)
+#    node_edge,               // Node and edge formulation proposed by Chopra
+#    extended_representative, // Extended formulations proposed in http://dx.doi.org/10.1016/j.endm.2016.03.044*/
+## 

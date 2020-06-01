@@ -12,7 +12,7 @@
 
 enum Parameters_heuristic
 {
-    heuristic,
+    heuristic_type,
     heuristic_max_time_seconds,
     NO_HEURISTIC_PARAMETER
 };
@@ -28,15 +28,26 @@ enum Heuristic_type //Select next branch
 class MKC_HeuristicParam
 {
 private:
-    Heuristic_type heuristic = Heuristic_type::vns;;
-    double heuristic_max_time_seconds = 10;
+    Heuristic_type heuristic_type = Heuristic_type::vns;;
+    double heuristic_max_time_seconds = 2.0;
     bool verbose = false;
+    std::string file_parameter;
 
 public:
-    MKC_HeuristicParam(const std::string file_name): file_path(file_name)
+    MKC_HeuristicParam(const std::string file_name): file_parameter(file_name)
     {
         set_parameters_from_file(file_name);
     }
+
+    const auto & get_heuristic() const 
+    {
+        return this->heuristic_type;
+    }
+
+    const double &get_max_time() const
+    {
+        return this->heuristic_max_time_seconds;
+    } 
 
     void set_parameters_from_file(const std::string file_name)
     {
@@ -63,8 +74,8 @@ public:
                 {
                     switch (get_parameter_type(splited[0]))
                     {
-                    case Parameters_heuristic::heuristic:
-                        this->heuristic = this->get_heuristic_type(splited[2]);
+                    case Parameters_heuristic::heuristic_type:
+                        this->heuristic_type = this->get_heuristic_type(splited[2]);
                         break;
                     case Parameters_heuristic::heuristic_max_time_seconds :
                         this->heuristic_max_time_seconds = std::stod(splited[2]);
@@ -90,8 +101,8 @@ public:
 private:
     Parameters_heuristic get_parameter_type(std::string input)
     {
-        if (input == "heuristic")
-            return Parameters_heuristic::heuristic;
+        if (input == "heuristic_type")
+            return Parameters_heuristic::heuristic_type;
         if (input == "max_time_seconds")
             return Parameters_heuristic::heuristic_max_time_seconds;
 
@@ -109,7 +120,7 @@ private:
         if (input == "iterative_clustering_heuristic")
             return Heuristic_type::ich;
 
-        Log::WARN("The heuristic type " + input + " not considered, default = VNS");
+        Log::WARN("The heuristic_type type " + input + " not considered, default = VNS");
         
         return Heuristic_type::vns;
     }

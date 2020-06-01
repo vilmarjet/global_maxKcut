@@ -220,6 +220,8 @@ int Pos_Last_parameter_BB;
 
 MKC_CPAParam *paramCPA;
 BranchBoundParam *paramBB;
+MKC_ProblemParam *paramProblem;
+MKC_HeuristicParam *paramHeuristic;
 
 std::vector<std::vector<int>> bestPartitions_BB;
 
@@ -236,48 +238,50 @@ int main(int argc, char *argv[])
 
   paramCPA = new MKC_CPAParam("./resource/parameters/CuttingPlaneParameters.txt");
   paramBB = new BranchBoundParam("./resource/parameters/BranchAndBoundParameters.txt");
+  paramProblem = new MKC_ProblemParam("./resource/parameters/ProblemParameters.txt");
+  paramHeuristic = new MKC_HeuristicParam("./resource/parameters/ProblemParameters.txt");
 
-  cout << paramBB->to_string();
-  cin.get();
+  // cout << paramBB->to_string();
+  // cin.get();
 
-  MKCInstance *new_instance = MKCInstanceBuilder<std::nullptr_t>::create()
-                                  ->set_graph()
-                                  ->set_graph_input_file(argv[1])
-                                  ->set_type_graph(GraphType::CHORDAL)
-                                  ->end_graph()
-                                  ->set_K(3)
-                                  ->build();
+  // MKCInstance *new_instance = MKCInstanceBuilder<std::nullptr_t>::create()
+  //                                 ->set_graph()
+  //                                 ->set_graph_input_file(argv[1])
+  //                                 ->set_type_graph(GraphType::CHORDAL)
+  //                                 ->end_graph()
+  //                                 ->set_K(3)
+  //                                 ->build();
 
-  cout << new_instance->get_graph()->to_string();
+  // cout << new_instance->get_graph()->to_string();
 
-  SolverParam solverParm;
-  CPAParam *cpaParam = CPAParamBuilder<std::nullptr_t>::create()
-                           ->set_number_max_iterations(20)
-                           ->set_number_max_violated_constraints(100)
+  // SolverParam solverParm;
+  // CPAParam *cpaParam = CPAParamBuilder<std::nullptr_t>::create()
+  //                          ->set_number_max_iterations(20)
+  //                          ->set_number_max_violated_constraints(100)
 
-                           ->set_early_termination(1)
-                           ->set_gap_primal(0.05)
-                           ->set_gap_relative_tolerance(0.05)
-                           ->set_gap_tolerance(0.05)
-                           ->end()
+  //                          ->set_early_termination(1)
+  //                          ->set_gap_primal(0.05)
+  //                          ->set_gap_relative_tolerance(0.05)
+  //                          ->set_gap_tolerance(0.05)
+  //                          ->end()
 
-                           ->build();
+  //                          ->build();
 
-  MKC_ModelEdgeLP *model = new MKC_ModelEdgeLP(new_instance,
-                                               SolverFactory::create_solver(TypeSolver::LP_MOSEK, solverParm));
+  // MKC_ModelEdgeLP *model = new MKC_ModelEdgeLP(new_instance,
+  //                                              SolverFactory::create_solver(TypeSolver::LP_MOSEK, solverParm));
 
-  MKC_CuttingPlane *cpa = new MKC_CuttingPlane(model, cpaParam);
+  // MKC_CuttingPlane *cpa = new MKC_CuttingPlane(model, cpaParam);
 
-  MKC_ModelEdgeSDP *modelSDP = new MKC_ModelEdgeSDP(new_instance,
-                                                    SolverFactory::create_solver(TypeSolver::SDP_MOSEK, solverParm));
+  // MKC_ModelEdgeSDP *modelSDP = new MKC_ModelEdgeSDP(new_instance,
+  //                                                   SolverFactory::create_solver(TypeSolver::SDP_MOSEK, solverParm));
 
-  MKC_CuttingPlane *cpaSDP = new MKC_CuttingPlane(modelSDP, cpaParam);
+  // MKC_CuttingPlane *cpaSDP = new MKC_CuttingPlane(modelSDP, cpaParam);
 
-  cpa->execute();
-  cin.get();
+  // cpa->execute();
+  // cin.get();
 
-  cpaSDP->execute();
-  cin.get();
+  // cpaSDP->execute();
+  // cin.get();
 
   sdpEdgeConst.size = 0;
   sdpEdgeConst.varI.clear();
@@ -290,7 +294,35 @@ int main(int argc, char *argv[])
   srand(time(NULL)); //to use the srand
 
   //  Inserting_Parameters(argv);
-  Inserting_Parameters_BB(argv);
+  K = paramProblem->get_number_partitions();
+  if (argc > 2)
+    Inserting_Parameters_BB(argv);
+  string FileLecture = "";
+  if (argc > 1 && argv[1])
+  {
+    for (int i = 0; argv[1][i]; i++)
+      FileLecture += argv[1][i];
+
+    paramProblem->set_input_file_path(FileLecture);
+  }
+  else
+  {
+    FileLecture = paramProblem->get_input_graph_file();
+  }
+
+  if (paramProblem->has_triangle_inequalities())
+  {
+    TypeTriangle = 1;
+  }
+  if (paramProblem->has_wheel_inequalities())
+  {
+    TypeHeurWheel = 1;
+  }
+  if (paramProblem->has_clique_inequalities())
+  {
+    TypeHeurClique = 1;
+    TypeHeurGeClique = 1;
+  }
 
   TOL = (double)NBMAXINEQ;
   //if (SDP_SEP == -2)
@@ -299,30 +331,15 @@ int main(int argc, char *argv[])
   bestSol = 100000000000000000.0;
 
   //File to read !
-  string FileLecture = "";
-  for (int i = 0; argv[1][i]; i++)
-    FileLecture += argv[1][i];
 
   //Read Instance
   Lire_Instance(FileLecture, instance); //Function to read
-
-  //******* Set FILE of final results
-  // *****
-  set_FileNames(argv, fileResult);
-
-  //FIle with iteation information
-  if (false)
-  {
-    set_FileNamesITE(argv, fileResult_ITE);
-    file_ITE.open(fileResult_ITE.c_str());
-    WriteIteration_FILE(instance, file_ITE, FileLecture, -1);
-  }
 
   //file Iteration BB
   if (paramBB->get_verbose_type() == BB_Verbose_Type::log_iterations_in_file ||
       paramBB->get_verbose_type() == BB_Verbose_Type::log_iterations_terminal_and_file)
   {
-    set_FileNamesITE_BB(argv, fileResult_ITE_BB);
+    set_FileNamesITE_BB(fileResult_ITE_BB);
     file_ITE_BB.open(fileResult_ITE_BB.c_str());
     WriteIteration_FILE_BB(file_ITE_BB, -1, 0, 0.0, 0.0, 0.0, 0.0);
   }
@@ -361,51 +378,52 @@ int main(int argc, char *argv[])
 
   /********* Special types of Solver (LP mostely)*********/
   //Study before and after
-  if (SDP_SEP == 99)
-  {
-    JUST_TRIandCLI = true;
-    SDP_SEP = 0;
-  }
-  else if (SDP_SEP == -99)
-  {
-    JUST_TRIandCLI = true;
-    SDP_SEP = -1;
-  }
-  else
-  {
-    JUST_TRIandCLI = false;
 
-    /*Two formulations that uses Node variables for LP formulations*/
-    if (SDP_SEP == 10)
-    {
-      //	 BuildCompleteGraph(instance);
-      set_NodeEdge_Formulation(instance); /*Edge-node formulation see My thesis*/
-      SDP_SEP = 0;                        // return to LP type of solver
-    }
-    else if (SDP_SEP == 11)
-    {
-      /*ExtendedRepresentative  is working just for complete graph (error formulations or code ?!)*/
-      BuildCompleteGraph(instance);
-      ISCOMPLETE_GRAPH = true;
-      //Set_RepresentativeVar(instance); /*Old extended*/
-      Set_ExtendedRepresentativeVar(instance); /*Extended formulations proposed in http://dx.doi.org/10.1016/j.endm.2016.03.044*/
-      SDP_SEP = 0;                             // return to LP type of solver
-    }
-    else if (SDP_SEP == 12)
-    {
-      //	 BuildCompleteGraph(instance);
-      set_NodeEdge_Formulation(instance); /*Edge-node formulation see My thesis*/
-      SDP_SEP = -2;                       // return to LP type of solver
-    }
-    else if (SDP_SEP != -3 && SDP_SEP != -2 && SDP_SEP != -1 && SDP_SEP != 0 && SDP_SEP != 1)
-    {
-      cout << "Unknown SDP_SEP  type. Exiting major error";
-      exit(1);
-    }
+  switch (paramProblem->get_problem_formulation())
+  {
+  case Problem_Formulation_type::extended_representative:
+    Set_ExtendedRepresentativeVar(instance);
+    BuildCompleteGraph(instance);
+    ISCOMPLETE_GRAPH = true;
+    break;
+  case Problem_Formulation_type::node_edge:
+    set_NodeEdge_Formulation(instance);
+    break;
+  default:
+    break;
   }
-  /****************************/
-  //
-  //
+
+  //Set SDP_SEP
+
+  switch (paramProblem->get_solver_type())
+  {
+  case Problem_Solver_type::LP_SOLVER_TYPE:
+    SDP_SEP = 0;
+    if (paramCPA->is_early_termination_ipm())
+    {
+      Log::WARN("LP with early termination not implemented, yet \n");
+    }
+    break;
+  case Problem_Solver_type::LP_SDP_EIG_SOLVER_TYPE:
+    SDP_SEP = 1;
+    if (paramCPA->is_early_termination_ipm())
+    {
+      SDP_SEP = -2;
+    }
+    break;
+  case Problem_Solver_type::SDP_SOLVER_TYPE:
+    SDP_SEP = -1;
+    if (paramCPA->is_early_termination_ipm())
+    {
+      SDP_SEP = -3;
+    }
+    break;
+
+  default:
+    SDP_SEP = 0;
+    break;
+  }
+
   bool DOHEURISTIC = false; //to do the Heuristic analysis
   PRINT_ITERATIONS = true;
   if (!DOHEURISTIC)
@@ -443,7 +461,7 @@ double BranchAndBound(T_Instance &instance)
   bool R, IsOK = true, NotOK = false;
   int counter = 0;
 
-  int freqLB_BIG = 20000; //if (SDP_SEP == -2)freqLB = 150;
+  int freqLB_BIG = 20; //if (SDP_SEP == -2)freqLB = 150;
 
   double lb, bestLowerBound, previousLB = 0;      // heuristic methodc
   double bestUpperBound, LocalUb, previousUB = 0; // highest in B&B list
@@ -465,13 +483,6 @@ double BranchAndBound(T_Instance &instance)
   {
     TYPE_BRANCH = BnB;
   }
-
-  cout << "SELEC_STRATEGY_BB = " << SELEC_STRATEGY_BB;
-  cout << "BRANCHING_RULE_BB = " << BRANCHING_RULE_BB;
-  cout << "STRATEGY_SOL_BB = " << STRATEGY_SOL_BB;
-  cout << "Pos_Last_parameter_BB = " << Pos_Last_parameter_BB;
-
-  cin.get();
 
   Set_BranchingRule(instance, BY_PARTITION_BB);
 
@@ -497,8 +508,6 @@ double BranchAndBound(T_Instance &instance)
     TYPE_SOLVER_BB = TYPE_SIMPLEX_BB; //  TYPE_IPM_BB
 
   int nbVer = 2;
-  if (SDP_SEP == -2)
-    nbVer = 2;
 
   Fix_N_Vertices_and_CreatPartitions(instance, ListBB, nbVer); //creat first branches by fixing "nbVer" Vertices.
 
@@ -521,7 +530,9 @@ double BranchAndBound(T_Instance &instance)
     //calculate a lower bound  (not for all candidates)
     if ((counter % freqLB == 0) || ListBB.size() == 1)
     {
-      lb = VNS_Heuristic_FeasibleSoltion(instance);
+
+      lb = execute_heuristic_to_feasible_solution(instance);
+
       if (lb > bestLowerBound)
       {
         bestLowerBound = lb;
@@ -530,7 +541,9 @@ double BranchAndBound(T_Instance &instance)
 
       R = CheckAndClean_ListBB(ListBB, bestLowerBound, &bestUpperBound); //check all candidades if UP>LB (fathom by bound)
       if (R == false)
+      {
         goto END_OF_BB; // Signal of end of BB
+      }
 
       //Print screen
       if (bestLowerBound > previousLB + epslon || bestUpperBound < previousUB - epslon || counter % freqLB_BIG == 0)
@@ -544,7 +557,7 @@ double BranchAndBound(T_Instance &instance)
                          100 * (bestUpperBound - bestLowerBound) / bestLowerBound,
                          getCurrentTime_Double(start_BB));
         }
-        if (paramBB->is_iteration_in_file)
+        if (paramBB->is_save_iterations_in_file())
         {
           WriteIteration_FILE_BB(file_ITE_BB, counter,
                                  ListBB.size(),
@@ -574,9 +587,8 @@ double BranchAndBound(T_Instance &instance)
       ExtraCONST_BB.clear(); //extra constraints of each branch (clean to receive new in cutting plane)
 
     //solve the relaxation (if Lazy strategy is used)
-    if (R == IsOK && STRATEGY_SOL_BB == LAZY_BB)
+    if (R == IsOK && paramBB->get_solution_strategy() == BB_Solution_Strategy::LAZY_FOR_BB)
     {
-
       if (paramBB->get_number_iterations_execute_CPA() == 0)
       {
         R = Solve_SubProblem_BB(*it_branch->ptxInst, &Partitions, fixvar, BY_PARTITION_BB, TYPE_SOLVER_BB, NEW_TASK, &bestLowerBound);
@@ -613,6 +625,7 @@ double BranchAndBound(T_Instance &instance)
       seqqq_BB = (*it_branch).Level_tree + 1; //Used in the branching
       R = Branching_BB(ListBB, *it_branch->ptxInst, Partitions, fixvar, BY_PARTITION_BB, TYPE_SOLVER_BB, &bestLowerBound);
     }
+
     //delete (parent) from list
     ListBB.erase(it_branch);
 
@@ -620,32 +633,67 @@ double BranchAndBound(T_Instance &instance)
     counter++;
     if (getCurrentTime_Double(start_BB) > MAXTIME_BB)
       RESUME = false;
+
   } //end WHILE
 
 END_OF_BB:
-  if (paramBB->is_iteration_in_file)
+  double gap_solution = 0.0;
+  if (ListBB.size() != 0)
   {
-    double gap_solution = 0.0;
-    if (ListBB.size() != 0)
-    {
-      gap_solution = 100 * (bestUpperBound - bestLowerBound) / bestLowerBound;
-    }
+    gap_solution = 100 * (bestUpperBound - bestLowerBound) / bestLowerBound;
+  }
+  else
+  {
+    bestUpperBound = bestLowerBound;
+  }
 
+  if (paramBB->is_save_iterations_in_file())
+  {
     WriteIteration_FILE_BB(file_ITE_BB,
                            counter,
                            ListBB.size(),
-                           bestLowerBound, bestUpperBound,
+                           bestLowerBound,
+                           bestUpperBound,
                            gap_solution,
                            getCurrentTime_Double(start_BB));
   }
 
-  SaveFinalSolution(file_ITE_BB, counter, 0, bestLowerBound, bestLowerBound, 0, getCurrentTime_Double(start_BB))
+  if (paramBB->is_verbose_terminal())
+  {
+    PrintScreen_BB(counter,
+                   ListBB.size(),
+                   bestLowerBound,
+                   bestUpperBound,
+                   gap_solution,
+                   getCurrentTime_Double(start_BB));
+  }
 
-      // free memory (mosek_BB)
-      MSK_deletetask(&task_BB);
+  // todo: code
+  SaveFinalSolution(counter, bestLowerBound, bestLowerBound, gap_solution, getCurrentTime_Double(start_BB));
+
+  // free memory (mosek_BB)
+  MSK_deletetask(&task_BB);
   MSK_deleteenv(&env_BB);
 
   return bestLowerBound; //end o function
+}
+
+double execute_heuristic_to_feasible_solution(const T_Instance &instance)
+{
+  switch (paramHeuristic->get_heuristic())
+  {
+  case Heuristic_type::vns:
+    return VNS_Heuristic_FeasibleSoltion(instance);
+  case Heuristic_type::grasp:
+    return Grasp_Heuristic_FeasibleSoltion(instance);
+  case Heuristic_type::moh:
+    return MultipleSearch_Heuristic_FeasibleSoltion(instance);
+  case Heuristic_type::ich:
+    return ICH_Heuristique_Ghaddar_main(instance);
+  default:
+    Log::WARN("The heuristic_type type not considered, default = VNS");
+    return VNS_Heuristic_FeasibleSoltion(instance);
+  }
 }
 
 inline void Set_BranchingRule(const T_Instance &instance, const bool &BY_PARTITION_BB)
@@ -704,6 +752,10 @@ inline bool CheckAndClean_ListBB(std::set<T_Branch> &ListBB, const double &bestL
       ListBB.erase(aux_it); //delete from list
   }                         //end of FOR IT
 
+  // cout << "ListBB" << ListBB.size() << endl;
+  // cout << "bestLowerBound = " << bestLowerBound << endl;
+  // cout << "biggestUpper = " << *biggestUpper << endl;
+
   if (*biggestUpper < bestLowerBound + 0.9 || ListBB.size() == 0) // Lb is optimal
     return false;                                                 // Print optimal value
 
@@ -744,20 +796,13 @@ inline bool Solve_SubProblem_BB(T_Instance &instance, std::vector<std::vector<in
     //      R =  Set_TrivialVertices_inPartition_BB(instance,*Partitions,bestLowerBound); //If R not true ---> Prunne by Integer solution (not helping)
     if (Partitions != NULL)
       Set_FixVar_fromPartition_BB(instance, *Partitions, fixvar); //Set vector with all edges fixed from partition
+  }
 
-    if (TYPE_SOLVER_BB == TYPE_SDP_BB)
-      R = SolveMosek_SDP_for_BB(instance, fixvar); //solve using SDP solver
-    else
-      R = SolveMosek_LP_for_Branch(instance, r_BB, task_BB, env_BB, TYPE_SOLVER_BB, fixvar, NEW_TASK); //TYPE_SIMPLEX_BB
-                                                                                                       // 	      PrintPartitionICH(Partitions); //cin.get();
-  }
+  if (TYPE_SOLVER_BB == TYPE_SDP_BB)
+    R = SolveMosek_SDP_for_BB(instance, fixvar); //solve using SDP solver
   else
-  {
-    if (TYPE_SOLVER_BB == TYPE_SDP_BB)
-      R = SolveMosek_SDP_for_BB(instance, fixvar); //solve using SDP solver
-    else
-      R = SolveMosek_LP_for_Branch(instance, r_BB, task_BB, env_BB, TYPE_SOLVER_BB, fixvar, NEW_TASK); //TYPE_SIMPLEX_BB
-  }
+    R = SolveMosek_LP_for_Branch(instance, r_BB, task_BB, env_BB, TYPE_SOLVER_BB, fixvar, NEW_TASK); //TYPE_SIMPLEX_BB
+                                                                                                     // 	      PrintPartitionICH(Partitions); //cin.get();
 
   return R;
 } //end of Solve_subproblem
@@ -3871,6 +3916,7 @@ inline void Set_FixVar_MOSEK_SDP_BB(const T_Instance &instance, MSKrescodee &r, 
 bool CuttingPlane_Simple_for_BB(T_Instance &instance_orig, std::vector<std::vector<int>> *Partitions, std::vector<T_fixVar> &fixvar,
                                 const bool &BY_PARTITION_BB, double *bestLowerBound, const int &cleanIneq, const std::vector<T_constraint> &CONST_branch)
 {
+
   double MAXTIME_CP = instance_orig.DIM * 0.5;
 
   //cout << instance2.ObSol << endl;
@@ -3974,7 +4020,7 @@ bool CuttingPlane_Simple_for_BB(T_Instance &instance_orig, std::vector<std::vect
         cin.get();
       }
 
-      //      cout << "Starting Search : " << endl;
+      //  cout << "Starting Search : " << endl;
       //STOP CRITERIA: No violation fund
       if (RESUME)
       {
@@ -8290,6 +8336,42 @@ inline void Selective_Separation(T_Instance &instance)
   }   //end for
 }
 
+void SaveFinalSolution(const int &Ite, const double &Lb, const double &Ub, const double &gap, const double &time)
+{
+  if (!utils::dirExists("./target/results"))
+  {
+    utils::make_dir("./target");
+    utils::make_dir("./target/results");
+  }
+
+  ofstream output("./target/results/" + paramBB->get_output_file_name_bb(), std::ios::app);
+
+  if (utils::is_empty(new ifstream("./target/results/" + paramBB->get_output_file_name_bb())))
+  {
+    /**HEADER *****/
+    output << "instance, ";
+    output << "partitions, ";
+
+    output << "solution_value (LB), ";
+    output << "gap_Ub_LB, ";
+    output << "time, ";
+    output << "nb_BB_iterations, ";
+    output << "Solver ";
+    output << endl;
+  }
+
+  output << paramProblem->get_input_graph_file() << ", ";
+  output << paramProblem->get_number_partitions() << ", ";
+  output << setprecision(12) << Lb << ", ";
+  output << setprecision(3) << gap << ", ";
+  output << setprecision(4) << time << ", ";
+  output << Ite << ", ";
+  output << paramProblem->get_solver_str() << " ";
+  output << endl;
+
+  output.close();
+}
+
 inline void WriteIteration_FILE_BB(std::ofstream &file_ITE, const int &Ite, const int &Size_list, const double &Lb, const double &Ub, const double &gap, const double &time)
 {
 
@@ -8599,6 +8681,11 @@ void Inserting_Parameters_BB(char *argv[])
   {
     istringstream ss(argv[2]);
     ss >> K;
+    paramProblem->set_number_of_partitions(K);
+  }
+  else
+  {
+    K = paramProblem->get_number_partitions();
   }
 
   if (argv[3]) //Type of solver (LP = 0, SDP = -1 or LP_EIG=-2)
@@ -8788,13 +8875,12 @@ void set_FileNamesITE_LowerBound(char *argv[], string &FileResults)
   FileResults += ".csv"; // kind of excel
 }
 
-void set_FileNamesITE_BB(char *argv[], string &FileResults)
+void set_FileNamesITE_BB(string &FileResults)
 {
 
   // FileResults += "ResultsBB/ITERATIONS_Selec/";
-  FileResults += "";
-  for (int i = 0; argv[1][i]; i++)
-    FileResults += argv[1][i];
+
+  FileResults += paramProblem->get_input_graph_file();
 
   stringstream sss, ss2, ss3, ss4;
   sss << K;
@@ -11278,7 +11364,7 @@ double VNS_Heuristic_FeasibleSoltion(const T_Instance &instance)
   clock_t start2 = std::clock(); // mesure time
   bool resp = true;
   int NbIte = 7, p, p_max = 8, p_initial = 2;
-  double maxTimeVNS = 2.0;
+  double maxTimeVNS = paramHeuristic->get_heuristic();
 
   //small instances we can do more
   if (instance.DIM <= 300)
@@ -11464,7 +11550,7 @@ double MultipleSearch_Heuristic_FeasibleSoltion(const T_Instance &instance)
   clock_t start2 = std::clock(); // mesure time
   bool resp = true;
   int NbIte_Tabu = 10, tabuSize = 10, MaxNbRound = 5000;
-  double maxTimeMOH = 2.0;
+  double maxTimeMOH = paramHeuristic->get_max_time();
   double BestPartitionsValue = 0.0,
          Newval;
   std::vector<std::vector<int>> Partitions;
@@ -11632,7 +11718,7 @@ double Grasp_Heuristic_FeasibleSoltion(const T_Instance &instance)
 {
   clock_t start2 = std::clock(); // mesure time
   double BestPartitionsValue = 0.0;
-  double maxTimeGRASP = 2.0; // seconds
+  double maxTimeGRASP = paramHeuristic->get_max_time(); // seconds
   //cout << "Begin of  Grasp_Heuristic_FeasibleSoltion " << endl;
 
   int NbIte_Grasp = 5000;
@@ -12073,7 +12159,7 @@ double ICH_Heuristique_Ghaddar_main(const T_Instance &instance)
   //chaging time of iteration and total time of cutting plane (reduce )
   if (MAXTIME > 30.0)
     MAXTIME = 30.0;
-  MAXTIME_ITE = 1.5; //(unespeceted ) for some instances, larger values are worse....
+  MAXTIME_ITE = 1.5; // for some instances, larger values are worse....
 
   T_Instance instance2 = instance;
   instance2.clear_Constraint();
