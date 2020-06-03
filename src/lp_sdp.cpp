@@ -1,50 +1,5 @@
-/*
-
-
-		vars.add(SelectMama_and_PapaNumVar(env, 0.0, 40.0));
-		vars.add(IloNumVar(env));
-		vars.add(IloNumVar(env));
-
-		IloExpr xpr(env);
-		xpr += 1.0*vars[0];
-		xpr += 2*vars[1];
-		xpr += 3*vars[2];
-
-		//IloObjective obj; = IloMinimize(env, x1 + 2*x2 + 3*x3);
-		IloObjective obj = IloMaximize(env);
-		obj(0)=1;
-		obj(1)=2;
-		obj(2)=3;
-
-		model.add(obj);
-
-		http://www.iems.ucf.edu/qzheng/grpmbr/seminar/Daniel_Using_C++_with_CPLEX.pdf
-
-		for(i=0;i<4;i++){
-		IloExpr xpr(env);
-		for(j=0;j<3;j++){
-		  xpr += (i+1)*var_x[j];
-		}
-		sprintf(temp,"cst_a(%d)",i+1);
-		cst_a.add(IloRange(env,0,xpr,+IloInfinity,temp));
-		xpr.end();
-		}
-
-		model.add(IloMaximize(env, xpr));
-		model.add( - vars[0] +     vars[1] + vars[2] <= 20);
-		model.add(   vars[0] - 3 * vars[1] + vars[2] <= 30);
-
-		// Solve
-		cplex.solve();
-
-*/
-
 #include "../headers/MainHead.hpp"
 
-//just to test git Novo mudanca
-//nova mul ultimo test
-//Essa es a mudanca
-/* This function prints log output from MOSEK to the terminal. */
 static void MSKAPI printstr(void *handle,
                             const char str[])
 {
@@ -235,53 +190,11 @@ using namespace maxkcut;
 
 int main(int argc, char *argv[])
 {
-
+ //populate parameters
   paramCPA = new MKC_CPAParam("./resource/parameters/CuttingPlaneParameters.txt");
   paramBB = new BranchBoundParam("./resource/parameters/BranchAndBoundParameters.txt");
   paramProblem = new MKC_ProblemParam("./resource/parameters/ProblemParameters.txt");
   paramHeuristic = new MKC_HeuristicParam("./resource/parameters/ProblemParameters.txt");
-
-  // cout << paramBB->to_string();
-  // cin.get();
-
-  // MKCInstance *new_instance = MKCInstanceBuilder<std::nullptr_t>::create()
-  //                                 ->set_graph()
-  //                                 ->set_graph_input_file(argv[1])
-  //                                 ->set_type_graph(GraphType::CHORDAL)
-  //                                 ->end_graph()
-  //                                 ->set_K(3)
-  //                                 ->build();
-
-  // cout << new_instance->get_graph()->to_string();
-
-  // SolverParam solverParm;
-  // CPAParam *cpaParam = CPAParamBuilder<std::nullptr_t>::create()
-  //                          ->set_number_max_iterations(20)
-  //                          ->set_number_max_violated_constraints(100)
-
-  //                          ->set_early_termination(1)
-  //                          ->set_gap_primal(0.05)
-  //                          ->set_gap_relative_tolerance(0.05)
-  //                          ->set_gap_tolerance(0.05)
-  //                          ->end()
-
-  //                          ->build();
-
-  // MKC_ModelEdgeLP *model = new MKC_ModelEdgeLP(new_instance,
-  //                                              SolverFactory::create_solver(TypeSolver::LP_MOSEK, solverParm));
-
-  // MKC_CuttingPlane *cpa = new MKC_CuttingPlane(model, cpaParam);
-
-  // MKC_ModelEdgeSDP *modelSDP = new MKC_ModelEdgeSDP(new_instance,
-  //                                                   SolverFactory::create_solver(TypeSolver::SDP_MOSEK, solverParm));
-
-  // MKC_CuttingPlane *cpaSDP = new MKC_CuttingPlane(modelSDP, cpaParam);
-
-  // cpa->execute();
-  // cin.get();
-
-  // cpaSDP->execute();
-  // cin.get();
 
   sdpEdgeConst.size = 0;
   sdpEdgeConst.varI.clear();
