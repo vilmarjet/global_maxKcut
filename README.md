@@ -2,7 +2,7 @@
 
 ## Application designed for Unix systems, only.
 
-Let <global_maxkcut> be the path folder of where you saved the this project.
+Let <global_maxkcut> be the path folder of where you saved this project.
 
 The following are steps to build, personallyze and execute the application.
 ### 1) MOSEK:
