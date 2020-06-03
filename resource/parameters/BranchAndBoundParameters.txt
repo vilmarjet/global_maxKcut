@@ -22,7 +22,7 @@ output_file_name = output_bb.csv                // file will be saved in ./targe
 #    best_first,   //best  first search strategy 
 #    worse_first,  //Worse first search strategy
 #    breath_first, //Breath first selection (all same level first)
-#    depth_first,  // depth rst search (Goes deep in search tree) (Empirically, obtain best results)
+#    depth_first,  // depth rst search (Goes deep in search tree) (Recommended option)
 # ###########
 
 
@@ -30,12 +30,12 @@ output_file_name = output_bb.csv                // file will be saved in ./targe
 #    R1_MostDecided,     // Most decided first
 #    R2_ArticleMG,       //Best in MG
 #    R3_LeastDecided,    //Least decided first
-#    R5_EdgeWeight,      // Edge with biggest weight (Empirically, the best)
+#    R5_EdgeWeight,      // Edge with biggest weight (Recommended option)
 #    R6_StrongBrahching, // Strong Branching
 #    R7_PseudoCost,      // PseudoCost
 # ###########
 
 # ######### partition_strategy:
 #    DICHOTOMIC, // Each branch generates 2 branches
-#    K_CHOTOMIC  // Each branch generates k branches
+#    K_CHOTOMIC  // Each branch generates k branches(Recommended option for K < 7)
 # ########
