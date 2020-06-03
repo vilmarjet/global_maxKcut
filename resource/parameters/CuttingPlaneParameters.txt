@@ -1,7 +1,7 @@
 max_number_iterations = 1000 
 max_time_seconds = 10
 max_time_per_iteration_seconds = 5                     
-max_number_violated_inequalities_par_iteration = 400 //Best results 400
-number_iterations_without_clean_inequalities = 3     //Best results btw 3 and 5
+max_number_violated_inequalities_par_iteration = 400 //(Recommended = 400)
+number_iterations_without_clean_inequalities = 3     // (Recommended, btw 3 and 5)
 verbose = false                                       //True = log in terminal all iterations of cutting plane
-is_early_termination_interior_point_method = true    //if true --> executes the early termination in cutting plane (empirically, true is the best)
+is_early_termination_interior_point_method = true    //if true --> executes the early termination in cutting plane (Recommended, true)
