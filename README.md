@@ -46,7 +46,7 @@ The following are steps to build, personallyze and execute the application.
 
 ### 6) Results:
     In BranchAndBoundParameters.txt it is possible to set the name of file where result of branch-and-bound is output. 
-    The result file will be created at the end of first execution in and update at each execution
+    The result file will be created at the end of first execution and updated at each execution
         ./target/results
         
 
