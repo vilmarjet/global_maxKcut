@@ -1,15 +1,15 @@
 file_name = ./resource/instance20.txt       //Input file of max-k-cut test
-partition_number = 3
+partition_number = 3                        // K of the max-k-cut
 solver_type = LP_SDP_EIG
 formulation = edge_only
-has_triangle_inequalities = true
-has_clique_inequalities = true
-has_wheel_inequalities = true
+has_triangle_inequalities = true            //(Recommended, true)
+has_clique_inequalities = true              //(Recommended, true - specially for edge_only formulations)
+has_wheel_inequalities = true               //(Recommended, true)
 
 # ######### solver_type:
 #    SDP,        // Semidefinite programming
 #    LP,         // Linear programming
-#    LP_SDP_EIG, // Linear programming  with SDP based constraints
+#    LP_SDP_EIG, // Linear programming  with SDP based constraints (Recommended, for k>3)
 # ########
 
 
