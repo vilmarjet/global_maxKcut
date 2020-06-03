@@ -2,13 +2,15 @@
 
 ## Application designed for Unix systems, only.
 
+Let <global_maxkcut> be the path folder of where you saved the this project.
+
 The following are steps to build, personallyze and execute the application.
 ### 1) MOSEK:
     Mosek is the solver chosen for solve SDP and LP formulations.  
     For installation: https://www.mosek.com/
 
 ### 2) Set-up of "Makefile":
-    In file phd_maxKcut/Makefile set mosek directories,
+    In file <global_maxkcut>/Makefile set mosek directories,
     MOSEK_IPATHS and MOSEK_BINPATH set the head and bin folder of mosek, for example:
     
     MOSEK_IPATHS=-I ../../mosek/9.1/tools/platform/linux64x86/h
@@ -20,9 +22,9 @@ The following are steps to build, personallyze and execute the application.
      * CuttingPlaneParameters.txt: parameters for cutting plane method used to find upper bound,
      * HeuristicParameters.txt: set heuristic and other parameters to be used in branch and bound,
      * ProblemParameters.txt: parameters of problem, for example: input_instance, partition_number, solver_type 
-
+     
 ### 4)Installation of application (bb_mkc_run)
-    In terminal, go to directory of phd_maxKcut, then execute the following command:
+    In terminal, go to <global_maxkcut> (where Makefile is saved), then execute the following command:
     
     $ make install 
 
@@ -37,6 +39,8 @@ The following are steps to build, personallyze and execute the application.
     b) The bb_mkc_run can receive in the first argument the path for instance test. Thus, the file_name set in ProblemParameters.txt will be disconsidered.
 
         $ ./bb_mkc_run ./resource/instance4.txt 
+        
+        the ./resource/instance4.txt  can be changed to path of folder where you set your graph instances.
     
     c) The application can also receive as arguments the number of partions. Thus, partition_number will be disconsidered.
 
@@ -47,7 +51,7 @@ The following are steps to build, personallyze and execute the application.
 ### 6) Results:
     In BranchAndBoundParameters.txt it is possible to set the name of file where result of branch-and-bound is output. 
     The result file will be created at the end of first execution and updated at each execution
-        ./target/results
+        <global_maxkcut>/target/results
         
 
 ## References:
